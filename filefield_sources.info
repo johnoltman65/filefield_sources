@@ -1,0 +1,6 @@
+; $Id$
+name = FileField Sources
+description = Extends FileField to allow referencing of existing files, remote files, and server files.
+dependencies[] = filefield
+package = CCK
+core = 6.x
