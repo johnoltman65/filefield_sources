@@ -151,7 +151,7 @@ function filefield_source_imce_custom_scan($dirname) {
   // Get a list of files in the database for this directory.
   $sql_dir_name = $dirname == '.' ? file_directory_path() : file_directory_path() .'/'. $dirname;
 
-  $result = db_query("SELECT filename FROM files WHERE filepath LIKE '%s' AND filepath NOT LIKE '%s'", $sql_dir_name .'/%', $sql_dir_name .'/%/%');
+  $result = db_query("SELECT filename FROM {files} WHERE filepath LIKE '%s' AND filepath NOT LIKE '%s'", $sql_dir_name .'/%', $sql_dir_name .'/%/%');
   $db_files = array();
   while ($row = db_fetch_object($result)) {
     $db_files[$row->filename] = $row->filename;
