@@ -134,7 +134,9 @@ function filefield_sources_invoke_all($method, &$params) {
  * Load hook_filefield_sources_info() data from all modules.
  */
 function filefield_sources_info() {
-  return module_invoke_all('filefield_sources_info');
+  $info = module_invoke_all('filefield_sources_info');
+  drupal_alter('filefield_sources_info', $info);
+  return $info;
 }
 
 /**
