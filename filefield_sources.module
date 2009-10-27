@@ -202,7 +202,7 @@ function filefield_sources_element_validate($element, $file) {
   // Call the validation functions.
   else {
     foreach ($validators as $function => $args) {
-      array_unshift($args, &$file);
+      array_unshift($args, $file);
       $errors = array_merge($errors, call_user_func_array($function, $args));
     }
   }
