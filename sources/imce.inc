@@ -13,6 +13,7 @@
 if ($_GET['q'] == 'imce' && isset($_GET['filefield']) && isset($_GET['type']) && content_fields($_GET['filefield'], $_GET['type'])) {
   $GLOBALS['conf']['imce_custom_scan'] = 'filefield_source_imce_custom_scan';
   $GLOBALS['conf']['imce_custom_process'] = array('filefield_source_imce_custom_process' => 1);
+  $GLOBALS['conf']['imce_settings_absurls'] = FALSE;
 }
 
 /**
@@ -121,7 +122,7 @@ function filefield_source_imce_value($element, &$item) {
     }
 
     // Resolve the file path to an FID.
-    if ($fid = db_result(db_query("SELECT fid FROM {files} WHERE filepath = '%s'", $file_path))) {
+    if ($fid = db_result(db_query("SELECT fid FROM {files} WHERE filepath = '%s'", rawurldecode($file_path)))) {
       $file = field_file_load($fid);
       if (filefield_sources_element_validate($element, (object) $file)) {
         $item = array_merge($item, $file);
