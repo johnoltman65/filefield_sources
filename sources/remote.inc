@@ -143,7 +143,8 @@ function filefield_source_remote_value($element, &$item) {
     curl_setopt($ch, CURLOPT_HEADER, TRUE);
     curl_setopt($ch, CURLOPT_NOBODY, TRUE);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
+    // Causes a warning if PHP safe mode is on.
+    @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
     curl_exec($ch);
     $info = curl_getinfo($ch);
     curl_close($ch);
