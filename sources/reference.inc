@@ -187,7 +187,7 @@ function filefield_source_reference_get_files($filename, $field = NULL) {
   $files = array();
   foreach ($fields as $field) {
     $db_info = content_database_info($field);
-    $result = db_query("SELECT f.* FROM {" . $db_info['table'] . "} c INNER JOIN {files} f ON c." . $db_info['columns']['fid']['column'] . " = f.fid WHERE f.filename LIKE '%s%%' AND status = 1", $filename);
+    $result = db_query_range("SELECT f.* FROM {" . $db_info['table'] . "} c INNER JOIN {files} f ON c." . $db_info['columns']['fid']['column'] . " = f.fid WHERE f.filename LIKE '%s%%' AND f.status = 1 ORDER BY f.timestamp DESC", $filename, 0, 30);
     while ($file = db_fetch_object($result)) {
       $files[$file->fid] = $file;
     }
