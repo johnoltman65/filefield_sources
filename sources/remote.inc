@@ -113,7 +113,7 @@ function filefield_source_remote_value($element, &$item) {
     $field = content_fields($element['#field_name'], $element['#type_name']);
     $url = $item['filefield_remote']['url'];
     $pathinfo = pathinfo($url);
-    $filename = basename($url);
+    $filename = rawurldecode(basename($url));
     $filepath = file_create_filename($filename, file_directory_temp());
 
     if (empty($pathinfo['extension'])) {
