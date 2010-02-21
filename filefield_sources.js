@@ -22,7 +22,7 @@ Drupal.behaviors.fileFieldSources = function(context) {
   });
 
   // Hide all the other upload mechanisms on page load.
-  $('div.filefield-source', context).hide();
+  $('div.filefield-source', context).css('display', 'none');
   $('div.filefield-sources-list', context).each(function() {
     $(this).find('a:first').addClass('active');
   });
