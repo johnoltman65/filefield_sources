@@ -105,7 +105,7 @@ function filefield_sources_form($widget) {
   );
 
   $sources = filefield_sources_list(FALSE);
-  $sources = array_intersect_key(array_merge($widget['filefield_sources'], $sources), $sources);
+  $sources = array_intersect_key(array_merge((array) $widget['filefield_sources'], $sources), $sources);
   $form['filefield_sources']['filefield_sources'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Enabled sources'),
