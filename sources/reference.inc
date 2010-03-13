@@ -66,10 +66,28 @@ function filefield_source_reference_theme() {
 function filefield_source_reference_settings($op, $field) {
   $return = array();
 
-  // Add settings to the FileField widget form.
+  if ($op == 'form') {
+    $return['sources_reference'] = array(
+      '#title' => t('Autocomplete reference options'),
+      '#type' => 'fieldset',
+      '#collapsible' => FALSE,
+    );
+
+    $return['sources_reference']['filefield_source_autocomplete'] = array(
+      '#title' => t('Match file name'),
+      '#options' => array(
+        '0' => t('Starts with string'),
+        '1' => t('Contains string'),
+      ),
+      '#type' => 'radios',
+      '#default_value' => empty($field['filefield_source_autocomplete']) ? '0' : '1', 
+    );
+  }
+  elseif ($op == 'save') {
+    $return[] = 'filefield_source_autocomplete';
+  }
 
   return $return;
-
 }
 
 /**
@@ -187,7 +205,11 @@ function filefield_source_reference_get_files($filename, $field = NULL) {
   $files = array();
   foreach ($fields as $field) {
     $db_info = content_database_info($field);
-    $result = db_query_range("SELECT f.* FROM {" . $db_info['table'] . "} c INNER JOIN {files} f ON c." . $db_info['columns']['fid']['column'] . " = f.fid WHERE f.filename LIKE '%s%%' AND f.status = 1 ORDER BY f.timestamp DESC", $filename, 0, 30);
+
+    // 1 == contains, 0 == starts with.
+    $like = empty($field['widget']['filefield_source_autocomplete']) ? '%s%%' : '%%%s%%';
+    $result = db_query_range("SELECT f.* FROM {" . $db_info['table'] . "} c INNER JOIN {files} f ON c." . $db_info['columns']['fid']['column'] . " = f.fid WHERE f.filename LIKE '" . $like . "' AND f.status = 1 ORDER BY f.timestamp DESC", $filename, 0, 30);
+
     while ($file = db_fetch_object($result)) {
       $files[$file->fid] = $file;
     }

@@ -87,7 +87,7 @@ function filefield_sources_widget_settings($widget) {
     'filefield_sources',
   );
   $params = array('save', $widget);
-  $settings += filefield_sources_invoke_all('settings', $params);
+  $settings = array_merge($settings, filefield_sources_invoke_all('settings', $params));
   return $settings;
 }
 
