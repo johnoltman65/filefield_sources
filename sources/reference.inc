@@ -37,7 +37,7 @@ function filefield_source_reference_menu() {
     'page callback' => 'filefield_source_reference_autocomplete',
     'page arguments' => array(2, 3),
     'access callback' => 'filefield_edit_access',
-    'access arguments' => array(3),
+    'access arguments' => array(2, 3),
     'file' => 'sources/reference.inc',
     'type' => MENU_CALLBACK,
   );
