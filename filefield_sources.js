@@ -4,6 +4,9 @@ Drupal.behaviors.fileFieldSources = function(context) {
   $('div.filefield-sources-list a', context).click(function() {
     $fileFieldElement = $(this).parents('div.form-item:first').find('div.filefield-element:first');
 
+    // Remove the active class.
+    $(this).parents('div.filefield-sources-list').find('a.active').removeClass('active');
+
     // The default upload element is a special case.
     if ($(this).is('.filefield-source-upload')) {
       $fileFieldElement.find('div.filefield-upload').parent().show();
@@ -16,7 +19,6 @@ Drupal.behaviors.fileFieldSources = function(context) {
     }
 
     // Add the active class.
-    $(this).parents('div.filefield-sources-list').find('a.active').removeClass('active');
     $(this).addClass('active');
     Drupal.fileFieldSources.updateHintText($fileFieldElement.get(0));
   });
