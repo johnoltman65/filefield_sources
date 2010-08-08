@@ -7,15 +7,18 @@ Drupal.behaviors.fileFieldSources = function(context) {
     // Remove the active class.
     $(this).parents('div.filefield-sources-list').find('a.active').removeClass('active');
 
+    // Find the unique FileField Source class name.
+    var fileFieldSourceClass = this.className.match(/filefield-source-[0-9a-z]+/i)[0];
+
     // The default upload element is a special case.
     if ($(this).is('.filefield-source-upload')) {
-      $fileFieldElement.find('div.filefield-upload').parent().show();
-      $fileFieldElement.find('div.filefield-source').hide();
+      $fileFieldElement.find('div.filefield-upload').parent().css('display', '');
+      $fileFieldElement.find('div.filefield-source').css('display', 'none');
     }
     else {
-      $fileFieldElement.find('div.filefield-upload').parent().hide();
-      $fileFieldElement.find('div.filefield-source').not('div.' + this.className.replace(' ', '.')).hide();
-      $fileFieldElement.find('div.' + this.className.replace(' ', '.')).show();
+      $fileFieldElement.find('div.filefield-upload').parent().css('display', 'none');
+      $fileFieldElement.find('div.filefield-source').not('div.' + fileFieldSourceClass).css('display', 'none');
+      $fileFieldElement.find('div.' + fileFieldSourceClass).css('display', '');
     }
 
     // Add the active class.
