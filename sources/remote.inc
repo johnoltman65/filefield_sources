@@ -141,8 +141,9 @@ function filefield_source_remote_value($element, &$item) {
 
     // Update the $url variable to reflect any redirects.
     $url = $info['url'];
-    $pathinfo = pathinfo($url);
-    $filename = rawurldecode(basename($url));
+    $url_info = parse_url($url);
+    $pathinfo = pathinfo($url_info['path']);
+    $filename = rawurldecode(basename($url_info['path']));
     $filepath = file_create_filename($filename, file_directory_temp());
 
     if (empty($pathinfo['extension'])) {
