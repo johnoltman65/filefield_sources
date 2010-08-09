@@ -10,12 +10,6 @@
  * same name. Any of these hooks could be broken out into a separate module.
  */
 
-if ($_GET['q'] == 'imce' && isset($_GET['filefield']) && isset($_GET['type']) && content_fields($_GET['filefield'], $_GET['type'])) {
-  $GLOBALS['conf']['imce_custom_scan'] = 'filefield_source_imce_custom_scan';
-  $GLOBALS['conf']['imce_custom_process'] = array('filefield_source_imce_custom_process' => 1);
-  $GLOBALS['conf']['imce_settings_absurls'] = FALSE;
-}
-
 /**
  * Implementation of hook_filefield_source_info().
  */
@@ -35,6 +29,22 @@ function filefield_source_imce_info() {
     'weight' => -1,
   );
   return $source;
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function filefield_source_imce_menu() {
+  $items = array();
+  $items['filefield/imce/%/%'] = array(
+    'page callback' => 'filefield_source_imce_page',
+    'page arguments' => array(2, 3),
+    'access callback' => 'filefield_edit_access',
+    'access arguments' => array(2, 3),
+    'file' => 'sources/imce.inc',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
 }
 
 /**
@@ -86,10 +96,10 @@ function filefield_source_imce_process($element, $edit, &$form_state, $form) {
     ),
   );
 
-  $imce_function = 'window.open(\''. url('imce', array('query' => 'filefield='. $element['#field_name'] .'&type='. $element['#type_name'] .'&app='. rawurlencode($field['widget']['label']) .'|url@'. $filepath_id)) .'\', \'\', \'width=760,height=560,resizable=1\'); return false;';
+  $imce_function = 'window.open(\'' . url('filefield/imce/' . $element['#type_name'] . '/' . $element['#field_name'], array('query' => 'app=' . rawurlencode($field['widget']['label']) . '|url@' . $filepath_id)) . '\', \'\', \'width=760,height=560,resizable=1\'); return false;';
   $element['filefield_imce']['display_path'] = array(
     '#type' => 'markup',
-    '#value' => '<span id="'. $display_id .'" class="filefield-sources-imce-display">' . t('No file selected') .'</span> (<a class="filefield-sources-imce-browse" href="#" onclick="'. $imce_function .'">' . t('browse') . '</a>)',
+    '#value' => '<span id="' . $display_id . '" class="filefield-sources-imce-display">' . t('No file selected') . '</span> (<a class="filefield-sources-imce-browse" href="#" onclick="' . $imce_function . '">' . t('browse') . '</a>)',
   );
 
   $element['filefield_imce']['select'] = array(
@@ -146,6 +156,40 @@ function theme_filefield_source_imce_element($element) {
 }
 
 /**
+ * Outputs the IMCE browser for FileField.
+ */
+function filefield_source_imce_page($content_type, $field_name) {
+  global $conf;
+
+  // Check access.
+  if (!module_exists('imce') || !imce_access() || !content_fields($field_name, $content_type)) {
+    return drupal_access_denied();
+  }
+  // Set custom directory scan.
+  $conf['imce_custom_scan'] = 'filefield_source_imce_custom_scan';
+
+  // Disable absolute URLs.
+  $conf['imce_settings_absurls'] = 0;
+
+  // Set custom post-process to disable undesired features.
+  if (empty($conf['imce_custom_process'])) {
+    $conf['imce_custom_process'] = array();
+  }
+  $conf['imce_custom_process'] += array('filefield_source_imce_custom_process' => 1);
+
+  // IMCE 6.x-2.x.
+  if (module_hook('imce', 'file_references')) {
+    module_load_include('inc', 'imce', 'inc/imce.page');
+    return imce();
+  }
+  // IMCE 6.x-1.x.
+  else {
+    module_load_include('inc', 'imce', 'inc/page');
+    return imce_page();
+  }
+}
+
+/**
  * Scan directory and return file list, subdirectories, and total size.
  */
 function filefield_source_imce_custom_scan($dirname) {
@@ -170,11 +214,14 @@ function filefield_source_imce_custom_scan($dirname) {
   return $directory;
 }
 
+/**
+ * Post process IMCE profile.
+ */
 function filefield_source_imce_custom_process(&$imce) {
-  // Disable uploading, thumbnails, delete, and other unnecessary features.
-  $imce['perm']['subnav'] = 0;
-  $imce['perm']['upload'] = 0;
-  $imce['perm']['thumb']  = 0;
-  $imce['perm']['delete'] = 0;
-  $imce['perm']['resize'] = 0;
+  // Disable file operations.
+  foreach ($imce['perm'] as $name => $val) {
+    if ($name != 'browse' && $name != 'subnav') {
+      $imce['perm'][$name] = 0;
+    }
+  }
 }
