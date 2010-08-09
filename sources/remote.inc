@@ -144,6 +144,7 @@ function filefield_source_remote_value($element, &$item) {
     $url_info = parse_url($url);
     $pathinfo = pathinfo($url_info['path']);
     $filename = rawurldecode(basename($url_info['path']));
+    $filename = filefield_sources_clean_filename($filename);
     $filepath = file_create_filename($filename, file_directory_temp());
 
     if (empty($pathinfo['extension'])) {

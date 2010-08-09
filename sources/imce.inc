@@ -32,6 +32,7 @@ function filefield_source_imce_info() {
     'description' => t('Select a file to use from a file browser.'),
     'process' => 'filefield_source_imce_process',
     'value' => 'filefield_source_imce_value',
+    'weight' => -1,
   );
   return $source;
 }
@@ -67,10 +68,10 @@ function filefield_source_imce_process($element, $edit, &$form_state, $form) {
   $field = content_fields($element['#field_name'], $element['#type_name']);
 
   $element['filefield_imce'] = array(
-    '#weight' => 100.3,
+    '#weight' => 100.5,
     '#access' => empty($element['fid']['#value']),
     '#theme' => 'filefield_source_imce_element',
-    '#description' => filefield_sources_element_validation_help($element),
+    '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
   );
 
   $filepath_id = $element['#id'] . '-imce-path';

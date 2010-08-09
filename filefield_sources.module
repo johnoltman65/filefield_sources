@@ -229,6 +229,7 @@ function filefield_sources_invoke_all($method, &$params) {
 function filefield_sources_info() {
   $info = module_invoke_all('filefield_sources_info');
   drupal_alter('filefield_sources_info', $info);
+  uasort($info, '_filefield_sources_sort');
   return $info;
 }
 
@@ -277,6 +278,45 @@ function filefield_sources_includes($include = TRUE, $enabled_only = TRUE) {
     }
   }
   return $includes;
+}
+
+/**
+ * Clean up the file name, munging extensions and transliterating.
+ *
+ * @param $filepath
+ *   A string containing a file name or full path. Only the file name will
+ *   actually be modified.
+ * @return
+ *   A file path with a cleaned-up file name.
+ */
+function filefield_sources_clean_filename($filepath) {
+  global $user;
+
+  $filename = basename($filepath);
+
+  if (module_exists('transliteration')) {
+    module_load_include('inc', 'transliteration');
+
+    $langcode = NULL;
+    if (!empty($_POST['language'])) {
+      $languages = language_list();
+      $langcode = isset($languages[$_POST['language']]) ? $_POST['language'] : NULL;
+    }
+    $filename = transliteration_clean_filename($filename, $langcode);
+  }
+
+  // Because this transfer mechanism does not use file_save_upload(), we need
+  // to manually munge the filename to prevent dangerous extensions.
+  // See file_save_upload().
+  $extensions = '';
+  foreach ($user->roles as $rid => $name) {
+    $extensions .= ' '. variable_get("upload_extensions_$rid",
+    variable_get('upload_extensions_default', 'jpg jpeg gif png txt html doc xls pdf ppt pps odt ods odp'));
+  }
+  $filename = file_munge_filename($filename, $extensions);
+
+  $directory = dirname($filepath);
+  return ($directory ? $directory . '/' : $directory) . $filename;
 }
 
 /**
@@ -340,13 +380,22 @@ function filefield_sources_element_validate($element, $file) {
 /**
  * Generate help text based on the $element['#upload_validators'] property.
  */
-function filefield_sources_element_validation_help($element) {
+function filefield_sources_element_validation_help($validators) {
   $desc = array();
-  foreach ($element['#upload_validators'] as $callback => $arguments) {
+  foreach ($validators as $callback => $arguments) {
     $help_func = $callback .'_help';
     if (function_exists($help_func)) {
       $desc[] = call_user_func_array($help_func, $arguments);
     }
   }
   return empty($desc) ? '' : implode('<br />', $desc);
+}
+
+/**
+ * Custom sort function for ordering sources.
+ */
+function _filefield_sources_sort($a, $b) {
+  $a = (array)$a + array('weight' => 0, 'label' => '');
+  $b = (array)$b + array('weight' => 0, 'label' => '');
+  return $a['weight'] < $b['weight'] ? -1 : ($a['weight'] > $b['weight'] ? 1 : strnatcasecmp($a['label'], $b['label']));
 }

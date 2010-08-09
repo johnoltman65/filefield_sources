@@ -23,6 +23,7 @@ function filefield_source_reference_info() {
     'description' => t('Reuse an existing file by entering its file name.'),
     'process' => 'filefield_source_reference_process',
     'value' => 'filefield_source_reference_value',
+    'weight' => 1,
   );
   return $source;
 }
@@ -70,7 +71,8 @@ function filefield_source_reference_settings($op, $field) {
     $return['sources_reference'] = array(
       '#title' => t('Autocomplete reference options'),
       '#type' => 'fieldset',
-      '#collapsible' => FALSE,
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
     );
 
     $return['sources_reference']['filefield_source_autocomplete'] = array(
@@ -105,7 +107,7 @@ function filefield_source_reference_process($element, $edit, &$form_state, $form
   $element['filefield_reference']['autocomplete'] = array(
     '#type' => 'textfield',
     '#autocomplete_path' => 'filefield/reference/' . $element['#type_name'] . '/' . $element['#field_name'],
-    '#description' => filefield_sources_element_validation_help($element),
+    '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
   );
 
   $element['filefield_reference']['select'] = array(
