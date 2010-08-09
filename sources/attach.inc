@@ -80,7 +80,6 @@ function filefield_source_attach_settings($op, $field) {
         'copy' => t('Leave a copy of the file in the attach directory'),
       ),
       '#default_value' => isset($field['filefield_source_attach_mode']) ? $field['filefield_source_attach_mode'] : 'move',
-      '#description' => t(),
     );
     $return['source_attach']['tokens'] = array(
       '#type' => 'markup',
