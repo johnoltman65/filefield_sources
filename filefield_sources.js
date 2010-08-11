@@ -50,7 +50,7 @@ Drupal.fileFieldSources = {
       var sourceType = matches[1];
       var defaultText = '';
       var textfield = $(this).find('input.form-text:first').get(0);
-      var defaultText = Drupal.settings.fileFieldSources[sourceType] ? Drupal.settings.fileFieldSources[sourceType].hintText : '';
+      var defaultText = (Drupal.settings.fileFieldSources && Drupal.settings.fileFieldSources[sourceType]) ? Drupal.settings.fileFieldSources[sourceType].hintText : '';
 
       // If the field doesn't exist, just return.
       if (!textfield) {
