@@ -1,4 +1,3 @@
-/* $Id$ */
 
 Drupal.behaviors.fileFieldSources = function(context) {
   $('div.filefield-sources-list a', context).click(function() {
