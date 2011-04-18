@@ -1,7 +1,12 @@
+(function ($) {
 
-Drupal.behaviors.fileFieldSources = function(context) {
+/**
+ * Behavior to add source options to configured fields.
+ */
+Drupal.behaviors.fileFieldSources = {};
+Drupal.behaviors.fileFieldSources.attach = function(context, settings) {
   $('div.filefield-sources-list a', context).click(function() {
-    $fileFieldElement = $(this).parents('div.form-item:first').find('div.filefield-element:first');
+    $fileFieldElement = $(this).parents('div.form-managed-file:first');
 
     // Remove the active class.
     $(this).parents('div.filefield-sources-list').find('a.active').removeClass('active');
@@ -11,11 +16,11 @@ Drupal.behaviors.fileFieldSources = function(context) {
 
     // The default upload element is a special case.
     if ($(this).is('.filefield-source-upload')) {
-      $fileFieldElement.find('div.filefield-upload').parent().css('display', '');
+      $fileFieldElement.find('div.filefield-sources-list').siblings('input.form-file, input.form-submit').css('display', '');
       $fileFieldElement.find('div.filefield-source').css('display', 'none');
     }
     else {
-      $fileFieldElement.find('div.filefield-upload').parent().css('display', 'none');
+      $fileFieldElement.find('div.filefield-sources-list').siblings('input.form-file, input.form-submit').css('display', 'none');
       $fileFieldElement.find('div.filefield-source').not('div.' + fileFieldSourceClass).css('display', 'none');
       $fileFieldElement.find('div.' + fileFieldSourceClass).css('display', '');
     }
@@ -98,3 +103,5 @@ Drupal.fileFieldSources = {
     $('div.filefield-element input.hint').val('').removeClass('hint');
   }
 };
+
+})(jQuery);

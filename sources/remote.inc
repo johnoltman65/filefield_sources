@@ -12,7 +12,7 @@
 define('FILEFIELD_SOURCE_REMOTE_HINT_TEXT', 'http://example.com/files/file.png');
 
 /**
- * Implementation of hook_filefield_source_info().
+ * Implements hook_filefield_source_info().
  */
 function filefield_source_remote_info() {
   $source = array();
@@ -27,14 +27,14 @@ function filefield_source_remote_info() {
 }
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function filefield_source_remote_menu() {
   $items = array();
 
-  $items['filefield/remote/progress/%/%/%'] = array(
+  $items['file/remote/progress/%/%/%/%'] = array(
     'page callback' => 'filefield_source_remote_progress',
-    'page arguments' => array(3, 4, 5),
+    'page arguments' => array(3, 4, 5, 6),
     'access arguments' => array('access content'),
     'file' => 'sources/remote.inc',
     'type' => MENU_CALLBACK,
@@ -43,21 +43,21 @@ function filefield_source_remote_menu() {
 }
 
 /**
- * Implementation of hook_theme().
+ * Implements hook_theme().
  */
 function filefield_source_remote_theme() {
   return array(
     'filefield_source_remote_element' => array(
-      'arguments' => array('element' => NULL),
+      'render element' => 'element',
       'file' => 'sources/remote.inc',
     ),
  );
 }
 
 /**
- * Implementation of hook_filefield_source_settings().
+ * Implements hook_filefield_source_settings().
  */
-function filefield_source_remote_settings($op, $field) {
+function filefield_source_remote_settings($op, $instance) {
   $return = array();
 
   // Add settings to the FileField widget form.
@@ -69,7 +69,7 @@ function filefield_source_remote_settings($op, $field) {
 /**
  * A #process callback to extend the filefield_widget element type.
  */
-function filefield_source_remote_process($element, $edit, &$form_state, $form) {
+function filefield_source_remote_process($element, &$form_state, $form) {
 
   $element['filefield_remote'] = array(
     '#theme' => 'filefield_source_remote_element',
@@ -87,17 +87,17 @@ function filefield_source_remote_process($element, $edit, &$form_state, $form) {
   $element['filefield_remote']['transfer'] = array(
     '#type' => 'submit',
     '#value' => t('Transfer'),
-    '#submit' => array('node_form_submit_build_node'),
-    '#ahah' => array(
-       'path' => 'filefield/ahah/'. $element['#type_name'] .'/'. $element['#field_name'] .'/'. $element['#delta'],
-       'wrapper' => $element['#id'] .'-ahah-wrapper',
-       'method' => 'replace',
-       'effect' => 'fade',
-       'progress' => array(
-         'type' => 'bar',
-         'path' => 'filefield/remote/progress/' . $element['#type_name'] .'/'. $element['#field_name'] .'/'. $element['#delta'],
-         'message' => t('Starting transfer...'),
-       )
+    '#submit' => array('file_field_widget_submit'),
+    '#limit_validation_errors' => array($element['#parents']),
+    '#ajax' => array(
+      'path' => 'file/ajax/' . implode('/', $element['#array_parents']) . '/' . $form['form_build_id']['#value'],
+      'wrapper' => $element['#id'] . '-ajax-wrapper',
+      'effect' => 'fade',
+      'progress' => array(
+        'type' => 'bar',
+        'path' => 'file/remote/progress/' . $element['#entity_type'] . '/' . $element['#bundle'] . '/' . $element['#field_name'] . '/' . $element['#delta'],
+        'message' => t('Starting transfer...'),
+      ),
     ),
   );
 
@@ -109,7 +109,7 @@ function filefield_source_remote_process($element, $edit, &$form_state, $form) {
  */
 function filefield_source_remote_value($element, &$item) {
   if (isset($item['filefield_remote']['url']) && strlen($item['filefield_remote']['url']) > 0 && valid_url($item['filefield_remote']['url']) && $item['filefield_remote']['url'] != FILEFIELD_SOURCE_REMOTE_HINT_TEXT) {
-    $field = content_fields($element['#field_name'], $element['#type_name']);
+    $field = field_info_instance($element['#entity_type'], $element['#field_name'], $element['#bundle']);
     $url = $item['filefield_remote']['url'];
 
     // Check the headers to make sure it exists and is within the allowed size.
@@ -143,8 +143,8 @@ function filefield_source_remote_value($element, &$item) {
     $url_info = parse_url($url);
     $pathinfo = pathinfo($url_info['path']);
     $filename = rawurldecode(basename($url_info['path']));
-    $filename = filefield_sources_clean_filename($filename);
-    $filepath = file_create_filename($filename, file_directory_temp());
+    $filename = filefield_sources_clean_filename($filename, $field['settings']['file_extensions']);
+    $filepath = file_create_filename($filename, 'temporary://');
 
     if (empty($pathinfo['extension'])) {
       form_error($element, t('The remote URL must be a file and have an extension.'));
@@ -152,16 +152,16 @@ function filefield_source_remote_value($element, &$item) {
     }
 
     // Perform basic extension check on the file before trying to transfer.
-    $extensions = $field['widget']['file_extensions'];
-    $regex = '/\.('. ereg_replace(' +', '|', preg_quote($extensions)) .')$/i';
+    $extensions = $field['settings']['file_extensions'];
+    $regex = '/\.('. preg_replace('/[ +]/', '|', preg_quote($extensions)) .')$/i';
     if (!empty($extensions) && !preg_match($regex, $filename)) {
       form_error($element, t('Only files with the following extensions are allowed: %files-allowed.', array('%files-allowed' => $extensions)));
       return;
     }
 
     // Check file size based off of header information.
-    if (!empty($element['#upload_validators']['filefield_validate_size'][0])) {
-      $max_size = $element['#upload_validators']['filefield_validate_size'][0];
+    if (!empty($element['#upload_validators']['file_validate_size'][0])) {
+      $max_size = $element['#upload_validators']['file_validate_size'][0];
       $file_size = $info['download_content_length'];
       if ($file_size > $max_size) {
         form_error($element, t('The remote file is %filesize exceeding the maximum file size of %maxsize.', array('%filesize' => format_size($file_size), '%maxsize' => format_size($max_size))));
@@ -171,7 +171,7 @@ function filefield_source_remote_value($element, &$item) {
 
     // Set progress bar information.
     $options = array(
-      'key' => $element['#type_name'] . '_' . $element['#field_name'] . '_' . $element['#delta'],
+      'key' => $element['#entity_type'] . '_' . $element['#bundle'] . '_' . $element['#field_name'] . '_' . $element['#delta'],
       'filepath' => $filepath,
     );
     filefield_source_remote_set_transfer_options($options);
@@ -183,8 +183,8 @@ function filefield_source_remote_value($element, &$item) {
     curl_setopt($ch, CURLOPT_WRITEFUNCTION, 'filefield_source_remote_curl_write');
     // Causes a warning if PHP safe mode is on.
     @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
-    if (curl_exec($ch) && $file = field_file_save_file($filepath, $element['#upload_validators'], filefield_widget_file_path($field))) {
-      $item = array_merge($item, $file);
+    if (curl_exec($ch) && $file = filefield_sources_save_file($filepath, $element['#upload_validators'], $element['#upload_location'])) {
+      $item = array_merge($item, (array) $file);
     }
     curl_close($ch);
 
@@ -196,8 +196,8 @@ function filefield_source_remote_value($element, &$item) {
 /**
  * Menu callback; progress.js callback to return upload progress.
  */
-function filefield_source_remote_progress($type_name, $field_name, $delta) {
-  $key = $type_name . '_' . $field_name . '_' . $delta;
+function filefield_source_remote_progress($entity_type, $bundle_name, $field_name, $delta) {
+  $key = $entity_type . '_' . $bundle_name . '_' . $field_name . '_' . $delta;
   $progress = array(
     'message' => t('Starting transfer...'),
     'percentage' => -1,
@@ -210,7 +210,7 @@ function filefield_source_remote_progress($type_name, $field_name, $delta) {
     $progress['percentage'] = round(100 * $current / $total);
   }
 
-  drupal_json($progress);
+  drupal_json_output($progress);
 }
 
 /**
@@ -270,8 +270,10 @@ function filefield_source_remote_get_transfer_options() {
 /**
  * Theme the output of the autocomplete field.
  */
-function theme_filefield_source_remote_element($element) {
-  $element['url']['#field_suffix'] = theme('submit', $element['transfer']);
-  return '<div class="filefield-source filefield-source-remote clear-block">' . theme('textfield', $element['url']) . '</div>';
+function theme_filefield_source_remote_element($variables) {
+  $element = $variables['element'];
+
+  $element['url']['#field_suffix'] = drupal_render($element['transfer']);
+  return '<div class="filefield-source filefield-source-remote clear-block">' . drupal_render($element['url']) . '</div>';
 }
 

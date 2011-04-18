@@ -10,7 +10,7 @@
  */
 
 /**
- * Implementation of hook_filefield_source_info().
+ * Implements hook_filefield_source_info().
  */
 function filefield_source_imce_info() {
   $source = array();
@@ -31,7 +31,7 @@ function filefield_source_imce_info() {
 }
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function filefield_source_imce_menu() {
   $items = array();
@@ -47,21 +47,21 @@ function filefield_source_imce_menu() {
 }
 
 /**
- * Implementation of hook_theme().
+ * Implements hook_theme().
  */
 function filefield_source_imce_theme() {
   return array(
     'filefield_source_imce_element' => array(
-      'arguments' => array('element' => NULL),
+      'render element' => 'element',
       'file' => 'sources/imce.inc',
     ),
  );
 }
 
 /**
- * Implementation of hook_filefield_source_settings().
+ * Implements hook_filefield_source_settings().
  */
-function filefield_source_imce_settings($op, $field) {
+function filefield_source_imce_settings($op, $instance) {
   $return = array();
 
   // Add settings to the FileField widget form.
@@ -73,7 +73,7 @@ function filefield_source_imce_settings($op, $field) {
 /**
  * A #process callback to extend the filefield_widget element type.
  */
-function filefield_source_imce_process($element, $edit, &$form_state, $form) {
+function filefield_source_imce_process($element, &$form_state, $form) {
   $field = content_fields($element['#field_name'], $element['#type_name']);
 
   $element['filefield_imce'] = array(
@@ -104,15 +104,16 @@ function filefield_source_imce_process($element, $edit, &$form_state, $form) {
   $element['filefield_imce']['select'] = array(
     '#type' => 'submit',
     '#value' => t('Select'),
-    '#submit' => array('node_form_submit_build_node'),
+    '#submit' => array('file_field_widget_submit'),
+    '#limit_validation_errors' => array($element['#parents']),
     '#name' => $element['#name'] . '[filefield_imce][button]',
     '#id' => $select_id,
     '#attributes' => array('style' => 'display: none;'),
-    '#ahah' => array(
-       'path' => 'filefield/ahah/'. $element['#type_name'] .'/'. $element['#field_name'] .'/'. $element['#delta'],
-       'wrapper' => $element['#id'] .'-ahah-wrapper',
-       'method' => 'replace',
-       'effect' => 'fade',
+    '#ajax' => array(
+      'path' => 'file/ajax/' . implode('/', $element['#array_parents']) . '/' . $form['form_build_id']['#value'],
+      'wrapper' => $element['#id'] . '-ajax-wrapper',
+      'method' => 'replace',
+      'effect' => 'fade',
     ),
   );
 
@@ -149,7 +150,9 @@ function filefield_source_imce_value($element, &$item) {
 /**
  * Theme the output of the autocomplete field.
  */
-function theme_filefield_source_imce_element($element) {
+function theme_filefield_source_imce_element($variables) {
+  $element = $variables['element'];
+
   $output = theme('markup', $element['display_path']) . theme('hidden', $element['file_path']) . theme('submit', $element['select']);
   return '<div class="filefield-source filefield-source-imce clear-block">' . theme('form_element', $element, $output) . '</div>';
 }

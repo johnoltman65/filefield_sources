@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function filefield_sources_menu() {
   $params = array();
@@ -14,7 +14,7 @@ function filefield_sources_menu() {
 }
 
 /**
- * Implementation of hook_init().
+ * Implements hook_init().
  */
 function filefield_sources_init() {
   // Currently needed for IMCE to set a custom variable.
@@ -22,22 +22,20 @@ function filefield_sources_init() {
 }
 
 /**
- * Implementation of hook_elements().
+ * Implements hook_element_info().
  */
-function filefield_sources_elements() {
+function filefield_sources_element_info() {
   $elements = array();
 
-  foreach (module_invoke_all('filefield_sources_widgets') as $widget) {
-    $elements[$widget]['#process'] = array('filefield_sources_process');
-    $elements[$widget]['#element_validate'] = array('filefield_sources_validate');
-    $elements[$widget]['#filefield_value_callback'] = array('filefield_sources_value');
-  }
+  $elements['managed_file']['#process'] = array('filefield_sources_field_process');
+  $elements['managed_file']['#element_validate'] = array('filefield_sources_field_validate');
+  $elements['managed_file']['#file_value_callbacks'] = array('filefield_sources_field_value');
 
   return $elements;
 }
 
 /**
- * Implementation of hook_theme().
+ * Implements hook_theme().
  */
 function filefield_sources_theme() {
   $params = array();
@@ -51,69 +49,63 @@ function filefield_sources_theme() {
 }
 
 /**
- * Implementation of hook_filefield_sources_widgets().
+ * Implements hook_filefield_sources_widgets().
  *
  * This returns a list of widgets that are compatible with FileField Sources.
  */
 function filefield_sources_filefield_sources_widgets() {
-  return array('filefield_widget', 'imagefield_widget');
+  return array('file_generic', 'image_image');
 }
 
 /**
- * Implementation of hook_widget_settings_alter().
+ * Implements hook_form_FORM_ID_alter().
  */
-function filefield_sources_widget_settings_alter(&$settings, $op, $widget) {
-  // Only support modules that implement hook_insert_widgets().
-  $widget_type = isset($widget['widget_type']) ? $widget['widget_type'] : $widget['type'];
-  if (!in_array($widget_type, module_invoke_all('filefield_sources_widgets'))) {
-    return;
-  }
-
-  if ($op == 'form') {
-    $settings = array_merge($settings, filefield_sources_form($widget));
-  }
-
-  if ($op == 'save') {
-    $settings = array_merge($settings, filefield_sources_widget_settings($widget));
+function filefield_sources_form_field_ui_field_edit_form_alter(&$form, &$form_state) {
+  $instance = $form['#instance'];
+  if (in_array($instance['widget']['type'], module_invoke_all('filefield_sources_widgets'))) {
+    $form['instance']['settings'] += filefield_sources_form($instance);
   }
 }
 
 /**
  * A list of settings needed by FileField Sources module on widgets.
  */
-function filefield_sources_widget_settings($widget) {
+function filefield_sources_field_widget_info_alter(&$info) {
   $settings = array(
-    'filefield_sources',
+    'filefield_sources' => array(),
   );
-  $params = array('save', $widget);
-  $settings = array_merge($settings, filefield_sources_invoke_all('settings', $params));
-  return $settings;
+  foreach (module_invoke_all('filefield_sources_widgets') as $widget) {
+    $params = array('save', $widget);
+    $widget_settings = array_merge($settings, filefield_sources_invoke_all('settings', $params));
+    $info[$widget]['settings']['filefield_sources'] = $widget_settings;
+  }
 }
 
 /**
  * Configuration form for editing FileField Sources settings for a widget.
  */
-function filefield_sources_form($widget) {
+function filefield_sources_form($instance) {
+  $settings = $instance['settings']['filefield_sources'];
 
   $form['filefield_sources'] = array(
     '#type' => 'fieldset',
     '#title' => t('File sources'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
-    '#weight' => 15,
+    '#weight' => 20,
   );
 
   $sources = filefield_sources_list(FALSE);
-  $sources = array_intersect_key(array_merge((array) $widget['filefield_sources'], $sources), $sources);
+  $sources = isset($settings['filefield_sources']) ? array_intersect_key(array_merge($settings['filefield_sources'], $sources), $sources) : $sources;
   $form['filefield_sources']['filefield_sources'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Enabled sources'),
     '#options' => $sources,
-    '#default_value' => (array) $widget['filefield_sources'],
+    '#default_value' => isset($settings['filefield_sources']) ? $settings['filefield_sources'] : array(),
     '#description' => t('Select the available locations from which this widget may select files.'),
   );
 
-  $params = array('form', $widget);
+  $params = array('form', $instance);
   $form['filefield_sources'] = array_merge($form['filefield_sources'], filefield_sources_invoke_all('settings', $params));
 
   return $form;
@@ -126,20 +118,25 @@ function filefield_sources_form($widget) {
  * different sources. Third-party modules can also add to the list of sources
  * by implementing hook_filefield_sources_info().
  */
-function filefield_sources_process($element, $edit, &$form_state, $form) {
+function filefield_sources_field_process($element, &$form_state, $form) {
   static $js_added;
+
+  // If not a recognized field instance, do not process.
+  if (!isset($element['#field_name']) || !($instance = field_widget_instance($element, $form_state))) {
+    return;
+  }
 
   // Do all processing as needed by each source.
   $sources = filefield_sources_info();
-  $field = content_fields($element['#field_name'], $element['#type_name']);
-  $enabled_sources = (array) $field['widget']['filefield_sources'];
+
+  $enabled_sources = $instance['settings']['filefield_sources']['filefield_sources'];
   foreach ($sources as $source_name => $source) {
     if (!$enabled_sources[$source_name]) {
       unset($sources[$source_name]);
     }
     elseif (isset($source['process'])) {
       $function = $source['process'];
-      $element = $function($element, $edit, $form_state, $form);
+      $element = $function($element, $form_state, $form);
     }
   }
 
@@ -150,8 +147,8 @@ function filefield_sources_process($element, $edit, &$form_state, $form) {
 
   // Add basic JS and CSS.
   $path = drupal_get_path('module', 'filefield_sources');
-  drupal_add_css($path .'/filefield_sources.css');
-  drupal_add_js($path .'/filefield_sources.js');
+  $element['#attached']['css'][] = $path . '/filefield_sources.css';
+  $element['#attached']['js'][] = $path . '/filefield_sources.js';
 
   // Check the element for hint text that might need to be added.
   foreach (element_children($element) as $key) {
@@ -166,8 +163,8 @@ function filefield_sources_process($element, $edit, &$form_state, $form) {
   if (empty($element['fid']['#value'])) {
     $element['filefield_sources_list'] = array(
       '#type' => 'markup',
-      '#value' => theme('filefield_sources_list', $element, $sources),
-      '#weight' => -1,
+      '#markup' => theme('filefield_sources_list', array('element' => $element, 'sources' => $sources)),
+      '#weight' => -20,
     );
   }
 
@@ -177,7 +174,7 @@ function filefield_sources_process($element, $edit, &$form_state, $form) {
 /**
  * An #element_validate function to run source validations.
  */
-function filefield_sources_validate($element, &$form_state, $form) {
+function filefield_sources_field_validate($element, &$form_state, $form) {
   // Do all processing as needed by each source.
   $sources = filefield_sources_info();
   foreach ($sources as $source) {
@@ -191,7 +188,7 @@ function filefield_sources_validate($element, &$form_state, $form) {
 /**
  * A #filefield_value_callback to run source value callbacks.
  */
-function filefield_sources_value($element, &$item) {
+function filefield_sources_field_value($element, &$item) {
   // Do all processing as needed by each source.
   $sources = filefield_sources_info();
   foreach ($sources as $source) {
@@ -214,7 +211,7 @@ function filefield_sources_invoke_all($method, &$params) {
       if (isset($result) && is_array($result)) {
         $return = array_merge_recursive($return, $result);
       }
-      else if (isset($result)) {
+      elseif (isset($result)) {
         $return[] = $result;
       }
     }
@@ -251,7 +248,7 @@ function filefield_sources_list($include_default = TRUE) {
 }
 
 /**
- * Implementation of hook_filefield_sources_info().
+ * Implements hook_filefield_sources_info().
  */
 function filefield_sources_filefield_sources_info() {
   $params = array();
@@ -268,15 +265,147 @@ function filefield_sources_includes($include = TRUE, $enabled_only = TRUE) {
 
   $includes = array();
   $directory = drupal_get_path('module', 'filefield_sources') . '/sources';
-  foreach (file_scan_directory($directory, '.inc$') as $file) {
+  foreach (file_scan_directory($directory, '/\.inc$/') as $file) {
     if (!$enabled_only || in_array($file->name, $enabled_includes)) {
       $includes[] = $file->name;
       if ($include) {
-        include_once($file->filename);
+        include_once(DRUPAL_ROOT . '/' . $file->uri);
       }
     }
   }
   return $includes;
+}
+
+/**
+ * Save a file into the database after validating it.
+ *
+ * This function is identical to the core function file_save_upload() except
+ * that it accepts an input file path instead of an input file source name.
+ *
+ * @see file_save_upload().
+ */
+function filefield_sources_save_file($filepath, $validators = array(), $destination = FALSE, $replace = FILE_EXISTS_RENAME) {
+  global $user;
+
+  // Begin building file object.
+  $file = new stdClass();
+  $file->uid      = $user->uid;
+  $file->status   = 0;
+  $file->filename = trim(basename($filepath), '.');
+  $file->uri      = $filepath;
+  $file->filemime = file_get_mimetype($file->filename);
+  $file->filesize = filesize($filepath);
+
+  $extensions = '';
+  if (isset($validators['file_validate_extensions'])) {
+    if (isset($validators['file_validate_extensions'][0])) {
+      // Build the list of non-munged extensions if the caller provided them.
+      $extensions = $validators['file_validate_extensions'][0];
+    }
+    else {
+      // If 'file_validate_extensions' is set and the list is empty then the
+      // caller wants to allow any extension. In this case we have to remove the
+      // validator or else it will reject all extensions.
+      unset($validators['file_validate_extensions']);
+    }
+  }
+  else {
+    // No validator was provided, so add one using the default list.
+    // Build a default non-munged safe list for file_munge_filename().
+    $extensions = 'jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp';
+    $validators['file_validate_extensions'] = array();
+    $validators['file_validate_extensions'][0] = $extensions;
+  }
+
+  if (!empty($extensions)) {
+    // Munge the filename to protect against possible malicious extension hiding
+    // within an unknown file type (ie: filename.html.foo).
+    $file->filename = file_munge_filename($file->filename, $extensions);
+  }
+
+  // Rename potentially executable files, to help prevent exploits (i.e. will
+  // rename filename.php.foo and filename.php to filename.php.foo.txt and
+  // filename.php.txt, respectively). Don't rename if 'allow_insecure_uploads'
+  // evaluates to TRUE.
+  if (!variable_get('allow_insecure_uploads', 0) && preg_match('/\.(php|pl|py|cgi|asp|js)(\.|$)/i', $file->filename) && (substr($file->filename, -4) != '.txt')) {
+    $file->filemime = 'text/plain';
+    $file->uri .= '.txt';
+    $file->filename .= '.txt';
+    // The .txt extension may not be in the allowed list of extensions. We have
+    // to add it here or else the file upload will fail.
+    if (!empty($extensions)) {
+      $validators['file_validate_extensions'][0] .= ' txt';
+      drupal_set_message(t('For security reasons, your upload has been renamed to %filename.', array('%filename' => $file->filename)));
+    }
+  }
+
+  // If the destination is not provided, use the temporary directory.
+  if (empty($destination)) {
+    $destination = 'temporary://';
+  }
+
+  // Assert that the destination contains a valid stream.
+  $destination_scheme = file_uri_scheme($destination);
+  if (!$destination_scheme || !file_stream_wrapper_valid_scheme($destination_scheme)) {
+    drupal_set_message(t('The file could not be uploaded, because the destination %destination is invalid.', array('%destination' => $destination)), 'error');
+    return FALSE;
+  }
+
+  // A URI may already have a trailing slash or look like "public://".
+  if (substr($destination, -1) != '/') {
+    $destination .= '/';
+  }
+  $file->destination = file_destination($destination . $file->filename, $replace);
+  // If file_destination() returns FALSE then $replace == FILE_EXISTS_ERROR and
+  // there's an existing file so we need to bail.
+  if ($file->destination === FALSE) {
+    drupal_set_message(t('The file %source could not be uploaded because a file by that name already exists in the destination %directory.', array('%source' => $file->filename, '%directory' => $destination)), 'error');
+    return FALSE;
+  }
+
+  // Add in our check of the the file name length.
+  $validators['file_validate_name_length'] = array();
+
+  // Call the validation functions specified by this function's caller.
+  $errors = file_validate($file, $validators);
+
+  // Check for errors.
+  if (!empty($errors)) {
+    $message = t('The specified file %name could not be uploaded.', array('%name' => $file->filename));
+    if (count($errors) > 1) {
+      $message .= theme('item_list', array('items' => $errors));
+    }
+    else {
+      $message .= ' ' . array_pop($errors);
+    }
+    drupal_set_message($message, 'error');
+    return FALSE;
+  }
+
+  // Move uploaded files from PHP's upload_tmp_dir to Drupal's temporary
+  // directory. This overcomes open_basedir restrictions for future file
+  // operations.
+  $file->uri = $file->destination;
+  if (!file_unmanaged_move($filepath, $file->uri)) {
+    drupal_set_message(t('File upload error. Could not move uploaded file.'), 'error');
+    watchdog('file', 'Upload error. Could not move uploaded file %file to destination %destination.', array('%file' => $file->filename, '%destination' => $file->uri));
+    return FALSE;
+  }
+
+  // Set the permissions on the new file.
+  drupal_chmod($file->uri);
+
+  // If we are replacing an existing file re-use its database record.
+  if ($replace == FILE_EXISTS_REPLACE) {
+    $existing_files = file_load_multiple(array(), array('uri' => $file->uri));
+    if (count($existing_files)) {
+      $existing = reset($existing_files);
+      $file->fid = $existing->fid;
+    }
+  }
+
+  // If we made it this far it's safe to record this file in the database.
+  return file_save($file);
 }
 
 /**
@@ -288,7 +417,7 @@ function filefield_sources_includes($include = TRUE, $enabled_only = TRUE) {
  * @return
  *   A file path with a cleaned-up file name.
  */
-function filefield_sources_clean_filename($filepath) {
+function filefield_sources_clean_filename($filepath, $extensions) {
   global $user;
 
   $filename = basename($filepath);
@@ -307,21 +436,21 @@ function filefield_sources_clean_filename($filepath) {
   // Because this transfer mechanism does not use file_save_upload(), we need
   // to manually munge the filename to prevent dangerous extensions.
   // See file_save_upload().
-  $extensions = '';
-  foreach ($user->roles as $rid => $name) {
-    $extensions .= ' '. variable_get("upload_extensions_$rid",
-    variable_get('upload_extensions_default', 'jpg jpeg gif png txt html doc xls pdf ppt pps odt ods odp'));
+  if (empty($extensions)) {
+    $extensions = 'jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp';
   }
   $filename = file_munge_filename($filename, $extensions);
-
-  $directory = dirname($filepath);
-  return ($directory ? $directory . '/' : $directory) . $filename;
+  $directory = drupal_dirname($filepath);
+  return ($directory != '.' ? $directory . '/' : '') . $filename;
 }
 
 /**
  * Theme the display of the sources list.
  */
-function theme_filefield_sources_list($element, $sources) {
+function theme_filefield_sources_list($variables) {
+  $element = $variables['element'];
+  $sources = $variables['sources'];
+
   $links = array();
 
   // Add the default "Upload" since it's not in our list.
@@ -364,10 +493,10 @@ function filefield_sources_element_validate($element, $file) {
   if (!empty($errors)) {
     $message = t('The selected file %name could not be referenced.', array('%name' => $file->filename));
     if (count($errors) > 1) {
-      $message .= '<ul><li>'. implode('</li><li>', $errors) .'</li></ul>';
+      $message .= '<ul><li>' . implode('</li><li>', $errors) . '</li></ul>';
     }
     else {
-      $message .= ' '. array_pop($errors);
+      $message .= ' ' . array_pop($errors);
     }
     form_error($element, $message);
     return 0;
@@ -382,12 +511,20 @@ function filefield_sources_element_validate($element, $file) {
 function filefield_sources_element_validation_help($validators) {
   $desc = array();
   foreach ($validators as $callback => $arguments) {
-    $help_func = $callback .'_help';
+    $help_func = $callback . '_help';
     if (function_exists($help_func)) {
       $desc[] = call_user_func_array($help_func, $arguments);
     }
   }
   return empty($desc) ? '' : implode('<br />', $desc);
+}
+
+/**
+ * Menu access callback; Checks user access to edit a file field.
+ */
+function _filefield_sources_field_access($entity_type, $bundle_name, $field_name) {
+  $field = field_info_field($field_name);
+  return field_access('edit', $field, $entity_type);
 }
 
 /**
