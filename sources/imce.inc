@@ -35,11 +35,11 @@ function filefield_source_imce_info() {
  */
 function filefield_source_imce_menu() {
   $items = array();
-  $items['filefield/imce/%/%'] = array(
+  $items['file/imce/%/%/%'] = array(
     'page callback' => 'filefield_source_imce_page',
-    'page arguments' => array(2, 3),
-    'access callback' => 'filefield_edit_access',
-    'access arguments' => array(2, 3),
+    'page arguments' => array(2, 3, 4),
+    'access callback' => '_filefield_sources_field_access',
+    'access arguments' => array(2, 3, 4),
     'file' => 'sources/imce.inc',
     'type' => MENU_CALLBACK,
   );
@@ -74,7 +74,7 @@ function filefield_source_imce_settings($op, $instance) {
  * A #process callback to extend the filefield_widget element type.
  */
 function filefield_source_imce_process($element, &$form_state, $form) {
-  $field = content_fields($element['#field_name'], $element['#type_name']);
+  $instance = field_widget_instance($element, $form_state);
 
   $element['filefield_imce'] = array(
     '#weight' => 100.5,
@@ -89,16 +89,16 @@ function filefield_source_imce_process($element, &$form_state, $form) {
   $element['filefield_imce']['file_path'] = array(
     '#type' => 'hidden',
     '#value' => '',
-    '#id' => $filepath_id,
     '#attributes' => array(
+      'id' => $filepath_id,
       'onchange' => "if (!jQuery('#$select_id').attr('disabled')) { jQuery('#$select_id').mousedown().disable(); jQuery('#$display_id').html(this.value); }",
     ),
   );
 
-  $imce_function = 'window.open(\'' . url('filefield/imce/' . $element['#type_name'] . '/' . $element['#field_name'], array('query' => 'app=' . rawurlencode($field['widget']['label']) . '|url@' . $filepath_id)) . '\', \'\', \'width=760,height=560,resizable=1\'); return false;';
+  $imce_function = 'window.open(\'' . url('file/imce/' . $element['#entity_type']  . '/' . $element['#bundle'] . '/' . $element['#field_name'], array('query' => array('app' => $instance['label'] . '|url@' . $filepath_id))) . '\', \'\', \'width=760,height=560,resizable=1\'); return false;';
   $element['filefield_imce']['display_path'] = array(
     '#type' => 'markup',
-    '#value' => '<span id="' . $display_id . '" class="filefield-sources-imce-display">' . t('No file selected') . '</span> (<a class="filefield-sources-imce-browse" href="#" onclick="' . $imce_function . '">' . t('browse') . '</a>)',
+    '#markup' => '<span id="' . $display_id . '" class="filefield-sources-imce-display">' . t('No file selected') . '</span> (<a class="filefield-sources-imce-browse" href="#" onclick="' . $imce_function . '">' . t('browse') . '</a>)',
   );
 
   $element['filefield_imce']['select'] = array(
@@ -125,18 +125,23 @@ function filefield_source_imce_process($element, &$form_state, $form) {
  */
 function filefield_source_imce_value($element, &$item) {
   if (isset($item['filefield_imce']['file_path']) && $item['filefield_imce']['file_path'] != '') {
-    if (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC) == FILE_DOWNLOADS_PUBLIC) {
-      $file_path = preg_replace('/^' . preg_quote(base_path(), '/') . '/', '', $item['filefield_imce']['file_path']);
-    }
-    else {
-      $file_path = preg_replace('/^' . preg_quote(url('system/files'), '/') . '/', file_directory_path(), $item['filefield_imce']['file_path']);
-    }
+    $field = field_info_field($element['#field_name']);
+
+    $scheme = $field['settings']['uri_scheme'];
+    $wrapper = file_stream_wrapper_get_instance_by_scheme($scheme);
+    $file_directory_prefix = $wrapper->getDirectoryPath();
+    $uri = preg_replace('/^' . preg_quote('/' . $file_directory_prefix . '/', '/') . '/', $scheme . '://', $item['filefield_imce']['file_path']);
 
     // Resolve the file path to an FID.
-    if ($fid = db_result(db_query("SELECT fid FROM {files} WHERE filepath = '%s'", rawurldecode($file_path)))) {
-      $file = field_file_load($fid);
-      if (filefield_sources_element_validate($element, (object) $file)) {
-        $item = array_merge($item, $file);
+    $fid = db_select('file_managed', 'f')
+      ->condition('uri', rawurldecode($uri))
+      ->fields('f', array('fid'))
+      ->execute()
+      ->fetchField();
+    if ($fid) {
+      $file = file_load($fid);
+      if (filefield_sources_element_validate($element, $file)) {
+        $item = array_merge($item, (array) $file);
       }
     }
     else {
@@ -153,18 +158,18 @@ function filefield_source_imce_value($element, &$item) {
 function theme_filefield_source_imce_element($variables) {
   $element = $variables['element'];
 
-  $output = theme('markup', $element['display_path']) . theme('hidden', $element['file_path']) . theme('submit', $element['select']);
-  return '<div class="filefield-source filefield-source-imce clear-block">' . theme('form_element', $element, $output) . '</div>';
+  $output = drupal_render_children($element);;
+  return '<div class="filefield-source filefield-source-imce clear-block">' . $output . '</div>';
 }
 
 /**
  * Outputs the IMCE browser for FileField.
  */
-function filefield_source_imce_page($content_type, $field_name) {
+function filefield_source_imce_page($entity_type, $bundle_name, $field_name) {
   global $conf;
 
   // Check access.
-  if (!module_exists('imce') || !imce_access() || !content_fields($field_name, $content_type)) {
+  if (!module_exists('imce') || !imce_access() || !$field = field_info_field($field_name)) {
     return drupal_access_denied();
   }
   // Set custom directory scan.
@@ -173,39 +178,41 @@ function filefield_source_imce_page($content_type, $field_name) {
   // Disable absolute URLs.
   $conf['imce_settings_absurls'] = 0;
 
+  // Set a URI to scan files from.
+  $conf['filefield_source_imce_scheme'] = $field['settings']['uri_scheme'];
+
   // Set custom post-process to disable undesired features.
   if (empty($conf['imce_custom_process'])) {
     $conf['imce_custom_process'] = array();
   }
   $conf['imce_custom_process'] += array('filefield_source_imce_custom_process' => 1);
 
-  // IMCE 6.x-2.x.
-  if (module_hook('imce', 'file_references')) {
-    module_load_include('inc', 'imce', 'inc/imce.page');
-    return imce();
-  }
-  // IMCE 6.x-1.x.
-  else {
-    module_load_include('inc', 'imce', 'inc/page');
-    return imce_page();
-  }
+  module_load_include('inc', 'imce', 'inc/imce.page');
+  return imce();
 }
 
 /**
  * Scan directory and return file list, subdirectories, and total size.
  */
-function filefield_source_imce_custom_scan($dirname) {
+function filefield_source_imce_custom_scan($dirname, $imce) {
   // Get a list of files in the database for this directory.
-  $sql_dir_name = $dirname == '.' ? file_directory_path() : file_directory_path() .'/'. $dirname;
+  $scheme = variable_get('filefield_source_imce_scheme', 'public');
+  $imce['scheme'] = $scheme;
+  $sql_uri_name = $dirname == '.' ? $scheme . '://' : $scheme . '://' . $dirname;
 
-  $result = db_query("SELECT filename FROM {files} WHERE filepath LIKE '%s' AND filepath NOT LIKE '%s'", $sql_dir_name .'/%', $sql_dir_name .'/%/%');
+  $result = db_select('file_managed', 'f')
+    ->fields('f', array('filename'))
+    ->condition('f.uri', $sql_uri_name . '/%', 'LIKE')
+    ->condition('f.uri', $sql_uri_name . '/%/%', 'NOT LIKE')
+    ->execute();
+
   $db_files = array();
-  while ($row = db_fetch_object($result)) {
+  foreach ($result as $row) {
     $db_files[$row->filename] = $row->filename;
   }
 
   // Get the default IMCE directory scan, then filter down to database files.
-  $directory = imce_scan_directory($dirname);
+  $directory = imce_scan_directory($dirname, $imce);
   foreach ($directory['files'] as $filename => $file) {
     if (!isset($db_files[$filename])) {
       unset($directory['files'][$filename]);

@@ -44,7 +44,7 @@ function filefield_source_attach_settings($op, $instance) {
   $return = array();
 
   if ($op == 'form') {
-    $settings = $instance['settings']['filefield_sources'];
+    $settings = isset($instance['settings']['filefield_sources']) ? $instance['settings']['filefield_sources'] : array();
 
     $return['source_attach'] = array(
       '#title' => t('File attach settings'),
@@ -58,7 +58,7 @@ function filefield_source_attach_settings($op, $instance) {
     $return['source_attach']['path'] = array(
       '#type' => 'textfield',
       '#title' => t('File attach path'),
-      '#default_value' => $settings['source_attach']['path'],
+      '#default_value' => isset($settings['source_attach']['path']) ? $settings['source_attach']['path'] : 'file_attach',
       '#size' => 60,
       '#maxlength' => 128,
       '#description' => t('The directory within the <em>File attach location</em> that will contain attachable files.'),
@@ -70,7 +70,7 @@ function filefield_source_attach_settings($op, $instance) {
         0 => t('Within the files directory'),
         1 => t('Absolute server path'),
       ),
-      '#default_value' => $settings['source_attach']['absolute'],
+      '#default_value' => isset($settings['source_attach']['absolute']) ? $settings['source_attach']['absolute'] : 0,
       '#description' => t('The <em>File attach path</em> may be with the files directory (%file_directory) or from the root of your server. If an absolute path is used and it does not start with a "/" your path will be relative to your site directory: %realpath.', array('%file_directory' => drupal_realpath(file_default_scheme() . '://'), '%realpath' => realpath('./'))),
     );
     $return['source_attach']['attach_mode'] = array(
@@ -80,7 +80,7 @@ function filefield_source_attach_settings($op, $instance) {
         'move' => t('Move the file directly to the final location'),
         'copy' => t('Leave a copy of the file in the attach directory'),
       ),
-      '#default_value' => $settings['source_attach']['attach_mode'],
+      '#default_value' => isset($settings['source_attach']['attach_mode']) ? $settings['source_attach']['attach_mode'] : 'move',
     );
     $return['source_attach']['tokens'] = array(
       '#type' => 'markup',
@@ -127,7 +127,7 @@ function filefield_source_attach_process($element, &$form_state, $form) {
   $description = t('This method may be used to attach files that exceed the file size limit. Files may be attached from the %directory directory on the server, usually uploaded through FTP.', array('%directory' => realpath($path)));
 
   // Error messages.
-  if ($options === FALSE || empty($settings['filefield_source_attach_path'])) {
+  if ($options === FALSE || empty($settings['path'])) {
     $attach_message = t('A file attach directory could not be located.');
     $attach_description = t('Please check your settings for the %field field.',  array('%field' => $instance['label']));
   }
@@ -197,7 +197,7 @@ function _filefield_source_attach_options($path) {
  */
 function filefield_source_attach_value($element, &$item) {
   if (!empty($item['filefield_attach']['filename'])) {
-    $instance = field_widget_instance($element, $form_state);
+    $instance = field_info_instance($element['#entity_type'], $element['#field_name'], $element['#bundle']);
     $attach_path = _filefield_source_attach_directory($instance);
     $filepath = $attach_path . '/' . $item['filefield_attach']['filename'];
 
@@ -214,11 +214,11 @@ function filefield_source_attach_value($element, &$item) {
     }
 
     // Save the file to the new location.
-    if ($file = field_file_save_file($filepath, $validators, filefield_widget_file_path($field))) {
-      $item = array_merge($item, $file);
+    if ($file = filefield_sources_save_file($filepath, $element['#upload_validators'], $element['#upload_location'])) {
+      $item = array_merge($item, (array) $file);
 
       // Delete the original file if "moving" the file instead of copying.
-      if (empty($instance['settings']['filefield_sources']['source_attach']['attach_mode']) || $instance['settings']['filefield_sources']['attach_source']['attach_mode'] !== 'copy') {
+      if (empty($instance['settings']['filefield_sources']['source_attach']['attach_mode']) || $instance['settings']['filefield_sources']['source_attach']['attach_mode'] !== 'copy') {
         @unlink($filepath);
       }
     }
@@ -256,7 +256,7 @@ function theme_filefield_source_attach_element($variables) {
 function _filefield_source_attach_directory($instance, $account = NULL) {
   $field = field_info_field($instance['field_name']);
   $account = isset($account) ? $account : $GLOBALS['user'];
-  $path = $instance['settings']['filefield_sources']['source_attach']['path'];
+  $path = isset($instance['settings']['filefield_sources']['source_attach']['path']) ? $instance['settings']['filefield_sources']['source_attach']['path'] : 'file_attach';
   $absolute = !empty($instance['settings']['filefield_sources']['source_attach']['absolute']);
 
   // Replace user level tokens.

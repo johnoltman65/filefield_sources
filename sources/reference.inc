@@ -67,7 +67,7 @@ function filefield_source_reference_settings($op, $instance) {
   $return = array();
 
   if ($op == 'form') {
-    $settings = $instance['settings']['filefield_sources'];
+    $settings = isset($instance['settings']['filefield_sources']) ? $instance['settings']['filefield_sources'] : array();
 
     $return['source_reference'] = array(
       '#title' => t('Autocomplete reference options'),
@@ -83,7 +83,7 @@ function filefield_source_reference_settings($op, $instance) {
         '1' => t('Contains string'),
       ),
       '#type' => 'radios',
-      '#default_value' => $settings['source_reference']['autocomplete'], 
+      '#default_value' => isset($settings['source_reference']['autocomplete']) ? $settings['source_reference']['autocomplete'] : '0', 
     );
   }
   elseif ($op == 'save') {
@@ -135,9 +135,9 @@ function filefield_source_reference_value($element, &$item) {
     $matches = array();
     if (preg_match('/\[fid:(\d+)\]/', $item['filefield_reference']['autocomplete'], $matches)) {
       $fid = $matches[1];
-      if ($file = field_file_load($fid)) {
+      if ($file = file_load($fid)) {
         if (filefield_sources_element_validate($element, (object) $file)) {
-          $item = array_merge($item, $file);
+          $item = array_merge($item, (array) $file);
         }
       }
       else {
@@ -194,41 +194,45 @@ function theme_filefield_source_reference_element($variables) {
  *
  * @param $file_name
  *   The partial name of the file to retrieve.
- * @param $field
+ * @param $instance
  *   Optional. A CCK field array for which to filter returned files.
  */
-function filefield_source_reference_get_files($filename, $field = NULL) {
-  // A field instance does not include storage information. Load the field
-  // directly to ensure we get a field, not a field instance.
-  if ($field) {
-    $field = field_info_field($field['field_name']);
-  }
-
-  if (!isset($field)) {
-    foreach (content_fields() as $field) {
-      if ($field['type'] == 'filefield') {
-        $fields[] = $field;
+function filefield_source_reference_get_files($filename, $instance = NULL) {
+  $instances = array();
+  if (!isset($instance)) {
+    foreach (field_info_fields() as $instance) {
+      if ($instance['type'] == 'file' || $instance['type'] == 'image') {
+        $instances[] = $instance;
       }
     }
   }
   else {
-    $fields = array($field);
+    $instances = array($instance);
   }
 
   $files = array();
-  foreach ($fields as $field) {
+  foreach ($instances as $instance) {
+    // Load the field data, which contains the schema information.
+    $field = field_info_field($instance['field_name']);
+
+    // We don't support fields that are not stored with SQL.
+    if (!isset($field['storage']['details']['sql']['FIELD_LOAD_CURRENT'])) {
+      continue;
+    }
 
     // 1 == contains, 0 == starts with.
-    $like = empty($field['widget']['filefield_source_autocomplete']) ? '%s%%' : '%%%s%%';
+    $like = empty($instance['widget']['settings']['filefield_sources']['source_reference']['autocomplete']) ? ($filename . '%') : ('%' . $filename . '%');
 
-    module_invoke($field['storage']['module'], 'field_storage_query', $query);
-
-    $query = new EntityFieldQuery();
-    $query->fieldCondition($field, 'fid');
-    $query->join('files', 'f', 'f.fid = base.fid');
+    $table_info = reset($field['storage']['details']['sql']['FIELD_LOAD_CURRENT']);
+    $table = key($field['storage']['details']['sql']['FIELD_LOAD_CURRENT']);
+    $query = db_select($table, 'cf');
+    $query->innerJoin('file_managed', 'f', 'f.fid = cf.' . $table_info['fid']);
+    $query->fields('f');
+    $query->condition('f.status', 1);
+    $query->condition('f.filename', $like, 'LIKE');
+    $query->orderBy('f.timestamp', 'DESC');
     $query->range(0, 30);
-    $result->execute();
-    //$result = db_query_range("SELECT f.* FROM {" . $db_info['table'] . "} c INNER JOIN {files} f ON c." . $db_info['columns']['fid']['column'] . " = f.fid WHERE f.filename LIKE '" . $like . "' AND f.status = 1 ORDER BY f.timestamp DESC", $filename, 0, 30);
+    $result = $query->execute();
 
     foreach ($result as $file) {
       $files[$file->fid] = $file;

@@ -85,7 +85,7 @@ function filefield_sources_field_widget_info_alter(&$info) {
  * Configuration form for editing FileField Sources settings for a widget.
  */
 function filefield_sources_form($instance) {
-  $settings = $instance['settings']['filefield_sources'];
+  $settings = isset($instance['settings']['filefield_sources']) ? $instance['settings']['filefield_sources'] : array();
 
   $form['filefield_sources'] = array(
     '#type' => 'fieldset',
@@ -128,10 +128,9 @@ function filefield_sources_field_process($element, &$form_state, $form) {
 
   // Do all processing as needed by each source.
   $sources = filefield_sources_info();
-
-  $enabled_sources = $instance['settings']['filefield_sources']['filefield_sources'];
+  $enabled_sources = isset($instance['settings']['filefield_sources']['filefield_sources']) ? $instance['settings']['filefield_sources']['filefield_sources'] : array();
   foreach ($sources as $source_name => $source) {
-    if (!$enabled_sources[$source_name]) {
+    if (empty($enabled_sources[$source_name])) {
       unset($sources[$source_name]);
     }
     elseif (isset($source['process'])) {
@@ -355,6 +354,10 @@ function filefield_sources_save_file($filepath, $validators = array(), $destinat
   if (substr($destination, -1) != '/') {
     $destination .= '/';
   }
+
+  // Ensure the destination is writable.
+  file_prepare_directory($destination, FILE_CREATE_DIRECTORY);
+
   $file->destination = file_destination($destination . $file->filename, $replace);
   // If file_destination() returns FALSE then $replace == FILE_EXISTS_ERROR and
   // there's an existing file so we need to bail.
@@ -475,7 +478,7 @@ function filefield_sources_element_validate($element, $file) {
 
   // Since this frequently is used to reference existing files, check that
   // they exist first in addition to the normal validations.
-  if (!file_exists($file->filepath)) {
+  if (!file_exists($file->uri)) {
     $errors[] = t('The file does not exist.');
   }
   // Call the validation functions.
