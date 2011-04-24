@@ -118,6 +118,7 @@ function filefield_source_remote_value($element, &$item) {
     curl_setopt($ch, CURLOPT_HEADER, TRUE);
     curl_setopt($ch, CURLOPT_NOBODY, TRUE);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+    curl_setopt($ch, CURLOPT_HEADERFUNCTION, '_filefield_source_remote_parse_header');
     // Causes a warning if PHP safe mode is on.
     @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
     curl_exec($ch);
@@ -141,8 +142,20 @@ function filefield_source_remote_value($element, &$item) {
     // Update the $url variable to reflect any redirects.
     $url = $info['url'];
     $url_info = parse_url($url);
-    $pathinfo = pathinfo($url_info['path']);
-    $filename = rawurldecode(basename($url_info['path']));
+
+    // Determine the proper filename by reading the filename given in the
+    // Content-Disposition header. If the server fails to send this header,
+    // fall back on the basename of the URL.
+    //
+    // We prefer to use the Content-Disposition header, because we can then
+    // use URLs like http://example.com/get_file/23 which would otherwise be
+    // rejected because the URL basename lacks an extension.
+    $filename = _filefield_source_remote_filename();
+    if (empty($filename)) {
+      $filename = rawurldecode(basename($url_info['path']));
+    }
+
+    $pathinfo = pathinfo($filename);
     $filename = filefield_sources_clean_filename($filename, $field['settings']['file_extensions']);
     $filepath = file_create_filename($filename, 'temporary://');
 
@@ -191,6 +204,34 @@ function filefield_source_remote_value($element, &$item) {
     // Delete the temporary file.
     @unlink($filepath);
   }
+}
+
+/**
+ * Parse cURL header and record the filename specified in Content-Disposition.
+ */
+function _filefield_source_remote_parse_header(&$ch, $header) {
+  if (preg_match('/Content-Disposition:.*?filename="(.+?)"/', $header, $matches)) {
+    // Content-Disposition: attachment; filename="FILE NAME HERE"
+    _filefield_source_remote_filename($matches[1]);
+  }
+  elseif (preg_match('/Content-Disposition:.*?filename=([^; ]+)/', $header, $matches)) {
+    // Content-Disposition: attachment; filename=file.ext
+    _filefield_source_remote_filename($matches[1]);
+  }
+
+  // This is required by cURL.
+  return strlen($header);
+}
+
+/**
+ * Get/set the remote file name in a static variable.
+ */
+function _filefield_source_remote_filename($curl_filename = NULL) {
+  static $filename = NULL;
+  if (isset($curl_filename)) {
+    $filename = $curl_filename;
+  }
+  return $filename;
 }
 
 /**
