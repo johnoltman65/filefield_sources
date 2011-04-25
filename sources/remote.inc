@@ -114,6 +114,22 @@ function filefield_source_remote_value($element, &$item) {
     $field = field_info_instance($element['#entity_type'], $element['#field_name'], $element['#bundle']);
     $url = $item['filefield_remote']['url'];
 
+    // Check that the destination is writable.
+    $temporary_directory = 'temporary://';
+    if (!file_prepare_directory($temporary_directory, FILE_MODIFY_PERMISSIONS)) {
+      watchdog('file', 'The directory %directory is not writable, because it does not have the correct permissions set.', array('%directory' => drupal_realpath($temporary_directory)));
+      drupal_set_message(t('The file could not be transferred because the temporary directory is not writable.'), 'error');
+      return;
+    }
+
+    // Check that the destination is writable.
+    $directory = $element['#upload_location'];
+    if (!file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
+      watchdog('file', 'File %file could not be copied, because the destination directory %destination is not configured correctly.', array('%file' => $url, '%destination' => drupal_realpath($directory)));
+      drupal_set_message(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', array('%file' => $url)), 'error');
+      return;
+    }
+
     // Check the headers to make sure it exists and is within the allowed size.
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -159,7 +175,7 @@ function filefield_source_remote_value($element, &$item) {
 
     $pathinfo = pathinfo($filename);
     $filename = filefield_sources_clean_filename($filename, $field['settings']['file_extensions']);
-    $filepath = file_create_filename($filename, 'temporary://');
+    $filepath = file_create_filename($filename, $temporary_directory);
 
     if (empty($pathinfo['extension'])) {
       form_error($element, t('The remote URL must be a file and have an extension.'));

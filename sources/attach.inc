@@ -209,6 +209,14 @@ function filefield_source_attach_value($element, &$item) {
     $instance = field_info_instance($element['#entity_type'], $element['#field_name'], $element['#bundle']);
     $filepath = $item['filefield_attach']['filename'];
 
+    // Check that the destination is writable.
+    $directory = $element['#upload_location'];
+    if (!file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
+      watchdog('file', 'File %file could not be copied, because the destination directory %destination is not configured correctly.', array('%file' => $filepath, '%destination' => drupal_realpath($directory)));
+      drupal_set_message(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', array('%file' => $filepath)), 'error');
+      return;
+    }
+
     // Clean up the file name extensions and transliterate.
     $original_filepath = $filepath;
     $new_filepath = filefield_sources_clean_filename($filepath, $instance['settings']['file_extensions']);
@@ -222,11 +230,11 @@ function filefield_source_attach_value($element, &$item) {
     }
 
     // Save the file to the new location.
-    if ($file = filefield_sources_save_file($filepath, $validators, $element['#upload_location'])) {
+    if ($file = filefield_sources_save_file($filepath, $validators, $directory)) {
       $item = array_merge($item, (array) $file);
 
       // Delete the original file if "moving" the file instead of copying.
-      if (empty($instance['widget']['settings']['filefield_sources']['source_attach']['attach_mode']) || $instance['settings']['filefield_sources']['source_attach']['attach_mode'] !== 'copy') {
+      if ($instance['widget']['settings']['filefield_sources']['source_attach']['attach_mode'] !== 'copy') {
         // TODO: Figure out a way to re-introduce this feature. By unlinking the
         // file it causes the option to be removed from the select list on the
         // form rebuild, thus throwing an illegal option error.
