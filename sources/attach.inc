@@ -151,8 +151,8 @@ function filefield_source_attach_process($element, &$form_state, $form) {
   }
   else {
     $validators = $element['#upload_validators'];
-    if (isset($validators['filefield_validate_size'])) {
-      unset($validators['filefield_validate_size']);
+    if (isset($validators['file_validate_size'])) {
+      unset($validators['file_validate_size']);
     }
     $description .= '<br />' . filefield_sources_element_validation_help($validators);
     $element['filefield_attach']['filename'] = array(
@@ -217,12 +217,12 @@ function filefield_source_attach_value($element, &$item) {
 
     // Run all the normal validations, minus file size restrictions.
     $validators = $element['#upload_validators'];
-    if (isset($validators['filefield_validate_size'])) {
-      unset($validators['filefield_validate_size']);
+    if (isset($validators['file_validate_size'])) {
+      unset($validators['file_validate_size']);
     }
 
     // Save the file to the new location.
-    if ($file = filefield_sources_save_file($filepath, $element['#upload_validators'], $element['#upload_location'])) {
+    if ($file = filefield_sources_save_file($filepath, $validators, $element['#upload_location'])) {
       $item = array_merge($item, (array) $file);
 
       // Delete the original file if "moving" the file instead of copying.

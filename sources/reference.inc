@@ -138,6 +138,12 @@ function filefield_source_reference_value($element, &$item) {
     if (preg_match('/\[fid:(\d+)\]/', $item['filefield_reference']['autocomplete'], $matches)) {
       $fid = $matches[1];
       if ($file = file_load($fid)) {
+
+        // Run all the normal validations, minus file size restrictions.
+        if (isset($element['#upload_validators']['file_validate_size'])) {
+          unset($element['#upload_validators']['file_validate_size']);
+        }
+
         if (filefield_sources_element_validate($element, (object) $file)) {
           $item = array_merge($item, (array) $file);
         }
