@@ -67,7 +67,7 @@ function filefield_source_reference_settings($op, $instance) {
   $return = array();
 
   if ($op == 'form') {
-    $settings = isset($instance['settings']['filefield_sources']) ? $instance['settings']['filefield_sources'] : array();
+    $settings = $instance['widget']['settings']['filefield_sources'];
 
     $return['source_reference'] = array(
       '#title' => t('Autocomplete reference options'),

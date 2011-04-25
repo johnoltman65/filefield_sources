@@ -64,7 +64,7 @@ function filefield_sources_filefield_sources_widgets() {
 function filefield_sources_form_field_ui_field_edit_form_alter(&$form, &$form_state) {
   $instance = $form['#instance'];
   if (in_array($instance['widget']['type'], module_invoke_all('filefield_sources_widgets'))) {
-    $form['instance']['settings'] += filefield_sources_form($instance);
+    $form['instance']['widget']['settings'] += filefield_sources_form($instance);
   }
 }
 
@@ -86,7 +86,7 @@ function filefield_sources_field_widget_info_alter(&$info) {
  * Configuration form for editing FileField Sources settings for a widget.
  */
 function filefield_sources_form($instance) {
-  $settings = isset($instance['settings']['filefield_sources']) ? $instance['settings']['filefield_sources'] : array();
+  $settings = $instance['widget']['settings']['filefield_sources'];
 
   $form['filefield_sources'] = array(
     '#type' => 'fieldset',
@@ -102,7 +102,7 @@ function filefield_sources_form($instance) {
     '#type' => 'checkboxes',
     '#title' => t('Enabled sources'),
     '#options' => $sources,
-    '#default_value' => isset($settings['filefield_sources']) ? $settings['filefield_sources'] : array(),
+    '#default_value' => $settings['filefield_sources'],
     '#description' => t('Select the available locations from which this widget may select files.'),
   );
 
@@ -129,7 +129,7 @@ function filefield_sources_field_process($element, &$form_state, $form) {
 
   // Do all processing as needed by each source.
   $sources = filefield_sources_info();
-  $enabled_sources = isset($instance['settings']['filefield_sources']['filefield_sources']) ? $instance['settings']['filefield_sources']['filefield_sources'] : array();
+  $enabled_sources = $instance['widget']['settings']['filefield_sources']['filefield_sources'];
   foreach ($sources as $source_name => $source) {
     if (empty($enabled_sources[$source_name])) {
       unset($sources[$source_name]);
