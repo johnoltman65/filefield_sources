@@ -199,7 +199,7 @@ function filefield_sources_field_pre_render($element) {
   if (!empty($element['#value']['fid'])) {
     foreach (element_children($element) as $key) {
       if (!empty($element[$key]['#filefield_source'])) {
-        $element['upload']['#access'] = FALSE;
+        $element[$key]['#access'] = FALSE;
       }
     }
   }
