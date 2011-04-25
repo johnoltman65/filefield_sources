@@ -80,7 +80,7 @@ function filefield_source_remote_process($element, &$form_state, $form) {
 
   $element['filefield_remote']['url'] = array(
     '#type' => 'textfield',
-    '#description' => filefield_sources_element_validation_help($element),
+    '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
     '#maxlength' => NULL,
   );
 
