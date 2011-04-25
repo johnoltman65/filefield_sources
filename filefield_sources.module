@@ -28,6 +28,7 @@ function filefield_sources_element_info() {
   $elements = array();
 
   $elements['managed_file']['#process'] = array('filefield_sources_field_process');
+  $elements['managed_file']['#pre_render'] = array('filefield_sources_field_pre_render');
   $elements['managed_file']['#element_validate'] = array('filefield_sources_field_validate');
   $elements['managed_file']['#file_value_callbacks'] = array('filefield_sources_field_value');
 
@@ -158,6 +159,26 @@ function filefield_sources_field_process($element, &$form_state, $form) {
     }
   }
 
+  // Adjust the AJAX settings so that on upload and remove of any individual
+  // file, the entire group of file fields is updated together.
+  // Copied directly from file_field_widget_process().
+  $field = field_widget_field($element, $form_state);
+  if ($field['cardinality'] != 1) {
+    $parents = array_slice($element['#array_parents'], 0, -1);
+    $new_path = 'file/ajax/' . implode('/', $parents) . '/' . $form['form_build_id']['#value'];
+    $field_element = drupal_array_get_nested_value($form, $parents);
+    $new_wrapper = $field_element['#id'] . '-ajax-wrapper';
+    foreach (element_children($element) as $key) {
+      foreach (element_children($element[$key]) as $subkey) {
+        if (isset($element[$key][$subkey]['#ajax'])) {
+          $element[$key][$subkey]['#ajax']['path'] = $new_path;
+          $element[$key][$subkey]['#ajax']['wrapper'] = $new_wrapper;
+          $element[$key][$subkey]['#limit_validation_errors'] = array($parents);
+        }
+      }
+    }
+  }
+
   // Add the list of sources to the element for toggling between sources.
   if (empty($element['fid']['#value'])) {
     $element['filefield_sources_list'] = array(
@@ -167,6 +188,21 @@ function filefield_sources_field_process($element, &$form_state, $form) {
     );
   }
 
+  return $element;
+}
+
+/**
+ * A #pre_render function to hide sources if a file is currently uploaded.
+ */
+function filefield_sources_field_pre_render($element) {
+  // If we already have a file, we don't want to show the upload controls.
+  if (!empty($element['#value']['fid'])) {
+    foreach (element_children($element) as $key) {
+      if (!empty($element[$key]['#filefield_source'])) {
+        $element['upload']['#access'] = FALSE;
+      }
+    }
+  }
   return $element;
 }
 
@@ -185,9 +221,18 @@ function filefield_sources_field_validate($element, &$form_state, $form) {
 }
 
 /**
+ * A #submit handler added to all FileField Source buttons.
+ */
+function filefield_sources_field_submit(&$form, &$form_state) {
+  $parents = array_slice($form_state['triggering_element']['#parents'], 0, -3);
+  drupal_array_set_nested_value($form_state['input'], $parents, NULL);
+  $form_state['rebuild'] = TRUE;
+}
+
+/**
  * A #filefield_value_callback to run source value callbacks.
  */
-function filefield_sources_field_value($element, &$item) {
+function filefield_sources_field_value($element, &$item, &$form_state) {
   // Do all processing as needed by each source.
   $sources = filefield_sources_info();
   foreach ($sources as $source) {
@@ -389,7 +434,7 @@ function filefield_sources_save_file($filepath, $validators = array(), $destinat
   // directory. This overcomes open_basedir restrictions for future file
   // operations.
   $file->uri = $file->destination;
-  if (!file_unmanaged_move($filepath, $file->uri)) {
+  if (!file_unmanaged_copy($filepath, $file->uri)) {
     drupal_set_message(t('File upload error. Could not move uploaded file.'), 'error');
     watchdog('file', 'Upload error. Could not move uploaded file %file to destination %destination.', array('%file' => $file->filename, '%destination' => $file->uri));
     return FALSE;

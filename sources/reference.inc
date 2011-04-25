@@ -99,9 +99,9 @@ function filefield_source_reference_settings($op, $instance) {
 function filefield_source_reference_process($element, &$form_state, $form) {
 
   $element['filefield_reference'] = array(
-    '#theme' => 'filefield_source_reference_element',
     '#weight' => 100.5,
-    '#access' => empty($element['fid']['#value']),
+    '#theme' => 'filefield_source_reference_element',
+    '#filefield_source' => TRUE, // Required for proper theming.
     '#filefield_sources_hint_text' => FILEFIELD_SOURCE_REFERENCE_HINT_TEXT,
   );
 
@@ -112,9 +112,11 @@ function filefield_source_reference_process($element, &$form_state, $form) {
   );
 
   $element['filefield_reference']['select'] = array(
+    '#name' => implode('_', $element['#array_parents']) . '_autocomplete_select',
     '#type' => 'submit',
     '#value' => t('Select'),
-    '#submit' => array('file_field_widget_submit'),
+    '#validate' => array(),
+    '#submit' => array('filefield_sources_field_submit'),
     '#name' => $element['#name'] . '[filefield_reference][button]',
     '#limit_validation_errors' => array($element['#parents']),
     '#ajax' => array(

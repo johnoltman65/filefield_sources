@@ -86,6 +86,13 @@ function filefield_source_attach_settings($op, $instance) {
       '#type' => 'markup',
       '#value' => theme('token_help', 'user'),
     );
+
+    // Temporary placeholder until this feature works again in Drupal 7.
+    // TODO: Figure out how to re-introduce this feature.
+    // See filefield_source_attach_value().
+    $return['source_attach']['attach_mode']['#disabled'] = TRUE;
+    $return['source_attach']['attach_mode']['#default_value'] = 'copy';
+    $return['source_attach']['attach_mode']['#description'] = '<em>' . t('This feature is not yet supported on Drupal 7. All fields will by set to the "copy" mode, leaving the original file unmoved.') . '</em>';
   }
   elseif ($op == 'save') {
     $return['source_attach']['path'] = '';
@@ -116,9 +123,9 @@ function filefield_source_attach_process($element, &$form_state, $form) {
   $settings = $instance['settings']['filefield_sources']['source_attach'];
 
   $element['filefield_attach'] = array(
-    '#theme' => 'filefield_source_attach_element',
     '#weight' => 100.5,
-    '#access' => empty($element['fid']['#value']),
+    '#theme' => 'filefield_source_attach_element',
+    '#filefield_source' => TRUE, // Required for proper theming.
   );
 
   $path = _filefield_source_attach_directory($instance);
@@ -156,9 +163,11 @@ function filefield_source_attach_process($element, &$form_state, $form) {
   }
 
   $element['filefield_attach']['attach'] = array(
+    '#name' => implode('_', $element['#array_parents']) . '_attach',
     '#type' => 'submit',
-    '#value' => isset($attach_message) ? t('Refresh') : t('Attach'),
-    '#submit' => array('file_field_widget_submit'),
+    '#value' => t('Attach'),
+    '#validate' => array(),
+    '#submit' => array('filefield_sources_field_submit'),
     '#limit_validation_errors' => array($element['#parents']),
     '#ajax' => array(
       'path' => 'file/ajax/' . implode('/', $element['#array_parents']) . '/' . $form['form_build_id']['#value'],
@@ -218,7 +227,10 @@ function filefield_source_attach_value($element, &$item) {
 
       // Delete the original file if "moving" the file instead of copying.
       if (empty($instance['settings']['filefield_sources']['source_attach']['attach_mode']) || $instance['settings']['filefield_sources']['source_attach']['attach_mode'] !== 'copy') {
-        @unlink($filepath);
+        // TODO: Figure out a way to re-introduce this feature. By unlinking the
+        // file it causes the option to be removed from the select list on the
+        // form rebuild, thus throwing an illegal option error.
+        //@unlink($filepath);
       }
     }
 
@@ -226,9 +238,9 @@ function filefield_source_attach_value($element, &$item) {
     if (file_exists($filepath) && $filepath != $original_filepath) {
       rename($filepath, $original_filepath);
     }
-  }
 
-  $item['filefield_attach']['filename'] = '';
+    $item['filefield_attach']['filename'] = '';
+  }
 }
 
 /**
