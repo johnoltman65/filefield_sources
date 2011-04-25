@@ -211,7 +211,7 @@ function filefield_source_attach_value($element, &$item) {
 
     // Clean up the file name extensions and transliterate.
     $original_filepath = $filepath;
-    $new_filepath = filefield_sources_clean_filename($filepath, $instance['widget']['settings']['file_extensions']);
+    $new_filepath = filefield_sources_clean_filename($filepath, $instance['settings']['file_extensions']);
     rename($filepath, $new_filepath);
     $filepath = $new_filepath;
 

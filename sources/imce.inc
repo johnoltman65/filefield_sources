@@ -129,7 +129,7 @@ function filefield_source_imce_value($element, &$item) {
   if (isset($item['filefield_imce']['file_path']) && $item['filefield_imce']['file_path'] != '') {
     $field = field_info_field($element['#field_name']);
 
-    $scheme = $field['widget']['settings']['uri_scheme'];
+    $scheme = $field['settings']['uri_scheme'];
     $wrapper = file_stream_wrapper_get_instance_by_scheme($scheme);
     $file_directory_prefix = $wrapper->getDirectoryPath();
     $uri = preg_replace('/^' . preg_quote('/' . $file_directory_prefix . '/', '/') . '/', $scheme . '://', $item['filefield_imce']['file_path']);
