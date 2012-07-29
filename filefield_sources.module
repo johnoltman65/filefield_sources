@@ -459,7 +459,7 @@ function filefield_sources_save_file($filepath, $validators = array(), $destinat
   // directory. This overcomes open_basedir restrictions for future file
   // operations.
   $file->uri = $file->destination;
-  if (!file_unmanaged_copy($filepath, $file->uri)) {
+  if (!file_unmanaged_copy($filepath, $file->uri, $replace)) {
     drupal_set_message(t('File upload error. Could not move uploaded file.'), 'error');
     watchdog('file', 'Upload error. Could not move uploaded file %file to destination %destination.', array('%file' => $file->filename, '%destination' => $file->uri));
     return FALSE;
