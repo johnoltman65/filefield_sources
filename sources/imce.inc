@@ -132,7 +132,7 @@ function filefield_source_imce_value($element, &$item) {
     $scheme = $field['settings']['uri_scheme'];
     $wrapper = file_stream_wrapper_get_instance_by_scheme($scheme);
     $file_directory_prefix = $wrapper->getDirectoryPath();
-    $uri = preg_replace('/^' . preg_quote('/' . $file_directory_prefix . '/', '/') . '/', $scheme . '://', $item['filefield_imce']['file_path']);
+    $uri = preg_replace('/^' . preg_quote(base_path() . $file_directory_prefix . '/', '/') . '/', $scheme . '://', $item['filefield_imce']['file_path']);
 
     // Resolve the file path to an FID.
     $fid = db_select('file_managed', 'f')
