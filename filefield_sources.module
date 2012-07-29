@@ -224,8 +224,41 @@ function filefield_sources_field_validate($element, &$form_state, $form) {
  * A #submit handler added to all FileField Source buttons.
  */
 function filefield_sources_field_submit(&$form, &$form_state) {
-  $parents = array_slice($form_state['triggering_element']['#parents'], 0, -3);
-  drupal_array_set_nested_value($form_state['input'], $parents, NULL);
+
+  $parents = array_slice($form_state['triggering_element']['#array_parents'], 0, -3);
+  $element = drupal_array_get_nested_value($form, $parents);
+  $field_name = $element['#field_name'];
+  $langcode = $element['#language'];
+
+  // Get exisitng file values.
+  // File Field items are stored in the field state after ajax reloads starting
+  // from Drupal 7.8. We try to support all releases by merging the items.
+  $field_state = field_form_get_state($element['#field_parents'], $field_name, $langcode, $form_state);
+  $field_values = drupal_array_get_nested_value($form_state['values'], $parents);
+
+  if (isset($field_values) && isset($field_state['items'])) {
+    $field_values += $field_state['items'];
+  }
+  elseif (isset($field_state['items'])) {
+    $field_values = $field_state['items'];
+  }
+
+  if (isset($field_values)) {
+    // Update sort order according to weight. Note that this is always stored in
+    // form state. Sort does not work using regular upload, but that is a core
+    // bug.
+    usort($field_values, '_field_sort_items_helper');
+
+    // Update form_state values.
+    drupal_array_set_nested_value($form_state['values'], $parents, $field_values);
+
+    // Update items.
+    $field_state['items'] = $field_values;
+    field_form_set_state($element['#field_parents'], $field_name, $langcode, $form_state, $field_state);
+  }
+
+  // Clear out input as it will need to be rebuildt.
+  drupal_array_set_nested_value($form_state['input'], $element['#parents'], NULL);
   $form_state['rebuild'] = TRUE;
 }
 
