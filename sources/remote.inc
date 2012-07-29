@@ -234,7 +234,8 @@ function _filefield_source_remote_parse_header(&$ch, $header) {
   }
   elseif (preg_match('/Content-Disposition:.*?filename=([^; ]+)/', $header, $matches)) {
     // Content-Disposition: attachment; filename=file.ext
-    _filefield_source_remote_filename($matches[1]);
+    $uri = trim($matches[1]);
+    _filefield_source_remote_filename($uri);
   }
 
   // This is required by cURL.
