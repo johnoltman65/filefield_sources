@@ -146,13 +146,13 @@ function filefield_source_remote_value($element, &$item) {
     if ($info['http_code'] != 200) {
       switch ($info['http_code']) {
         case 403:
-          form_error($element, t('The remote file could not be transfered because access to the file was denied.'));
+          form_error($element, t('The remote file could not be transferred because access to the file was denied.'));
           break;
         case 404:
-          form_error($element, t('The remote file could not be transfered because it was not found.'));
+          form_error($element, t('The remote file could not be transferred because it was not found.'));
           break;
         default:
-          form_error($element, t('The remote file could not be transfered due to an HTTP error (@code).', array('@code' => $info['http_code'])));
+          form_error($element, t('The remote file could not be transferred due to an HTTP error (@code).', array('@code' => $info['http_code'])));
       }
       return;
     }
@@ -266,7 +266,7 @@ function filefield_source_remote_progress($entity_type, $bundle_name, $field_nam
   if ($cache = cache_get('filefield_transfer:'. session_id() . ':' . $key)) {
     $current = $cache->data['current'];
     $total = $cache->data['total'];
-    $progress['message'] = t('Transfering... (@current of @total)', array('@current' => format_size($current), '@total' => format_size($total)));
+    $progress['message'] = t('Transferring... (@current of @total)', array('@current' => format_size($current), '@total' => format_size($total)));
     $progress['percentage'] = round(100 * $current / $total);
   }
 
