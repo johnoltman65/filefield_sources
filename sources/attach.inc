@@ -63,6 +63,10 @@ function filefield_source_attach_settings($op, $instance) {
       '#maxlength' => 128,
       '#description' => t('The directory within the <em>File attach location</em> that will contain attachable files.'),
     );
+    $return['source_attach']['tokens'] = array(
+      '#theme' => 'token_tree',
+      '#token_types' => array('user'),
+    );
     $return['source_attach']['absolute'] = array(
       '#type' => 'radios',
       '#title' => t('File attach location'),
@@ -81,10 +85,6 @@ function filefield_source_attach_settings($op, $instance) {
         'copy' => t('Leave a copy of the file in the attach directory'),
       ),
       '#default_value' => isset($settings['source_attach']['attach_mode']) ? $settings['source_attach']['attach_mode'] : 'move',
-    );
-    $return['source_attach']['tokens'] = array(
-      '#type' => 'markup',
-      '#value' => theme('token_help', 'user'),
     );
 
     // Temporary placeholder until this feature works again in Drupal 7.
