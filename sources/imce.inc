@@ -200,12 +200,12 @@ function filefield_source_imce_custom_scan($dirname, $imce) {
   // Get a list of files in the database for this directory.
   $scheme = variable_get('filefield_source_imce_scheme', 'public');
   $imce['scheme'] = $scheme;
-  $sql_uri_name = $dirname == '.' ? $scheme . '://' : $scheme . '://' . $dirname;
+  $sql_uri_name = $dirname == '.' ? $scheme . '://' : $scheme . '://' . $dirname . '/';
 
   $result = db_select('file_managed', 'f')
     ->fields('f', array('filename'))
-    ->condition('f.uri', $sql_uri_name . '/%', 'LIKE')
-    ->condition('f.uri', $sql_uri_name . '/%/%', 'NOT LIKE')
+    ->condition('f.uri', $sql_uri_name . '%', 'LIKE')
+    ->condition('f.uri', $sql_uri_name . '_%/%', 'NOT LIKE')
     ->execute();
 
   $db_files = array();
