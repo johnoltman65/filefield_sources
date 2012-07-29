@@ -123,7 +123,7 @@ function filefield_sources_field_process($element, &$form_state, $form) {
   static $js_added;
 
   // If not a recognized field instance, do not process.
-  if (!isset($element['#field_name']) || !($instance = field_widget_instance($element, $form_state))) {
+  if (!isset($element['#field_name']) || !($instance = field_widget_instance($element, $form_state)) || !isset($instance['widget']['settings']['filefield_sources']['filefield_sources'])) {
     return $element;
   }
 
