@@ -124,7 +124,11 @@ function filefield_source_remote_value($element, &$item) {
 
     // Check that the destination is writable.
     $directory = $element['#upload_location'];
-    if (!file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
+    $mode = variable_get('file_chmod_directory', 0775);
+
+    // This first chmod check is for other systems such as S3, which don't work
+    // with file_prepare_directory().
+    if (!drupal_chmod($directory, $mode) && !file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
       watchdog('file', 'File %file could not be copied, because the destination directory %destination is not configured correctly.', array('%file' => $url, '%destination' => drupal_realpath($directory)));
       drupal_set_message(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', array('%file' => $url)), 'error');
       return;
