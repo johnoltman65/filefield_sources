@@ -291,5 +291,5 @@ function _filefield_source_attach_directory($instance, $account = NULL) {
     $path = token_replace($path, array('user' => $account));
   }
 
-  return $absolute ? $path : file_default_scheme($field['settings']['uri_scheme']) . '://' . $path;;
+  return $absolute ? $path : file_default_scheme() . '://' . $path;
 }
