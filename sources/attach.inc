@@ -86,13 +86,6 @@ function filefield_source_attach_settings($op, $instance) {
       ),
       '#default_value' => isset($settings['source_attach']['attach_mode']) ? $settings['source_attach']['attach_mode'] : 'move',
     );
-
-    // Temporary placeholder until this feature works again in Drupal 7.
-    // TODO: Figure out how to re-introduce this feature.
-    // See filefield_source_attach_value().
-    $return['source_attach']['attach_mode']['#disabled'] = TRUE;
-    $return['source_attach']['attach_mode']['#default_value'] = 'copy';
-    $return['source_attach']['attach_mode']['#description'] = '<em>' . t('This feature is not yet supported on Drupal 7. All fields will by set to the "copy" mode, leaving the original file unmoved.') . '</em>';
   }
   elseif ($op == 'save') {
     $return['source_attach']['path'] = 'file_attach';
@@ -130,6 +123,18 @@ function filefield_source_attach_process($element, &$form_state, $form) {
 
   $path = _filefield_source_attach_directory($instance);
   $options = _filefield_source_attach_options($path);
+
+  // If we have built this element before, append the list of options that we
+  // had previously. This allows files to be deleted after copying them and
+  // still be considered a valid option during the validation and submit.
+  if (!isset($form_state['triggering_element']) && isset($form_state['filefield_sources'][$instance['field_name']]['attach_options'])) {
+    $options = $options + $form_state['filefield_sources'][$instance['field_name']]['attach_options'];
+  }
+  // On initial form build and rebuilds after processing input, save the
+  // original list of options so they can be restored in the line above.
+  else {
+    $form_state['filefield_sources'][$instance['field_name']]['attach_options'] = $options;
+  }
 
   $description = t('This method may be used to attach files that exceed the file size limit. Files may be attached from the %directory directory on the server, usually uploaded through FTP.', array('%directory' => realpath($path)));
 
@@ -235,10 +240,7 @@ function filefield_source_attach_value($element, &$item) {
 
       // Delete the original file if "moving" the file instead of copying.
       if ($instance['widget']['settings']['filefield_sources']['source_attach']['attach_mode'] !== 'copy') {
-        // TODO: Figure out a way to re-introduce this feature. By unlinking the
-        // file it causes the option to be removed from the select list on the
-        // form rebuild, thus throwing an illegal option error.
-        //@unlink($filepath);
+        @unlink($filepath);
       }
     }
 
