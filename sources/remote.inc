@@ -139,12 +139,17 @@ function filefield_source_remote_value($element, &$item) {
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_HEADER, TRUE);
     curl_setopt($ch, CURLOPT_NOBODY, TRUE);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
     curl_setopt($ch, CURLOPT_HEADERFUNCTION, '_filefield_source_remote_parse_header');
     // Causes a warning if PHP safe mode is on.
     @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
     curl_exec($ch);
     $info = curl_getinfo($ch);
+    if ($info['http_code'] != 200) {
+      curl_setopt($ch, CURLOPT_HTTPGET, TRUE);
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+      $file_contents = curl_exec($ch);
+      $info = curl_getinfo($ch);
+    }
     curl_close($ch);
 
     if ($info['http_code'] != 200) {
@@ -218,17 +223,30 @@ function filefield_source_remote_value($element, &$item) {
     );
     filefield_source_remote_set_transfer_options($options);
 
-    // Then make the actual request to download the file.
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_HEADER, FALSE);
-    curl_setopt($ch, CURLOPT_WRITEFUNCTION, 'filefield_source_remote_curl_write');
-    // Causes a warning if PHP safe mode is on.
-    @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
-    if (curl_exec($ch) && $file = filefield_sources_save_file($filepath, $element['#upload_validators'], $element['#upload_location'])) {
+    $transfer_success = FALSE;
+    // If we've already downloaded the entire file because the header-retrieval
+    // failed, just ave the contents we have.
+    if (isset($file_contents)) {
+      if ($fp = @fopen($filepath, 'w')) {
+        fwrite($fp, $file_contents);
+        fclose($fp);
+        $transfer_success = TRUE;
+      }
+    }
+    // If we don't have the file contents, download the actual file.
+    else {
+      $ch = curl_init();
+      curl_setopt($ch, CURLOPT_URL, $url);
+      curl_setopt($ch, CURLOPT_HEADER, FALSE);
+      curl_setopt($ch, CURLOPT_WRITEFUNCTION, 'filefield_source_remote_curl_write');
+      // Causes a warning if PHP safe mode is on.
+      @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
+      $transfer_success = curl_exec($ch);
+      curl_close($ch);
+    }
+    if ($transfer_success && $file = filefield_sources_save_file($filepath, $element['#upload_validators'], $element['#upload_location'])) {
       $item = array_merge($item, (array) $file);
     }
-    curl_close($ch);
 
     // Delete the temporary file.
     @unlink($filepath);
