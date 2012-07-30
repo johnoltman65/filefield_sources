@@ -174,6 +174,13 @@ function filefield_source_remote_value($element, &$item) {
     }
 
     $pathinfo = pathinfo($filename);
+
+    // Create the file extension from the MIME header if all else has failed.
+    if (empty($pathinfo['extension']) && $extension = _filefield_source_remote_mime_extension()) {
+      $filename = $filename . '.' . $extension;
+      $pathinfo = pathinfo($filename);
+    }
+
     $filename = filefield_sources_clean_filename($filename, $field['settings']['file_extensions']);
     $filepath = file_create_filename($filename, $temporary_directory);
 
@@ -237,6 +244,10 @@ function _filefield_source_remote_parse_header(&$ch, $header) {
     $uri = trim($matches[1]);
     _filefield_source_remote_filename($uri);
   }
+  elseif (preg_match('/Content-Type:[ ]*([a-z0-9_\-]+\/[a-z0-9_\-]+)/i', $header, $matches)) {
+    $mime_type = $matches[1];
+    _filefield_source_remote_mime_extension($mime_type);
+  }
 
   // This is required by cURL.
   return strlen($header);
@@ -251,6 +262,29 @@ function _filefield_source_remote_filename($curl_filename = NULL) {
     $filename = $curl_filename;
   }
   return $filename;
+}
+
+/**
+ * Get/set the remote file extension in a static variable.
+ */
+function _filefield_source_remote_mime_extension($curl_mime_type = NULL) {
+  static $extension = NULL;
+  if (isset($curl_mime_type)) {
+    include_once DRUPAL_ROOT . '/includes/file.mimetypes.inc';
+    $curl_mime_type = drupal_strtolower($curl_mime_type);
+    $mapping = file_mimetype_mapping();
+    // See if this matches a known MIME type.
+    $map_id = array_search($curl_mime_type, $mapping['mimetypes']);
+    if ($map_id !== FALSE) {
+      // If we have a match, get this list of likely extensions. For some reason
+      // Drupal lists the "most common" extension last for most file types
+      // including php, jpg, and doc.
+      if ($extensions = array_keys($mapping['extensions'], $map_id)) {
+        $extension = end($extensions);
+      }
+    }
+  }
+  return $extension;
 }
 
 /**
