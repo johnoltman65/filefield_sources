@@ -70,7 +70,9 @@ function filefield_sources_field_widget_info_alter(&$info) {
   foreach (module_invoke_all('filefield_sources_widgets') as $widget) {
     $params = array('save', $widget);
     $widget_settings = array_merge($settings, filefield_sources_invoke_all('settings', $params));
-    $info[$widget]['settings']['filefield_sources'] = $widget_settings;
+    if (isset($info[$widget])) {
+      $info[$widget]['settings']['filefield_sources'] = $widget_settings;
+    }
   }
 }
 
