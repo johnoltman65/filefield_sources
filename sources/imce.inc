@@ -72,6 +72,7 @@ function filefield_source_imce_settings($op, $instance) {
       '#type' => 'fieldset',
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
+      '#access' => module_exists('imce'),
     );
 
     $return['source_imce']['imce_mode'] = array(
