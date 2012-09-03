@@ -56,7 +56,12 @@ function filefield_sources_filefield_sources_widgets() {
 function filefield_sources_form_field_ui_field_edit_form_alter(&$form, &$form_state) {
   $instance = $form['#instance'];
   if (in_array($instance['widget']['type'], module_invoke_all('filefield_sources_widgets'))) {
-    $form['instance']['widget']['settings'] += filefield_sources_form($instance);
+    if (is_array($form['instance']['widget']['settings'])) {
+      $form['instance']['widget']['settings'] += filefield_sources_form($instance);
+    }
+    else {
+      $form['instance']['widget']['settings'] = filefield_sources_form($instance);
+    }
   }
 }
 
