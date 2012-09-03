@@ -198,7 +198,7 @@ function _filefield_source_attach_options($path) {
     $options = array('' => t('-- Select file --'));
     foreach ($file_attach as $filename => $fileinfo) {
       $filename = basename($filename);
-      $options[$fileinfo->uri] = $fileinfo->filename;
+      $options[$fileinfo->uri] = str_replace($path . '/', '', $fileinfo->uri);
     }
   }
 
