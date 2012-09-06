@@ -97,6 +97,11 @@ function filefield_source_attach_settings($op, $instance) {
 }
 
 function _filefield_source_attach_file_path_validate($element, &$form_state) {
+  // Only validate if this source is enabled.
+  if (!$form_state['values']['instance']['widget']['settings']['filefield_sources']['filefield_sources']['attach']) {
+    return;
+  }
+
   // Strip slashes from the end of the file path.
   $filepath = rtrim($element['path']['#value'], '\\/');
   form_set_value($element['path'], $filepath, $form_state);
