@@ -110,11 +110,15 @@ function filefield_source_imce_process($element, &$form_state, $form) {
   $display_id = $element['#id'] . '-imce-display';
   $select_id = $element['#id'] . '-imce-select';
   $element['filefield_imce']['file_path'] = array(
-    '#type' => 'hidden',
+    // IE doesn't support onchange events for hidden fields, so we use a
+    // textfield and hide it from display.
+    '#type' => 'textfield',
     '#value' => '',
+    '#disabled' => TRUE,
     '#attributes' => array(
       'id' => $filepath_id,
-      'onchange' => "if (!jQuery('#$select_id').attr('disabled')) { jQuery('#$select_id').mousedown().disable(); jQuery('#$display_id').html(this.value); }",
+      'onchange' => "if (this.value.length > 0) { jQuery(this).attr('disabled', ''); jQuery('#$select_id').triggerHandler('mousedown'); }",
+      'style' => 'position:absolute; left: -9999em',
     ),
   );
 
