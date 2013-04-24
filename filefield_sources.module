@@ -57,10 +57,10 @@ function filefield_sources_form_field_ui_field_edit_form_alter(&$form, &$form_st
   $instance = $form['#instance'];
   if (in_array($instance['widget']['type'], module_invoke_all('filefield_sources_widgets'))) {
     if (!empty($form['instance']['widget']['settings'])) {
-      $form['instance']['widget']['settings'] += filefield_sources_form($instance);
+      $form['instance']['widget']['settings'] += filefield_sources_form($instance, $form_state);
     }
     else {
-      $form['instance']['widget']['settings'] = filefield_sources_form($instance);
+      $form['instance']['widget']['settings'] = filefield_sources_form($instance, $form_state);
     }
   }
 }
@@ -84,7 +84,7 @@ function filefield_sources_field_widget_info_alter(&$info) {
 /**
  * Configuration form for editing FileField Sources settings for a widget.
  */
-function filefield_sources_form($instance) {
+function filefield_sources_form($instance, &$form_state) {
   $settings = $instance['widget']['settings']['filefield_sources'];
 
   // Backward compatibility: auto-enable 'upload'.
@@ -106,6 +106,14 @@ function filefield_sources_form($instance) {
     '#default_value' => $enabled,
     '#description' => t('Select the available locations from which this widget may select files.'),
   );
+
+  // Make sure all includes are loaded for multistep forms.
+  $sources_info = filefield_sources_info(FALSE);
+  foreach ($sources_info as $source_name => $source) {
+    if (isset($source['file'])) {
+      _filefield_sources_form_include($source['module'], $source['file'], $form_state);
+    }
+  }
 
   $params = array('form', $instance);
   $form['filefield_sources'] = array_merge($form['filefield_sources'], filefield_sources_invoke_all('settings', $params));
@@ -135,9 +143,14 @@ function filefield_sources_field_process($element, &$form_state, $form) {
     if (empty($enabled_sources[$source_name])) {
       unset($sources[$source_name]);
     }
-    elseif (isset($source['process'])) {
-      $function = $source['process'];
-      $element = $function($element, $form_state, $form);
+    else {
+      if (isset($source['process'])) {
+        $function = $source['process'];
+        $element = $function($element, $form_state, $form);
+      }
+      if (isset($source['file'])) {
+        _filefield_sources_form_include($source['module'], $source['file'], $form_state);
+      }
     }
   }
   $element['#filefield_sources'] = $sources;
@@ -322,7 +335,16 @@ function filefield_sources_info($include_default = TRUE) {
       'description' => t('Upload a file from your computer.'),
       'weight' => -10,
     );
-    $cache += module_invoke_all('filefield_sources_info');
+
+    // Add the providing module name to each source.
+    foreach (module_implements('filefield_sources_info') as $module) {
+      $function = $module . '_filefield_sources_info';
+      $additions = $function();
+      foreach ($additions as $source_name => $source_info) {
+        $additions[$source_name]['module'] = $module;
+      }
+      $cache += $additions;
+    }
 
     drupal_alter('filefield_sources_info', $cache);
     uasort($cache, '_filefield_sources_sort');
@@ -635,6 +657,16 @@ function _filefield_sources_sort($a, $b) {
   $a = (array)$a + array('weight' => 0, 'label' => '');
   $b = (array)$b + array('weight' => 0, 'label' => '');
   return $a['weight'] < $b['weight'] ? -1 : ($a['weight'] > $b['weight'] ? 1 : strnatcasecmp($a['label'], $b['label']));
+}
+
+/**
+ * Ensure that a source include file is loaded into $form_state.
+ */
+function _filefield_sources_form_include($module, $filepath, &$form_state) {
+  $last_dot = strrpos($filepath, '.');
+  $path = substr($filepath, 0, $last_dot);
+  $extension = substr($filepath, $last_dot + 1);
+  form_load_include($form_state, $extension, $module, $path);
 }
 
 /**

@@ -21,6 +21,7 @@ function filefield_source_attach_info() {
     'process' => 'filefield_source_attach_process',
     'value' => 'filefield_source_attach_value',
     'weight' => 3,
+    'file' => 'includes/attach.inc',
   );
   return $source;
 }
