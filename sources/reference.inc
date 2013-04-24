@@ -240,6 +240,7 @@ function filefield_source_reference_get_files($filename, $instance = NULL) {
     $query->condition('f.status', 1);
     $query->condition('f.filename', $like, 'LIKE');
     $query->orderBy('f.timestamp', 'DESC');
+    $query->groupBy('f.fid');
     $query->range(0, 30);
     $result = $query->execute();
 
