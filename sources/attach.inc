@@ -198,7 +198,7 @@ function _filefield_source_attach_options($path) {
   }
 
   $options = array();
-  $file_attach = file_scan_directory($path, '/.*/', array('.', '..', 'CVS', '.svn'), 0, TRUE, 'filename', 0, 0);
+  $file_attach = file_scan_directory($path, '/.*/', array('key' => 'filename'), 0);
 
   if (count($file_attach)) {
     $options = array('' => t('-- Select file --'));
