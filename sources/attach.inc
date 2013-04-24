@@ -64,10 +64,12 @@ function filefield_source_attach_settings($op, $instance) {
       '#maxlength' => 128,
       '#description' => t('The directory within the <em>File attach location</em> that will contain attachable files.'),
     );
-    $return['source_attach']['tokens'] = array(
-      '#theme' => 'token_tree',
-      '#token_types' => array('user'),
-    );
+    if (module_exists('token')) {
+      $return['source_attach']['tokens'] = array(
+        '#theme' => 'token_tree',
+        '#token_types' => array('user'),
+      );
+    }
     $return['source_attach']['absolute'] = array(
       '#type' => 'radios',
       '#title' => t('File attach location'),
