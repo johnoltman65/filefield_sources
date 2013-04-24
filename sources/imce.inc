@@ -114,10 +114,9 @@ function filefield_source_imce_process($element, &$form_state, $form) {
     // textfield and hide it from display.
     '#type' => 'textfield',
     '#value' => '',
-    '#disabled' => TRUE,
     '#attributes' => array(
       'id' => $filepath_id,
-      'onchange' => "if (this.value.length > 0) { jQuery(this).removeAttr('disabled'); jQuery('#$select_id').triggerHandler('mousedown'); }",
+      'onblur' => "if (this.value.length > 0) { jQuery('#$select_id').triggerHandler('mousedown'); }",
       'style' => 'position:absolute; left: -9999em',
     ),
   );
