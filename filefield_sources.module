@@ -712,3 +712,28 @@ function _filefield_sources_enabled($settings) {
   $enabled = array_keys(array_filter($settings['filefield_sources']));
   return drupal_map_assoc($enabled);
 }
+
+/**
+ * Gets weight of a particular module.
+ * @todo Remove once https://www.drupal.org/node/1808132 is finished.
+ *
+ * @param string $module
+ *   The name of the module (without the .module extension).
+ *
+ * @return integer
+ *   The configured weight of the module.
+ *
+ * @throws InvalidArgumentException
+ *   Thrown in case the given module is not installed in the system.
+ */
+function module_get_weight($module) {
+  $weight = \Drupal::config('core.extension')->get("module.$module");
+  if ($weight !== NULL) {
+    return (int) $weight;
+  }
+  $weight = \Drupal::config('core.extension')->get("disabled.module.$module");
+  if ($weight !== NULL) {
+    return (int) $weight;
+  }
+  throw new InvalidArgumentException(format_string('The module %module is not installed.', array('%module' => $module)));
+}
