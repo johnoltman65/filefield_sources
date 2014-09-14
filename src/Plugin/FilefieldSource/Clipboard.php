@@ -16,7 +16,7 @@ use Symfony\Component\Routing\Route;
  *
  * @FilefieldSource(
  *   id = "clipboard",
- *   name = @Translation('Paste from clipboard (<a href="http://drupal.org/node/1775902">limited browser support</a>)'),
+ *   name = @Translation("Paste from clipboard (<a href=""http://drupal.org/node/1775902"">limited browser support</a>)"),
  *   label = @Translation("Clipboard"),
  *   description = @Translation("Allow users to paste a file directly from the clipboard."),
  *   weight = 1
