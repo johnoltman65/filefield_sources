@@ -5,7 +5,7 @@
  * Contains \Drupal\filefield_sources\Routing\FilefieldSourcesRoutes.
  */
 
-namespace \Drupal\filefield_sources\Routing;
+namespace Drupal\filefield_sources\Routing;
 
 /**
  * Defines a route subscriber to register a url for serving filefield sources.
