@@ -10,6 +10,7 @@ namespace Drupal\filefield_sources\Plugin\FilefieldSource;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\filefield_sources\FilefieldSourceInterface;
 use Symfony\Component\Routing\Route;
+use Drupal\Core\Field\WidgetInterface;
 
 define('FILEFIELD_SOURCE_REMOTE_HINT_TEXT', 'http://example.com/files/file.png');
 
@@ -376,12 +377,14 @@ class Remote extends FilefieldSourceInterface {
         '_access' => 'TRUE',
       )
     );
+
+    return $routes;
   }
 
   /**
    * Implements hook_filefield_source_settings().
    */
-  public static function settings($op, $instance) {
+  public static function settings(WidgetInterface $plugin) {
     $return = array();
 
     // Add settings to the FileField widget form.

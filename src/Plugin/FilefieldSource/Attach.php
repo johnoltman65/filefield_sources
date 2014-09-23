@@ -9,6 +9,8 @@ namespace Drupal\filefield_sources\Plugin\FilefieldSource;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\filefield_sources\FilefieldSourceInterface;
+use Drupal\Core\Field\WidgetInterface;
+use Drupal\Component\Utility\NestedArray;
 
 /**
  * A FileField source plugin to allow use of files within a server directory.
@@ -193,7 +195,7 @@ class Attach extends FilefieldSourceInterface {
     // Replace user level tokens.
     // Node level tokens require a lot of complexity like temporary storage
     // locations when values don't exist. See the filefield_paths module.
-    if (module_exists('token')) {
+    if (\Drupal::moduleHandler()->moduleExists('token')) {
       $path = token_replace($path, array('user' => $account));
     }
 
@@ -224,78 +226,81 @@ class Attach extends FilefieldSourceInterface {
   /**
    * Implements hook_filefield_source_settings().
    */
-  public static function settings($op, $instance) {
-    $return = array();
+  public static function settings(WidgetInterface $plugin) {
+    $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', array(
+      'source_attach' => array(
+        'path' => 'file_attach',
+        'absolute' => 0,
+        'attach_mode' => 'move',
+      )
+    ));
 
-    if ($op == 'form') {
-      $settings = $instance['widget']['settings']['filefield_sources'];
-
-      $return['source_attach'] = array(
-        '#title' => t('File attach settings'),
-        '#type' => 'fieldset',
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-        '#description' => t('File attach allows for selecting a file from a directory on the server, commonly used in combination with FTP.') . ' <strong>' . t('This file source will ignore file size checking when used.') . '</strong>',
-        '#element_validate' => array(array(get_called_class(), 'validate')),
-        '#weight' => 3,
-      );
-      $return['source_attach']['path'] = array(
-        '#type' => 'textfield',
-        '#title' => t('File attach path'),
-        '#default_value' => $settings['source_attach']['path'],
-        '#size' => 60,
-        '#maxlength' => 128,
-        '#description' => t('The directory within the <em>File attach location</em> that will contain attachable files.'),
-      );
-      if (module_exists('token')) {
-        $return['source_attach']['tokens'] = array(
-          '#theme' => 'token_tree',
-          '#token_types' => array('user'),
-        );
-      }
-      $return['source_attach']['absolute'] = array(
-        '#type' => 'radios',
-        '#title' => t('File attach location'),
-        '#options' => array(
-          0 => t('Within the files directory'),
-          1 => t('Absolute server path'),
-        ),
-        '#default_value' => $settings['source_attach']['absolute'],
-        '#description' => t('The <em>File attach path</em> may be with the files directory (%file_directory) or from the root of your server. If an absolute path is used and it does not start with a "/" your path will be relative to your site directory: %realpath.', array('%file_directory' => drupal_realpath(file_default_scheme() . '://'), '%realpath' => realpath('./'))),
-      );
-      $return['source_attach']['attach_mode'] = array(
-        '#type' => 'radios',
-        '#title' => t('Attach method'),
-        '#options' => array(
-          'move' => t('Move the file directly to the final location'),
-          'copy' => t('Leave a copy of the file in the attach directory'),
-        ),
-        '#default_value' => isset($settings['source_attach']['attach_mode']) ? $settings['source_attach']['attach_mode'] : 'move',
+    $return['source_attach'] = array(
+      '#title' => t('File attach settings'),
+      '#type' => 'details',
+      '#description' => t('File attach allows for selecting a file from a directory on the server, commonly used in combination with FTP.') . ' <strong>' . t('This file source will ignore file size checking when used.') . '</strong>',
+      '#element_validate' => array(array(get_called_class(), 'validate')),
+      '#weight' => 3,
+    );
+    $return['source_attach']['path'] = array(
+      '#type' => 'textfield',
+      '#title' => t('File attach path'),
+      '#default_value' => $settings['source_attach']['path'],
+      '#size' => 60,
+      '#maxlength' => 128,
+      '#description' => t('The directory within the <em>File attach location</em> that will contain attachable files.'),
+    );
+    if (\Drupal::moduleHandler()->moduleExists('token')) {
+      $return['source_attach']['tokens'] = array(
+        '#theme' => 'token_tree',
+        '#token_types' => array('user'),
       );
     }
-    elseif ($op == 'save') {
-      $return['source_attach']['path'] = 'file_attach';
-      $return['source_attach']['absolute'] = 0;
-      $return['source_attach']['attach_mode'] = 'move';
-    }
+    $return['source_attach']['absolute'] = array(
+      '#type' => 'radios',
+      '#title' => t('File attach location'),
+      '#options' => array(
+        0 => t('Within the files directory'),
+        1 => t('Absolute server path'),
+      ),
+      '#default_value' => $settings['source_attach']['absolute'],
+      '#description' => t('The <em>File attach path</em> may be with the files directory (%file_directory) or from the root of your server. If an absolute path is used and it does not start with a "/" your path will be relative to your site directory: %realpath.', array('%file_directory' => drupal_realpath(file_default_scheme() . '://'), '%realpath' => realpath('./'))),
+    );
+    $return['source_attach']['attach_mode'] = array(
+      '#type' => 'radios',
+      '#title' => t('Attach method'),
+      '#options' => array(
+        'move' => t('Move the file directly to the final location'),
+        'copy' => t('Leave a copy of the file in the attach directory'),
+      ),
+      '#default_value' => isset($settings['source_attach']['attach_mode']) ? $settings['source_attach']['attach_mode'] : 'move',
+    );
 
     return $return;
   }
 
-  public static function validate($element, &$form_state) {
-    // Only validate if this source is enabled.
-    if (!$form_state['values']['instance']['widget']['settings']['filefield_sources']['filefield_sources']['attach']) {
-      return;
-    }
+  public static function validate(&$element, FormStateInterface $form_state, &$complete_form) {
+    $parents = $element['#parents'];
+    $current_element_id = array_pop($parents);
+    $input_exists = FALSE;
 
-    // Strip slashes from the end of the file path.
-    $filepath = rtrim($element['path']['#value'], '\\/');
-    form_set_value($element['path'], $filepath, $form_state);
-    $filepath = _filefield_source_attach_directory($form_state['values']['instance']);
+    // Get input of the whole parent element.
+    $input = NestedArray::getValue($form_state->getValues(), $parents, $input_exists);
+    if ($input_exists) {
+      // Only validate if this source is enabled.
+      if (!$input['filefield_sources']['attach']) {
+        return;
+      }
 
-    // Check that the directory exists and is writable.
-    if (!file_prepare_directory($filepath, FILE_CREATE_DIRECTORY)) {
-      form_error($element['path'], t('Specified file attach path must exist or be writable.'));
+      // Strip slashes from the end of the file path.
+      $filepath = rtrim($element['path']['#value'], '\\/');
+      form_set_value($element['path'], $filepath, $form_state);
+      $filepath = $path = static::getDirectory(($form_state['values']['instance']));
+
+      // Check that the directory exists and is writable.
+      if (!file_prepare_directory($filepath, FILE_CREATE_DIRECTORY)) {
+        form_error($element['path'], t('Specified file attach path must exist or be writable.'));
+      }
     }
   }
 

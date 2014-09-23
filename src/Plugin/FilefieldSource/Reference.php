@@ -10,6 +10,7 @@ namespace Drupal\filefield_sources\Plugin\FilefieldSource;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\filefield_sources\FilefieldSourceInterface;
 use Symfony\Component\Routing\Route;
+use Drupal\Core\Field\WidgetInterface;
 
 define('FILEFIELD_SOURCE_REFERENCE_HINT_TEXT', 'example.png [fid:123]');
 
@@ -162,37 +163,34 @@ class Reference extends FilefieldSourceInterface {
         '_access_filefield_sources_field' => 'TRUE',
       )
     );
+
+    return $routes;
   }
 
   /**
    * Implements hook_filefield_source_settings().
    */
-  public static function settings($op, $instance) {
-    $return = array();
+  public static function settings(WidgetInterface $plugin) {
+    $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', array(
+      'source_reference' => array(
+        'autocomplete' => '0'
+      )
+    ));
 
-    if ($op == 'form') {
-      $settings = $instance['widget']['settings']['filefield_sources'];
+    $return['source_reference'] = array(
+      '#title' => t('Autocomplete reference options'),
+      '#type' => 'details',
+    );
 
-      $return['source_reference'] = array(
-        '#title' => t('Autocomplete reference options'),
-        '#type' => 'fieldset',
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-      );
-
-      $return['source_reference']['autocomplete'] = array(
-        '#title' => t('Match file name'),
-        '#options' => array(
-          '0' => t('Starts with string'),
-          '1' => t('Contains string'),
-        ),
-        '#type' => 'radios',
-        '#default_value' => isset($settings['source_reference']['autocomplete']) ? $settings['source_reference']['autocomplete'] : '0', 
-      );
-    }
-    elseif ($op == 'save') {
-      $return['source_reference']['autocomplete'] = '0';
-    }
+    $return['source_reference']['autocomplete'] = array(
+      '#title' => t('Match file name'),
+      '#options' => array(
+        '0' => t('Starts with string'),
+        '1' => t('Contains string'),
+      ),
+      '#type' => 'radios',
+      '#default_value' => isset($settings['source_reference']['autocomplete']) ? $settings['source_reference']['autocomplete'] : '0',
+    );
 
     return $return;
   }

@@ -179,6 +179,8 @@ class Clipboard extends FilefieldSourceInterface {
         '_access_filefield_sources_field' => 'TRUE',
       )
     );
+
+    return $routes;
   }
 
 }

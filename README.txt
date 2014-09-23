@@ -26,7 +26,7 @@ Installation
    on a type you'd like to modify. Add a new file field or edit an existing one.
 
    While editing the file or image field, you'll have new options available
-   under a "File sources" fieldset. You can enable the desired sources for that
+   under a "File sources" details. You can enable the desired sources for that
    particular field.
 
 4) Create a piece of content that uses your file file and try it out.

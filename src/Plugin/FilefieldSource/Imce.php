@@ -10,10 +10,11 @@ namespace Drupal\filefield_sources\Plugin\FilefieldSource;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\filefield_sources\FilefieldSourceInterface;
 use Symfony\Component\Routing\Route;
+use Drupal\Core\Field\WidgetInterface;
 
 /**
  * A FileField source plugin to allow referencing of files from IMCE.
- * @todo Check if module imce exists: module_exists('imce') && imce_access()
+ * @todo Check if module imce exists: \Drupal::moduleHandler()->moduleExists('imce') && imce_access()
  *
  * @FilefieldSource(
  *   id = "imce",
@@ -141,7 +142,7 @@ class Imce extends FilefieldSourceInterface {
     global $conf;
 
     // Check access.
-    if (!module_exists('imce') || !imce_access() || !$instance = field_info_instance($entity_type, $field_name, $bundle_name)) {
+    if (!\Drupal::moduleHandler()->moduleExists('imce') || !imce_access() || !$instance = field_info_instance($entity_type, $field_name, $bundle_name)) {
       return drupal_access_denied();
     }
     $field = field_info_field($field_name);
@@ -273,38 +274,35 @@ class Imce extends FilefieldSourceInterface {
         '_access_filefield_sources_field' => 'TRUE',
       )
     );
+
+    return $routes;
   }
 
   /**
    * Implements hook_filefield_source_settings().
    */
-  public static function settings($op, $instance) {
-    $return = array();
+  public static function settings(WidgetInterface $plugin) {
+    $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', array(
+      'source_imce' => array(
+        'imce_mode' => 0
+      )
+    ));
 
-    if ($op == 'form') {
-      $settings = $instance['widget']['settings']['filefield_sources'];
+    $return['source_imce'] = array(
+      '#title' => t('IMCE file browser settings'),
+      '#type' => 'details',
+      '#access' => \Drupal::moduleHandler()->moduleExists('imce'),
+    );
 
-      $return['source_imce'] = array(
-        '#title' => t('IMCE file browser settings'),
-        '#type' => 'fieldset',
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-        '#access' => module_exists('imce'),
-      );
-
-      $return['source_imce']['imce_mode'] = array(
-        '#type' => 'radios',
-        '#title' => t('File browser mode'),
-        '#options' => array(
-          0 => t('Restricted: Users can only browse the field directory. No file operations are allowed.'),
-          1 => t('Full: Browsable directories are defined by <a href="!imce-admin-url">IMCE configuration profiles</a>. File operations are allowed.', array('!imce-admin-url' => url('admin/config/media/imce'))),
-        ),
-        '#default_value' => isset($settings['source_imce']['imce_mode']) ? $settings['source_imce']['imce_mode'] : 0,
-      );
-    }
-    elseif ($op == 'save') {
-      $return['source_imce']['imce_mode'] = 0;
-    }
+    $return['source_imce']['imce_mode'] = array(
+      '#type' => 'radios',
+      '#title' => t('File browser mode'),
+      '#options' => array(
+        0 => t('Restricted: Users can only browse the field directory. No file operations are allowed.'),
+        1 => t('Full: Browsable directories are defined by <a href="!imce-admin-url">IMCE configuration profiles</a>. File operations are allowed.', array('!imce-admin-url' => url('admin/config/media/imce'))),
+      ),
+      '#default_value' => isset($settings['source_imce']['imce_mode']) ? $settings['source_imce']['imce_mode'] : 0,
+    );
 
     return $return;
 
