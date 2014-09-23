@@ -34,7 +34,7 @@ class FilefieldSourceManager extends DefaultPluginManager {
   public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler) {
     $this->setCacheBackend($cache_backend, 'filefield_sources');
 
-    parent::__construct('Plugin/FilefieldSource', $namespaces, $module_handler, 'Drupal\filefield_sources\Annotation\FilefieldSource');
+    parent::__construct('Plugin/FilefieldSource', $namespaces, $module_handler, 'Drupal\filefield_sources\FilefieldSourceInterface', 'Drupal\filefield_sources\Annotation\FilefieldSource');
   }
 
 }
