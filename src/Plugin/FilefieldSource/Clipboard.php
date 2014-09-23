@@ -22,7 +22,7 @@ use Symfony\Component\Routing\Route;
  *   weight = 1
  * )
  */
-class Clipboard extends FilefieldSourceInterface {
+class Clipboard implements FilefieldSourceInterface {
 
   /**
    * {@inheritdoc}

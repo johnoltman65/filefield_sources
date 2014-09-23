@@ -24,7 +24,7 @@ define('FILEFIELD_SOURCE_REMOTE_HINT_TEXT', 'http://example.com/files/file.png')
  *   description = @Translation("Download a file from a remote server.")
  * )
  */
-class Remote extends FilefieldSourceInterface {
+class Remote implements FilefieldSourceInterface {
 
   /**
    * {@inheritdoc}

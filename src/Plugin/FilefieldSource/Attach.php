@@ -23,7 +23,7 @@ use Drupal\Component\Utility\NestedArray;
  *   weight = 3
  * )
  */
-class Attach extends FilefieldSourceInterface {
+class Attach implements FilefieldSourceInterface {
 
   /**
    * {@inheritdoc}

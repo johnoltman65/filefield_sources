@@ -24,7 +24,7 @@ use Drupal\Core\Field\WidgetInterface;
  *   weight = -1
  * )
  */
-class Imce extends FilefieldSourceInterface {
+class Imce implements FilefieldSourceInterface {
 
   /**
    * {@inheritdoc}

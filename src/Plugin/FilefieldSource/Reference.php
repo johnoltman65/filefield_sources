@@ -25,7 +25,7 @@ define('FILEFIELD_SOURCE_REFERENCE_HINT_TEXT', 'example.png [fid:123]');
  *   weight = 1
  * )
  */
-class Reference extends FilefieldSourceInterface {
+class Reference implements FilefieldSourceInterface {
 
   /**
    * {@inheritdoc}
