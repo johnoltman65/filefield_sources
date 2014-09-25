@@ -29,11 +29,14 @@ function filefield_sources_element_info() {
  * Implements hook_theme().
  */
 function filefield_sources_theme() {
-  $params = array();
-  $theme = filefield_sources_invoke_all('theme', $params);
+  $theme = array();
+
+  $theme['filefield_sources_element'] = array(
+    'render element' => 'element',
+  );
 
   $theme['filefield_sources_list'] = array(
-    'arguments' => array('sources' => NULL),
+    'variables' => array('element' => NULL, 'sources' => NULL),
   );
 
   return $theme;
@@ -155,10 +158,13 @@ function filefield_sources_form($plugin, FormStateInterface $form_state) {
  * by implementing hook_filefield_sources_info().
  */
 function filefield_sources_field_process(&$element, FormStateInterface $form_state, &$complete_form) {
+  static $js_added;
+
   if (!isset($element['#filefield_sources_settings'])) {
     return $element;
   }
   $settings = $element['#filefield_sources_settings'];
+  unset($element['#filefield_sources_settings']);
   $enabled_sources = _filefield_sources_enabled($settings);
 
   // Do all processing as needed by each source.
@@ -196,13 +202,19 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
   $element['#attached']['js'][] = $path . '/filefield_sources.js';
 
   // Check the element for hint text that might need to be added.
+  $js_settings = array('fileFieldSources' => array());
   foreach (element_children($element) as $key) {
     if (isset($element[$key]['#filefield_sources_hint_text']) && !isset($js_added[$key])) {
       $type = str_replace('filefield_', '', $key);
-      drupal_add_js(array('fileFieldSources' => array($type => array('hintText' => $element[$key]['#filefield_sources_hint_text']))), 'setting');
+      $js_settings['fileFieldSources'][$type] = array('hintText' => $element[$key]['#filefield_sources_hint_text']);
       $js_added[$key] = TRUE;
     }
   }
+
+  $element['#attached']['js'][] = array(
+    'type' => 'setting',
+    'data' => $js_settings,
+  );
 
   // Adjust the AJAX settings so that on upload and remove of any individual
   // file, the entire group of file fields is updated together.
@@ -582,6 +594,27 @@ function filefield_sources_clean_filename($filepath, $extensions) {
   $filename = file_munge_filename($filename, $extensions);
   $directory = drupal_dirname($filepath);
   return ($directory != '.' ? $directory . '/' : '') . $filename;
+}
+
+/**
+ * Theme the display of the source element.
+ */
+function theme_filefield_sources_element($variables) {
+  $element = $variables['element'];
+  $source_id = $element['#source_id'];
+  $method = isset($element['#method']) ? $element['#method'] : 'element';
+  $extra_variables = isset($element['#variables']) ? $element['#variables'] : array();
+
+  $sources = filefield_sources_info();
+  if (isset($sources[$source_id]['class'])) {
+    $callback = array($sources[$source_id]['class'], $method);
+    if (is_callable($callback)) {
+      $variables = array_merge($variables, $extra_variables);
+      return call_user_func_array($callback, array($variables));
+    }
+  }
+
+  return '';
 }
 
 /**

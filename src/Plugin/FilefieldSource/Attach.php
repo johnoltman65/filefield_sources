@@ -28,7 +28,7 @@ class Attach implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function valueCallback(&$element, $input, FormStateInterface $form_state) {
+  public static function value(&$element, $input, FormStateInterface $form_state) {
     if (!empty($input['filefield_attach']['filename'])) {
       $instance = field_info_instance($element['#entity_type'], $element['#field_name'], $element['#bundle']);
       $filepath = $input['filefield_attach']['filename'];
@@ -79,13 +79,14 @@ class Attach implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function processCallback(&$element, FormStateInterface $form_state, &$complete_form) {
+  public static function process(&$element, FormStateInterface $form_state, &$complete_form) {
     $instance = field_widget_instance($element, $form_state);
     $settings = $instance['widget']['settings']['filefield_sources']['source_attach'];
 
     $element['filefield_attach'] = array(
       '#weight' => 100.5,
-      '#theme' => 'filefield_source_attach_element',
+      '#theme' => 'filefield_sources_element',
+      '#source_id' => 'attach',
       '#filefield_source' => TRUE, // Required for proper theming.
     );
 
@@ -154,21 +155,9 @@ class Attach implements FilefieldSourceInterface {
   }
 
   /**
-   * Implements hook_theme().
-   */
-  public static function theme() {
-    return array(
-      'filefield_source_attach_element' => array(
-        'render element' => 'element',
-        'function' => array(get_called_class(), 'attachElement'),
-      ),
-    );
-  }
-
-  /**
    * Theme the output of the attach element.
    */
-  public static function attachElement($variables) {
+  public static function element($variables) {
     $element = $variables['element'];
 
     if (isset($element['attach_message'])) {

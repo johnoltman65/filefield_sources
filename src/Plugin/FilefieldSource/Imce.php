@@ -29,7 +29,7 @@ class Imce implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function valueCallback(&$element, $input, FormStateInterface $form_state) {
+  public static function value(&$element, $input, FormStateInterface $form_state) {
     if (isset($input['filefield_imce']['file_path']) && $input['filefield_imce']['file_path'] != '') {
       $field = field_info_field($element['#field_name']);
 
@@ -61,12 +61,13 @@ class Imce implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function processCallback(&$element, FormStateInterface $form_state, &$complete_form) {
+  public static function process(&$element, FormStateInterface $form_state, &$complete_form) {
     $instance = field_widget_instance($element, $form_state);
 
     $element['filefield_imce'] = array(
       '#weight' => 100.5,
-      '#theme' => 'filefield_source_imce_element',
+      '#theme' => 'filefield_sources_element',
+      '#source_id' => 'imce',
       '#filefield_source' => TRUE, // Required for proper theming.
       '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
     );
@@ -114,21 +115,9 @@ class Imce implements FilefieldSourceInterface {
   }
 
   /**
-   * Implements hook_theme().
-   */
-  public static function theme() {
-    return array(
-      'filefield_source_imce_element' => array(
-        'render element' => 'element',
-        'function' => array(get_called_class(), 'imceElement'),
-      ),
-    );
-  }
-
-  /**
    * Theme the output of the imce element.
    */
-  function imceElement($variables) {
+  public static function element($variables) {
     $element = $variables['element'];
 
     $output = drupal_render_children($element);;

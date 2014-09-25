@@ -30,7 +30,7 @@ class Reference implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function valueCallback(&$element, $input, FormStateInterface $form_state) {
+  public static function value(&$element, $input, FormStateInterface $form_state) {
     if (isset($input['filefield_reference']['autocomplete']) && strlen($input['filefield_reference']['autocomplete']) > 0 && $input['filefield_reference']['autocomplete'] != FILEFIELD_SOURCE_REFERENCE_HINT_TEXT) {
       $matches = array();
       if (preg_match('/\[fid:(\d+)\]/', $input['filefield_reference']['autocomplete'], $matches)) {
@@ -62,11 +62,12 @@ class Reference implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function processCallback(&$element, FormStateInterface $form_state, &$complete_form) {
+  public static function process(&$element, FormStateInterface $form_state, &$complete_form) {
 
     $element['filefield_reference'] = array(
       '#weight' => 100.5,
-      '#theme' => 'filefield_source_reference_element',
+      '#theme' => 'filefield_sources_element',
+      '#source_id' => 'reference',
       '#filefield_source' => TRUE, // Required for proper theming.
       '#filefield_sources_hint_text' => FILEFIELD_SOURCE_REFERENCE_HINT_TEXT,
     );
@@ -96,25 +97,9 @@ class Reference implements FilefieldSourceInterface {
   }
 
   /**
-   * Implements hook_theme().
-   */
-  public static function theme() {
-    return array(
-      'filefield_source_reference_element' => array(
-        'render element' => 'element',
-        'function' => array(get_called_class(), 'referenceElement'),
-      ),
-      'filefield_source_reference_autocomplete_item' => array(
-        'variables' => array('file' => NULL),
-        'function' => array(get_called_class(), 'autocompleteItem'),
-      ),
-    );
-  }
-
-  /**
    * Theme the output of the autocomplete field.
    */
-  function referenceElement($variables) {
+  public static function element($variables) {
     $element = $variables['element'];
 
     $element['autocomplete']['#field_suffix'] = drupal_render($element['select']);
@@ -124,7 +109,7 @@ class Reference implements FilefieldSourceInterface {
   /**
    * Theme the output of a single item in the autocomplete list.
    */
-  function autocompleteItem($variables) {
+  public static function autocompleteElement($variables) {
     $file = $variables['file'];
 
     $output = '';
@@ -144,7 +129,15 @@ class Reference implements FilefieldSourceInterface {
     if (!empty($field)) {
       $files = static::getFiles($filename, $field);
       foreach ($files as $fid => $file) {
-        $items[$file->filename ." [fid:$fid]"] = theme('filefield_source_reference_autocomplete_item', array('file' => $file));
+        $autocomplete = array(
+          '#theme' => 'filefield_sources_element',
+          '#source_id' => 'reference',
+          '#method' => 'autocompleteElement',
+          '#variables' => array(
+            'file' => $file
+          ),
+        );
+        $items[$file->filename ." [fid:$fid]"] = drupal_render($autocomplete);
       }
     }
 

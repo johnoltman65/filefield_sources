@@ -29,7 +29,7 @@ class Remote implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function valueCallback(&$element, $input, FormStateInterface $form_state) {
+  public static function value(&$element, $input, FormStateInterface $form_state) {
     if (isset($input['filefield_remote']['url']) && strlen($input['filefield_remote']['url']) > 0 && valid_url($input['filefield_remote']['url']) && $input['filefield_remote']['url'] != FILEFIELD_SOURCE_REMOTE_HINT_TEXT) {
       $field = field_info_instance($element['#entity_type'], $element['#field_name'], $element['#bundle']);
       $url = $input['filefield_remote']['url'];
@@ -286,11 +286,12 @@ class Remote implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function processCallback(&$element, FormStateInterface $form_state, &$complete_form) {
+  public static function process(&$element, FormStateInterface $form_state, &$complete_form) {
 
     $element['filefield_remote'] = array(
       '#weight' => 100.5,
-      '#theme' => 'filefield_source_remote_element',
+      '#theme' => 'filefield_sources_element',
+      '#source_id' => 'remote',
       '#filefield_source' => TRUE, // Required for proper theming.
       '#filefield_sources_hint_text' => FILEFIELD_SOURCE_REMOTE_HINT_TEXT,
     );
@@ -324,21 +325,9 @@ class Remote implements FilefieldSourceInterface {
   }
 
   /**
-   * Implements hook_theme().
-   */
-  public static function theme() {
-    return array(
-      'filefield_source_remote_element' => array(
-        'render element' => 'element',
-        'function' => array(get_called_class(), 'remoteElement'),
-      ),
-    );
-  }
-
-  /**
    * Theme the output of the remote element.
    */
-  function remoteElement($variables) {
+  public static function element($variables) {
     $element = $variables['element'];
 
     $element['url']['#field_suffix'] = drupal_render($element['transfer']);

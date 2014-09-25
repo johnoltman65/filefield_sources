@@ -27,7 +27,7 @@ class Clipboard implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function valueCallback(&$element, $input, FormStateInterface $form_state) {
+  public static function value(&$element, $input, FormStateInterface $form_state) {
     if (isset($input['filefield_clipboard']['contents']) && strlen($input['filefield_clipboard']['contents']) > 0) {
       // Check that the destination is writable.
       $temporary_directory = 'temporary://';
@@ -84,14 +84,15 @@ class Clipboard implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function processCallback(&$element, FormStateInterface $form_state, &$complete_form) {
+  public static function process(&$element, FormStateInterface $form_state, &$complete_form) {
     // If settings are needed later:
     //$instance = field_widget_instance($element, $form_state);
     //$settings = $instance['widget']['settings']['filefield_sources']['source_clipboard'];
 
     $element['filefield_clipboard'] = array(
       '#weight' => 100.5,
-      '#theme' => 'filefield_source_clipboard_element',
+      '#theme' => 'filefield_sources_element',
+      '#source_id' => 'clipboard',
       '#filefield_source' => TRUE, // Required for proper theming.
       '#filefield_sources_hint_text' => t('Enter filename then paste.'),
       '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
@@ -127,28 +128,16 @@ class Clipboard implements FilefieldSourceInterface {
   }
 
   /**
-   * Implements hook_theme().
-   */
-  public static function theme() {
-    return array(
-      'filefield_source_clipboard_element' => array(
-        'render element' => 'element',
-        'function' => array(get_called_class(), 'clipboardElement'),
-      ),
-    );
-  }
-
-  /**
    * Theme the output of the clipboard element.
    */
-  function clipboardElement($variables) {
+  public static function element($variables) {
     $element = $variables['element'];
 
     $capture = '<div class="filefield-source-clipboard-capture" contenteditable="true"><span class="hint">example_filename.png</span></div>';
     $element['#field_suffix'] = drupal_render($element['upload']) . ' <span class="hint">' . t('ctrl + v') . '</span>';
     $element['#description'] = t('Enter a file name and paste an image from the clipboard. This feature only works in <a href="http://drupal.org/node/1775902">limited browsers</a>.');
     $element['#children'] = $capture . drupal_render_children($element);
-    return '<div class="filefield-source filefield-source-clipboard clear-block">' . theme('form_element', array('element' => $element)) . '</div>';
+    return '<div class="filefield-source filefield-source-clipboard clear-block">' . drupal_render($element) . '</div>';
   }
 
   /**
