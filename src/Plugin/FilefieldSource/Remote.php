@@ -357,7 +357,7 @@ class Remote implements FilefieldSourceInterface {
   public static function routes() {
     $routes = array();
 
-    $routes['filefield_sources.clipboard'] = new Route(
+    $routes['filefield_sources.remote'] = new Route(
       '/file/remote/{entity_type}/{bundle_name}/{field_name}/{delta}',
       array(
         '_controller' => get_called_class() . '::progress',
