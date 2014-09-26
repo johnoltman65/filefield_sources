@@ -237,7 +237,7 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
   }
 
   // Add the list of sources to the element for toggling between sources.
-  if (empty($element['fid']['#value'])) {
+  if (empty($element['fids']['#value'])) {
     if (count($enabled_sources) > 1) {
       $element['filefield_sources_list'] = array(
         '#theme' => 'filefield_sources_list',
@@ -256,7 +256,7 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
  */
 function filefield_sources_field_pre_render($element) {
   // If we already have a file, we don't want to show the upload controls.
-  if (!empty($element['#value']['fid'])) {
+  if (!empty($element['#value']['fids'])) {
     foreach (element_children($element) as $key) {
       if (!empty($element[$key]['#filefield_source'])) {
         $element[$key]['#access'] = FALSE;
