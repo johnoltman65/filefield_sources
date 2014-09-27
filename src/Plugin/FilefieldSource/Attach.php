@@ -96,7 +96,8 @@ class Attach implements FilefieldSourceInterface {
     // If we have built this element before, append the list of options that we
     // had previously. This allows files to be deleted after copying them and
     // still be considered a valid option during the validation and submit.
-    if (!isset($form_state['triggering_element']) && isset($form_state['filefield_sources'][$instance['field_name']]['attach_options'])) {
+    $triggering_element = $form_state->getTriggeringElement();
+    if (!isset($triggering_element) && isset($form_state['filefield_sources'][$instance['field_name']]['attach_options'])) {
       $options = $options + $form_state['filefield_sources'][$instance['field_name']]['attach_options'];
     }
     // On initial form build and rebuilds after processing input, save the
