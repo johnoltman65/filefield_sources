@@ -11,6 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\filefield_sources\FilefieldSourceInterface;
 use Symfony\Component\Routing\Route;
 use Drupal\Core\Field\WidgetInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 define('FILEFIELD_SOURCE_REMOTE_HINT_TEXT', 'http://example.com/files/file.png');
 
@@ -359,7 +360,7 @@ class Remote implements FilefieldSourceInterface {
       $progress['percentage'] = round(100 * $current / $total);
     }
 
-    drupal_json_output($progress);
+    return new JsonResponse($progress);
   }
 
   public static function routes() {

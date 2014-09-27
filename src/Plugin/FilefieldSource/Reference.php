@@ -11,6 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\filefield_sources\FilefieldSourceInterface;
 use Symfony\Component\Routing\Route;
 use Drupal\Core\Field\WidgetInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 define('FILEFIELD_SOURCE_REFERENCE_HINT_TEXT', 'example.png [fid:123]');
 
@@ -141,7 +142,7 @@ class Reference implements FilefieldSourceInterface {
       }
     }
 
-    drupal_json_output($items);
+    return new JsonResponse($items);
   }
 
   public static function routes() {
