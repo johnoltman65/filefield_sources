@@ -200,8 +200,8 @@ class Remote implements FilefieldSourceInterface {
     $options = static::getTransferOptions();
 
     // Get the current progress and update the progress value.
-    // Only update every 64KB to reduce cache_set calls. cURL usually writes
-    // in 16KB chunks.
+    // Only update every 64KB to reduce Drupal::cache()->set() calls.
+    // cURL usually writes in 16KB chunks.
     if (curl_getinfo($ch, CURLINFO_SIZE_DOWNLOAD) / 65536 > $progress_update) {
       $progress_update++;
       $progress = array(
@@ -211,10 +211,10 @@ class Remote implements FilefieldSourceInterface {
       // Set a cache so that we can retrieve this value from the progress bar.
       $cid = 'filefield_transfer:'. session_id() . ':' . $options['key'];
       if ($progress['current'] != $progress['total']) {
-        cache_set($cid, $progress, 'cache', time() + 300);
+        \Drupal::cache()->set($cid, $progress, time() + 300);
       }
       else {
-        cache_clear_all($cid, 'cache');
+        \Drupal::cache()->delete($cid);
       }
     }
 
@@ -353,7 +353,7 @@ class Remote implements FilefieldSourceInterface {
       'percentage' => -1,
     );
 
-    if ($cache = cache_get('filefield_transfer:'. session_id() . ':' . $key)) {
+    if ($cache = \Drupal::cache()->get('filefield_transfer:'. session_id() . ':' . $key)) {
       $current = $cache->data['current'];
       $total = $cache->data['total'];
       $progress['message'] = t('Transferring... (@current of @total)', array('@current' => format_size($current), '@total' => format_size($total)));
