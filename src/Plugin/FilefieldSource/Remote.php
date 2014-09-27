@@ -302,6 +302,23 @@ class Remote implements FilefieldSourceInterface {
       '#maxlength' => NULL,
     );
 
+    $ajax_settings = array(
+      'path' => 'file/ajax',
+      'options' => array(
+        'query' => array(
+          'element_parents' => implode('/', $element['#array_parents']),
+          'form_build_id' => $complete_form['form_build_id']['#value'],
+        ),
+      ),
+      'wrapper' => $element['#id'] . '-ajax-wrapper',
+      'effect' => 'fade',
+      'progress' => array(
+        'type' => 'bar',
+        'path' => 'file/remote/progress/' . $element['#entity_type'] . '/' . $element['#bundle'] . '/' . $element['#field_name'] . '/' . $element['#delta'],
+        'message' => t('Starting transfer...'),
+      ),
+    );
+
     $element['filefield_remote']['transfer'] = array(
       '#name' => implode('_', $element['#array_parents']) . '_transfer',
       '#type' => 'submit',
@@ -309,16 +326,7 @@ class Remote implements FilefieldSourceInterface {
       '#validate' => array(),
       '#submit' => array('filefield_sources_field_submit'),
       '#limit_validation_errors' => array($element['#parents']),
-      '#ajax' => array(
-        'path' => 'file/ajax/' . implode('/', $element['#array_parents']) . '/' . $complete_form['form_build_id']['#value'],
-        'wrapper' => $element['#id'] . '-ajax-wrapper',
-        'effect' => 'fade',
-        'progress' => array(
-          'type' => 'bar',
-          'path' => 'file/remote/progress/' . $element['#entity_type'] . '/' . $element['#bundle'] . '/' . $element['#field_name'] . '/' . $element['#delta'],
-          'message' => t('Starting transfer...'),
-        ),
-      ),
+      '#ajax' => $ajax_settings,
     );
 
     return $element;
@@ -358,7 +366,7 @@ class Remote implements FilefieldSourceInterface {
     $routes = array();
 
     $routes['filefield_sources.remote'] = new Route(
-      '/file/remote/{entity_type}/{bundle_name}/{field_name}/{delta}',
+      '/file/remote/progress/{entity_type}/{bundle_name}/{field_name}/{delta}',
       array(
         '_controller' => get_called_class() . '::progress',
       ),

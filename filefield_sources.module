@@ -109,6 +109,10 @@ function filefield_sources_field_widget_form_alter(&$element, FormStateInterface
   $plugin = $context['widget'];
   if (in_array($plugin->getPluginId(), \Drupal::moduleHandler()->invokeAll('filefield_sources_widgets'))) {
     $element['#filefield_sources_settings'] = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources');
+
+    // Bundle is missing in element.
+    $items = $context['items'];
+    $element['#bundle'] = $items->getEntity()->bundle();
   }
 }
 
