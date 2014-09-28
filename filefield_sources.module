@@ -165,9 +165,12 @@ function filefield_sources_form($plugin, FormStateInterface $form_state) {
 function filefield_sources_field_process(&$element, FormStateInterface $form_state, &$complete_form) {
   static $js_added;
 
+  // Check if we are processing file field sources.
   if (!isset($element['#filefield_sources_settings'])) {
     return $element;
   }
+
+  // Copy the settings out and remove unused property in the element.
   $settings = $element['#filefield_sources_settings'];
   unset($element['#filefield_sources_settings']);
   $enabled_sources = _filefield_sources_enabled($settings);
@@ -201,10 +204,10 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
     }
   }
 
-  // Add basic JS and CSS.
-  $path = drupal_get_path('module', 'filefield_sources');
-  $element['#attached']['css'][] = $path . '/filefield_sources.css';
-  $element['#attached']['js'][] = $path . '/filefield_sources.js';
+  // Add class to upload button.
+  $element['upload_button']['#attributes']['class'][] = 'upload-button';
+
+  $element['#attached']['library'][] = 'filefield_sources/drupal.filefield_sources';
 
   // Check the element for hint text that might need to be added.
   $js_settings = array('fileFieldSources' => array());

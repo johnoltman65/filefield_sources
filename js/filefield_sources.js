@@ -1,4 +1,6 @@
-(function ($) {
+(function ($, Drupal) {
+
+"use strict";
 
 /**
  * Behavior to add source options to configured fields.
@@ -57,7 +59,6 @@ Drupal.fileFieldSources = {
     $(fileFieldElement).find('div.filefield-source').each(function() {
       var matches = this.className.match(/filefield-source-([a-z]+)/);
       var sourceType = matches[1];
-      var defaultText = '';
       var textfield = $(this).find('input.form-text:first').get(0);
       var defaultText = (drupalSettings.fileFieldSources && drupalSettings.fileFieldSources[sourceType]) ? drupalSettings.fileFieldSources[sourceType].hintText : '';
 
@@ -239,4 +240,9 @@ Drupal.fileFieldSources = {
   }
 };
 
-})(jQuery);
+// Override triggerUploadButton method from file.js.
+Drupal.file.triggerUploadButton = function (event) {
+  $(event.target).closest('.form-managed-file').find('.form-submit.upload-button').trigger('mousedown');
+}
+
+})(jQuery, Drupal);
