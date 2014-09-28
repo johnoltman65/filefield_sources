@@ -255,20 +255,10 @@ class Remote implements FilefieldSourceInterface {
    */
   protected static function mimeExtension($curl_mime_type = NULL) {
     static $extension = NULL;
-    if (isset($curl_mime_type)) {
-      include_once DRUPAL_ROOT . '/includes/file.mimetypes.inc';
-      $curl_mime_type = drupal_strtolower($curl_mime_type);
-      $mapping = file_mimetype_mapping();
-      // See if this matches a known MIME type.
-      $map_id = array_search($curl_mime_type, $mapping['mimetypes']);
-      if ($map_id !== FALSE) {
-        // If we have a match, get this list of likely extensions. For some reason
-        // Drupal lists the "most common" extension last for most file types
-        // including php, jpg, and doc.
-        if ($extensions = array_keys($mapping['extensions'], $map_id)) {
-          $extension = end($extensions);
-        }
-      }
+    $mimetype = drupal_strtolower($curl_mime_type);
+    $result = \Drupal::service('file.mime_type.guesser.extension')->convertMimeTypeToMostCommonExtension($mimetype);
+    if ($result) {
+      $extension = $result;
     }
     return $extension;
   }

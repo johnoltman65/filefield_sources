@@ -55,10 +55,7 @@ class Clipboard implements FilefieldSourceInterface {
       $file_contents = base64_decode(substr($base64_data, $comma_position + 1));
       $mimetype = substr($base64_data, 5, $semicolon_position - 5);
 
-      include_once('./includes/file.mimetypes.inc');
-      $mime_mapping = file_mimetype_mapping();
-      $mime_key = array_search($mimetype, $mime_mapping['mimetypes']);
-      $extension = array_search($mime_key, $mime_mapping['extensions']);
+      $extension = \Drupal::service('file.mime_type.guesser.extension')->convertMimeTypeToExtension($mimetype);
 
       $filename = trim($input['filefield_clipboard']['filename']);
       $filename = preg_replace('/\.[a-z0-9]{3,4}$/', '', $filename);
