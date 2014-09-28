@@ -12,6 +12,8 @@ use Drupal\filefield_sources\FilefieldSourceInterface;
 use Symfony\Component\Routing\Route;
 use Drupal\Core\Field\WidgetInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Drupal\Component\Utility\UrlHelper;
+use Drupal\Core\Site\Settings;
 
 define('FILEFIELD_SOURCE_REMOTE_HINT_TEXT', 'http://example.com/files/file.png');
 
@@ -45,7 +47,7 @@ class Remote implements FilefieldSourceInterface {
 
       // Check that the destination is writable.
       $directory = $element['#upload_location'];
-      $mode = variable_get('file_chmod_directory', 0775);
+      $mode = Settings::get('file_chmod_directory', FILE_CHMOD_DIRECTORY);
 
       // This first chmod check is for other systems such as S3, which don't work
       // with file_prepare_directory().

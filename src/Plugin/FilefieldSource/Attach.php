@@ -11,6 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\filefield_sources\FilefieldSourceInterface;
 use Drupal\Core\Field\WidgetInterface;
 use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\Site\Settings;
 
 /**
  * A FileField source plugin to allow use of files within a server directory.
@@ -35,7 +36,7 @@ class Attach implements FilefieldSourceInterface {
 
       // Check that the destination is writable.
       $directory = $element['#upload_location'];
-      $mode = variable_get('file_chmod_directory', 0775);
+      $mode = Settings::get('file_chmod_directory', FILE_CHMOD_DIRECTORY);
 
       // This first chmod check is for other systems such as S3, which don't work
       // with file_prepare_directory().
