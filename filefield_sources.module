@@ -179,7 +179,8 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
     if (empty($enabled_sources[$source_name])) {
       unset($sources[$source_name]);
     }
-    else {
+    // Default upload plugin does not have class.
+    elseif (isset($source['class'])) {
       $callback = array($source['class'], 'process');
       if (is_callable($callback)) {
         $element = call_user_func_array($callback, array($element, $form_state, $complete_form));
