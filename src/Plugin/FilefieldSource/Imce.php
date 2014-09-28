@@ -131,7 +131,7 @@ class Imce implements FilefieldSourceInterface {
     global $conf;
 
     // Check access.
-    if (!\Drupal::moduleHandler()->moduleExists('imce') || !imce_access() || !$instance = field_info_instance($entity_type, $field_name, $bundle_name)) {
+    if (!\Drupal::moduleHandler()->moduleExists('imce') || !imce_access() || !$instance = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name)) {
       return drupal_access_denied();
     }
     $field = field_info_field($field_name);

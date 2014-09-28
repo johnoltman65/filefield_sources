@@ -30,7 +30,7 @@ class Attach implements FilefieldSourceInterface {
    */
   public static function value(&$element, $input, FormStateInterface $form_state) {
     if (!empty($input['filefield_attach']['filename'])) {
-      $instance = field_info_instance($element['#entity_type'], $element['#field_name'], $element['#bundle']);
+      $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
       $filepath = $input['filefield_attach']['filename'];
 
       // Check that the destination is writable.
@@ -47,7 +47,7 @@ class Attach implements FilefieldSourceInterface {
 
       // Clean up the file name extensions and transliterate.
       $original_filepath = $filepath;
-      $new_filepath = filefield_sources_clean_filename($filepath, $instance['settings']['file_extensions']);
+      $new_filepath = filefield_sources_clean_filename($filepath, $instance->settings['file_extensions']);
       rename($filepath, $new_filepath);
       $filepath = $new_filepath;
 
@@ -62,7 +62,7 @@ class Attach implements FilefieldSourceInterface {
         $input = array_merge($input, (array) $file);
 
         // Delete the original file if "moving" the file instead of copying.
-        if ($instance['widget']['settings']['filefield_sources']['source_attach']['attach_mode'] !== 'copy') {
+        if ($element['#filefield_sources_settings']['filefield_sources']['source_attach']['attach_mode'] !== 'copy') {
           @unlink($filepath);
         }
       }

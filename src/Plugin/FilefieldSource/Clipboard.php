@@ -144,7 +144,7 @@ class Clipboard implements FilefieldSourceInterface {
     global $conf;
 
     // Check access.
-    if (!$instance = field_info_instance($entity_type, $field_name, $bundle_name)) {
+    if (!$instance = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name)) {
       return drupal_access_denied();
     }
     $field = field_info_field($field_name);

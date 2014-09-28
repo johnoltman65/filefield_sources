@@ -124,7 +124,7 @@ class Reference implements FilefieldSourceInterface {
    * Menu callback; autocomplete.js callback to return a list of files.
    */
   public static function autocomplete($entity_type, $bundle_name, $field_name, $filename) {
-    $field = field_info_instance($entity_type, $field_name, $bundle_name);
+    $field = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name);
 
     $items = array();
     if (!empty($field)) {

@@ -31,8 +31,8 @@ class Remote implements FilefieldSourceInterface {
    * {@inheritdoc}
    */
   public static function value(&$element, $input, FormStateInterface $form_state) {
-    if (isset($input['filefield_remote']['url']) && strlen($input['filefield_remote']['url']) > 0 && valid_url($input['filefield_remote']['url']) && $input['filefield_remote']['url'] != FILEFIELD_SOURCE_REMOTE_HINT_TEXT) {
-      $field = field_info_instance($element['#entity_type'], $element['#field_name'], $element['#bundle']);
+    if (isset($input['filefield_remote']['url']) && strlen($input['filefield_remote']['url']) > 0 && UrlHelper::isValid($input['filefield_remote']['url']) && $input['filefield_remote']['url'] != FILEFIELD_SOURCE_REMOTE_HINT_TEXT) {
+      $field = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
       $url = $input['filefield_remote']['url'];
 
       // Check that the destination is writable.
@@ -111,7 +111,7 @@ class Remote implements FilefieldSourceInterface {
         $pathinfo = pathinfo($filename);
       }
 
-      $filename = filefield_sources_clean_filename($filename, $field['settings']['file_extensions']);
+      $filename = filefield_sources_clean_filename($filename, $field->settings['file_extensions']);
       $filepath = file_create_filename($filename, $temporary_directory);
 
       if (empty($pathinfo['extension'])) {
@@ -120,7 +120,7 @@ class Remote implements FilefieldSourceInterface {
       }
 
       // Perform basic extension check on the file before trying to transfer.
-      $extensions = $field['settings']['file_extensions'];
+      $extensions = $field->settings['file_extensions'];
       $regex = '/\.('. preg_replace('/[ +]/', '|', preg_quote($extensions)) .')$/i';
       if (!empty($extensions) && !preg_match($regex, $filename)) {
         form_error($element, t('Only files with the following extensions are allowed: %files-allowed.', array('%files-allowed' => $extensions)));

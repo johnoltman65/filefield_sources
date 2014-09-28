@@ -170,9 +170,7 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
     return $element;
   }
 
-  // Copy the settings out and remove unused property in the element.
   $settings = $element['#filefield_sources_settings'];
-  unset($element['#filefield_sources_settings']);
   $enabled_sources = _filefield_sources_enabled($settings);
 
   // Do all processing as needed by each source.
