@@ -298,11 +298,12 @@ function filefield_sources_field_submit(&$element, FormStateInterface $form_stat
 
   $triggering_element = $form_state->getTriggeringElement();
   $parents = array_slice($triggering_element['#array_parents'], 0, -3);
+  $new_parents = array_slice($triggering_element['#parents'], 0, -3);
   $element = NestedArray::getValue($element, $parents);
   $field_name = $element['#field_name'];
-  $langcode = $element['#language'];
+//  NestedArray::setValue($form_state->getUserInput(), $new_parents, NULL);
 
-  // Get exisitng file values.
+  // Get existing file values.
   // File Field items are stored in the field state after ajax reloads starting
   // from Drupal 7.8. We try to support all releases by merging the items.
   $field_state = WidgetBase::getWidgetState($element['#field_parents'], $field_name, $form_state);
@@ -750,4 +751,16 @@ function module_get_weight($module) {
     return (int) $weight;
   }
   throw new InvalidArgumentException(format_string('The module %module is not installed.', array('%module' => $module)));
+}
+
+function field_widget_instance($element, $form_state) {
+  //$field_instance = entity_load('field_instance_config', $entity_type_id . '.' . $bundle . '.' . $field_name);
+  //$instance = current(entity_load_multiple_by_properties('field_instance_config', array('entity_type' => 'entity_test', 'field_name' => $instance_definition['field_name'], 'bundle' => $instance_definition['bundle'], 'include_deleted' => TRUE)));
+  $field_state = WidgetBase::getWidgetState($element['#field_parents'], $element['#field_name'], $form_state);
+  return $field_state['instance'];
+}
+
+function field_widget_field($element, $form_state) {
+  $field_state = WidgetBase::getWidgetState($element['#field_parents'], $element['#field_name'], $form_state);
+  return $field_state['field'];
 }
