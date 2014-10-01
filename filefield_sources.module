@@ -354,6 +354,9 @@ function filefield_sources_field_value(&$element, &$input, FormStateInterface $f
 function filefield_sources_invoke_all($method, &$params) {
   $return = array();
   foreach (\Drupal::service('filefield_sources')->getDefinitions() as $plugin_id => $definition) {
+    if (!isset($definition['class'])) {
+      continue;
+    }
     // Get routes defined by each plugin.
     $callback = array($definition['class'], $method);
     if (is_callable($callback)) {
