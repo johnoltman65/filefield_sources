@@ -329,21 +329,21 @@ function filefield_sources_field_submit(&$element, FormStateInterface $form_stat
     WidgetBase::setWidgetState($element['#field_parents'], $field_name, $form_state, $field_state);
   }
 
-  // Clear out input as it will need to be rebuildt.
-  NestedArray::setValue($form_state->getUserInput(), $element['#parents'], NULL);
   $form_state->setRebuild();
 }
 
 /**
  * A #filefield_value_callback to run source value callbacks.
  */
-function filefield_sources_field_value(&$element, $input, FormStateInterface $form_state) {
+function filefield_sources_field_value(&$element, &$input, FormStateInterface $form_state) {
   // Do all processing as needed by each source.
   $sources = filefield_sources_info();
   foreach ($sources as $source) {
-    $callback = array($source['class'], 'value');
-    if (is_callable($callback)) {
-      call_user_func_array($callback, array($element, $input, $form_state));
+    if (isset($source['class'])) {
+      $callback = array($source['class'], 'value');
+      if (is_callable($callback)) {
+        call_user_func_array($callback, array(&$element, &$input, $form_state));
+      }
     }
   }
 }

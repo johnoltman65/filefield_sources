@@ -28,7 +28,7 @@ class Clipboard implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function value(&$element, $input, FormStateInterface $form_state) {
+  public static function value(&$element, &$input, FormStateInterface $form_state) {
     if (isset($input['filefield_clipboard']['contents']) && strlen($input['filefield_clipboard']['contents']) > 0) {
       // Check that the destination is writable.
       $temporary_directory = 'temporary://';
@@ -71,7 +71,9 @@ class Clipboard implements FilefieldSourceInterface {
       }
 
       if ($copy_success && $file = filefield_sources_save_file($filepath, $element['#upload_validators'], $element['#upload_location'])) {
-        $input = array_merge($input, (array) $file);
+        if (!in_array($file->id(), $input['fids'])) {
+          $input['fids'][] = $file->id();
+        }
       }
 
       // Remove the temporary file generated from paste.

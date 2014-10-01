@@ -32,7 +32,7 @@ class Remote implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function value(&$element, $input, FormStateInterface $form_state) {
+  public static function value(&$element, &$input, FormStateInterface $form_state) {
     if (isset($input['filefield_remote']['url']) && strlen($input['filefield_remote']['url']) > 0 && UrlHelper::isValid($input['filefield_remote']['url']) && $input['filefield_remote']['url'] != FILEFIELD_SOURCE_REMOTE_HINT_TEXT) {
       $field = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
       $url = $input['filefield_remote']['url'];
@@ -168,7 +168,9 @@ class Remote implements FilefieldSourceInterface {
         curl_close($ch);
       }
       if ($transfer_success && $file = filefield_sources_save_file($filepath, $element['#upload_validators'], $element['#upload_location'])) {
-        $input = array_merge($input, (array) $file);
+        if (!in_array($file->id(), $input['fids'])) {
+          $input['fids'][] = $file->id();
+        }
       }
 
       // Delete the temporary file.

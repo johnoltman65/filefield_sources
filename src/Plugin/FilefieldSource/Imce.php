@@ -29,7 +29,7 @@ class Imce implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function value(&$element, $input, FormStateInterface $form_state) {
+  public static function value(&$element, &$input, FormStateInterface $form_state) {
     if (isset($input['filefield_imce']['file_path']) && $input['filefield_imce']['file_path'] != '') {
       $field = field_info_field($element['#field_name']);
 

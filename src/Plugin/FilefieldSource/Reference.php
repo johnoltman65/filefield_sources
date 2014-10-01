@@ -31,7 +31,7 @@ class Reference implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function value(&$element, $input, FormStateInterface $form_state) {
+  public static function value(&$element, &$input, FormStateInterface $form_state) {
     if (isset($input['filefield_reference']['autocomplete']) && strlen($input['filefield_reference']['autocomplete']) > 0 && $input['filefield_reference']['autocomplete'] != FILEFIELD_SOURCE_REFERENCE_HINT_TEXT) {
       $matches = array();
       if (preg_match('/\[fid:(\d+)\]/', $input['filefield_reference']['autocomplete'], $matches)) {

@@ -29,7 +29,7 @@ class Attach implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function value(&$element, $input, FormStateInterface $form_state) {
+  public static function value(&$element, &$input, FormStateInterface $form_state) {
     if (!empty($input['filefield_attach']['filename'])) {
       $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
       $filepath = $input['filefield_attach']['filename'];
@@ -60,7 +60,9 @@ class Attach implements FilefieldSourceInterface {
 
       // Save the file to the new location.
       if ($file = filefield_sources_save_file($filepath, $validators, $directory)) {
-        $input = array_merge($input, (array) $file);
+        if (!in_array($file->id(), $input['fids'])) {
+          $input['fids'][] = $file->id();
+        }
 
         // Delete the original file if "moving" the file instead of copying.
         if ($element['#filefield_sources_settings']['filefield_sources']['source_attach']['attach_mode'] !== 'copy') {

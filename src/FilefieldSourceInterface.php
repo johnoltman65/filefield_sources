@@ -34,7 +34,7 @@ interface FilefieldSourceInterface {
    * @return mixed
    *   The value to assign to the element.
    */
-  public static function value(&$element, $input, FormStateInterface $form_state);
+  public static function value(&$element, &$input, FormStateInterface $form_state);
 
   /**
    * Process callback for file field source plugin.
