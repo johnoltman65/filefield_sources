@@ -294,14 +294,12 @@ function filefield_sources_field_validate(&$element, FormStateInterface $form_st
 /**
  * A #submit handler added to all FileField Source buttons.
  */
-function filefield_sources_field_submit(&$element, FormStateInterface $form_state) {
+function filefield_sources_field_submit(&$form, FormStateInterface $form_state) {
 
   $triggering_element = $form_state->getTriggeringElement();
   $parents = array_slice($triggering_element['#array_parents'], 0, -3);
-  $new_parents = array_slice($triggering_element['#parents'], 0, -3);
-  $element = NestedArray::getValue($element, $parents);
+  $element = NestedArray::getValue($form, $parents);
   $field_name = $element['#field_name'];
-//  NestedArray::setValue($form_state->getUserInput(), $new_parents, NULL);
 
   // Get existing file values.
   // File Field items are stored in the field state after ajax reloads starting
@@ -330,6 +328,7 @@ function filefield_sources_field_submit(&$element, FormStateInterface $form_stat
     WidgetBase::setWidgetState($element['#field_parents'], $field_name, $form_state, $field_state);
   }
 
+  // NestedArray::setValue($form_state->getUserInput(), $element['#parents'], NULL);
   $form_state->setRebuild();
 }
 
