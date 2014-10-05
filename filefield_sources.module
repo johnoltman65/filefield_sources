@@ -210,19 +210,18 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
   $element['#attached']['library'][] = 'filefield_sources/drupal.filefield_sources';
 
   // Check the element for hint text that might need to be added.
-  $js_settings = array('fileFieldSources' => array());
-  foreach (element_children($element) as $key) {
+  foreach (Element::children($element) as $key) {
     if (isset($element[$key]['#filefield_sources_hint_text']) && !isset($js_added[$key])) {
       $type = str_replace('filefield_', '', $key);
-      $js_settings['fileFieldSources'][$type] = array('hintText' => $element[$key]['#filefield_sources_hint_text']);
+
+      $element['#attached']['js'][] = array(
+        'type' => 'setting',
+        'data' => array('fileFieldSources' => array($type => array('hintText' => $element[$key]['#filefield_sources_hint_text']))),
+      );
+
       $js_added[$key] = TRUE;
     }
   }
-
-  $element['#attached']['js'][] = array(
-    'type' => 'setting',
-    'data' => $js_settings,
-  );
 
   // Adjust the Ajax settings so that on upload and remove of any individual
   // file, the entire group of file fields is updated together.
