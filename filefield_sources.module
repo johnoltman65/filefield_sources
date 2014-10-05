@@ -224,11 +224,6 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
     'data' => $js_settings,
   );
 
-//   Fix js error: settings.editors is undefined.
-  $formats = filter_formats($user);
-  $format_ids = array_keys($formats);
-  $element['#attached'] = drupal_merge_attached($element['#attached'], \Drupal::getContainer()->get('plugin.manager.editor')->getAttachments($format_ids));
-
   // Adjust the Ajax settings so that on upload and remove of any individual
   // file, the entire group of file fields is updated together.
   // Copied directly from Drupal\file\Plugin\Field\FieldWidget\FileWidget::process().
@@ -244,10 +239,12 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
     $field_element = NestedArray::getValue($complete_form, $parents);
     $new_wrapper = $field_element['#id'] . '-ajax-wrapper';
     foreach (Element::children($element) as $key) {
-      if (isset($element[$key]['#ajax'])) {
-        $element[$key]['#ajax']['path'] = $new_path;
-        $element[$key]['#ajax']['options'] = $new_options;
-        $element[$key]['#ajax']['wrapper'] = $new_wrapper;
+      foreach (Element::children($element[$key]) as $subkey) {
+        if (isset($element[$key][$subkey]['#ajax'])) {
+          $element[$key][$subkey]['#ajax']['path'] = $new_path;
+          $element[$key][$subkey]['#ajax']['options'] = $new_options;
+          $element[$key][$subkey]['#ajax']['wrapper'] = $new_wrapper;
+        }
       }
     }
     unset($element['#prefix'], $element['#suffix']);
