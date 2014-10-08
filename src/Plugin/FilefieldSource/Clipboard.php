@@ -134,7 +134,7 @@ class Clipboard implements FilefieldSourceInterface {
     $element = $variables['element'];
 
     $capture = '<div class="filefield-source-clipboard-capture" contenteditable="true"><span class="hint">example_filename.png</span></div>';
-    $element['#field_suffix'] = drupal_render($element['upload']) . ' <span class="hint">' . t('ctrl + v') . '</span>';
+    $element['#suffix'] = drupal_render($element['upload']) . ' <span class="hint">' . t('ctrl + v') . '</span>';
     $element['#description'] = t('Enter a file name and paste an image from the clipboard. This feature only works in <a href="http://drupal.org/node/1775902">limited browsers</a>.');
     $element['#children'] = $capture . drupal_render_children($element);
     return '<div class="filefield-source filefield-source-clipboard clear-block">' . drupal_render($element) . '</div>';
