@@ -8,6 +8,7 @@
 namespace Drupal\filefield_sources\Access;
 
 use Drupal\Core\Routing\Access\AccessInterface as RoutingAccessInterface;
+use Drupal\Core\Session\AccountInterface;
 
 /**
  * Allows access to routes to be controlled by a '_filefield_sources_field_access' parameter.
@@ -23,13 +24,15 @@ class FieldAccessCheck implements RoutingAccessInterface {
    *   Bundle name.
    * @param string $field_name
    *   Field name.
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The currently logged in account.
    *
    * @return string
    *   A \Drupal\Core\Access\AccessInterface constant value.
    */
-  public function access($entity_type, $bundle_name, $field_name) {
-    $field = field_info_field($field_name);
-    return field_access('edit', $field, $entity_type) ? static::ALLOW : static::DENY;
+  public function access($entity_type, $bundle_name, $field_name, AccountInterface $account) {
+    $field = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name);
+    return $field->access('edit', $account, TRUE);
   }
 
 }

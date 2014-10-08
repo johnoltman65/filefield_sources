@@ -12,6 +12,7 @@ use Drupal\filefield_sources\FilefieldSourceInterface;
 use Symfony\Component\Routing\Route;
 use Drupal\Core\Field\WidgetInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 
 define('FILEFIELD_SOURCE_REFERENCE_HINT_TEXT', 'example.png [fid:123]');
 
@@ -73,9 +74,16 @@ class Reference implements FilefieldSourceInterface {
       '#filefield_sources_hint_text' => FILEFIELD_SOURCE_REFERENCE_HINT_TEXT,
     );
 
+    $autocomplete_route_parameters = array(
+      'entity_type' => $element['#entity_type'],
+      'bundle_name' => $element['#bundle'],
+      'field_name' => $element['#field_name'],
+    );
+
     $element['filefield_reference']['autocomplete'] = array(
       '#type' => 'textfield',
-      '#autocomplete_path' => 'file/reference/' . $element['#entity_type'] . '/' . $element['#bundle'] . '/' . $element['#field_name'],
+      '#autocomplete_route_name' => 'filefield_sources.autocomplete',
+      '#autocomplete_route_parameters' => $autocomplete_route_parameters,
       '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
     );
 
@@ -123,22 +131,25 @@ class Reference implements FilefieldSourceInterface {
   /**
    * Menu callback; autocomplete.js callback to return a list of files.
    */
-  public static function autocomplete($entity_type, $bundle_name, $field_name, $filename) {
-    $field = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name);
-
+  public static function autocomplete(Request $request, $entity_type, $bundle_name, $field_name) {
     $items = array();
-    if (!empty($field)) {
-      $files = static::getFiles($filename, $field);
-      foreach ($files as $fid => $file) {
-        $autocomplete = array(
-          '#theme' => 'filefield_sources_element',
-          '#source_id' => 'reference',
-          '#method' => 'autocompleteElement',
-          '#variables' => array(
-            'file' => $file
-          ),
-        );
-        $items[$file->filename ." [fid:$fid]"] = drupal_render($autocomplete);
+
+    $file_name = drupal_strtolower($request->query->get('q'));
+    if (!empty($file_name)) {
+      $field = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name);
+      if (!empty($field)) {
+        $files = static::getFiles($file_name, $field);
+        foreach ($files as $fid => $file) {
+          $autocomplete = array(
+            '#theme' => 'filefield_sources_element',
+            '#source_id' => 'reference',
+            '#method' => 'autocompleteElement',
+            '#variables' => array(
+              'file' => $file
+            ),
+          );
+          $items[$file->filename ." [fid:$fid]"] = drupal_render($autocomplete);
+        }
       }
     }
 
@@ -149,7 +160,7 @@ class Reference implements FilefieldSourceInterface {
     $routes = array();
 
     $routes['filefield_sources.autocomplete'] = new Route(
-      '/file/reference/{entity_type}/{bundle_name}/{field_name}/{file_name}',
+      '/file/reference/{entity_type}/{bundle_name}/{field_name}',
       array(
         '_controller' => get_called_class() . '::autocomplete',
       ),
