@@ -135,6 +135,10 @@ Drupal.fileFieldSources = {
     var clipboardData = null;
     var targetElement = this;
 
+    // $.browser has been remove from jquery from 1.9
+    jQuery.browser = {};
+    jQuery.browser.mozilla = /mozilla/.test(navigator.userAgent.toLowerCase()) && !/webkit/.test(navigator.userAgent.toLowerCase());
+
     // Chrome.
     if (window.event && window.event.clipboardData && window.event.clipboardData.items) {
       clipboardData = window.event.clipboardData;
