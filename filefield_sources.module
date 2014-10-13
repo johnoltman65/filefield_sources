@@ -34,10 +34,12 @@ function filefield_sources_theme() {
 
   $theme['filefield_sources_element'] = array(
     'render element' => 'element',
+    'function' => 'theme_filefield_sources_element',
   );
 
   $theme['filefield_sources_list'] = array(
     'variables' => array('element' => NULL, 'sources' => NULL),
+    'function' => 'theme_filefield_sources_list',
   );
 
   return $theme;
