@@ -142,36 +142,4 @@ class Clipboard implements FilefieldSourceInterface {
     return '<div class="filefield-source filefield-source-clipboard clear-block">' . drupal_render_children($element) . '</div>';
   }
 
-  /**
-   * Handles the uploading of a file through a POST request.
-   */
-  public static function page($entity_type, $bundle_name, $field_name) {
-    global $conf;
-
-    // Check access.
-    if (!$instance = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name)) {
-      return drupal_access_denied();
-    }
-    $field = field_info_field($field_name);
-
-    module_load_include('inc', 'imce', 'inc/imce.page');
-    return imce($field['settings']['uri_scheme']);
-  }
-
-  public static function routes() {
-    $routes = array();
-
-    $routes['filefield_sources.clipboard'] = new Route(
-      '/file/clipboard/{entity_type}/{bundle_name}/{field_name}',
-      array(
-        '_controller' => get_called_class() . '::page',
-      ),
-      array(
-        '_access_filefield_sources_field' => 'TRUE',
-      )
-    );
-
-    return $routes;
-  }
-
 }
