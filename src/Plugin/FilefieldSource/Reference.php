@@ -140,28 +140,49 @@ class Reference implements FilefieldSourceInterface {
    * Menu callback; autocomplete.js callback to return a list of files.
    */
   public static function autocomplete(Request $request, $entity_type, $bundle_name, $field_name) {
-    $items = array();
+    $matches = array();
+    $string = drupal_strtolower($request->query->get('q'));
 
-    $file_name = drupal_strtolower($request->query->get('q'));
-    if (!empty($file_name)) {
-      $field = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name);
-      if (!empty($field)) {
-        $files = static::getFiles($file_name, $field);
-        foreach ($files as $fid => $file) {
-          $autocomplete = array(
-            '#theme' => 'filefield_sources_element',
-            '#source_id' => 'reference',
-            '#method' => 'autocompleteElement',
-            '#variables' => array(
-              'file' => $file
-            ),
-          );
-          $items[$file->filename ." [fid:$fid]"] = drupal_render($autocomplete);
+    $field_definition = entity_create('field_config', array(
+      'field_name' => $field_name,
+      'entity_type' => $entity_type,
+      'bundle' => $bundle_name,
+      'type' => 'entity_reference',
+      'settings' => array(
+        'target_type' => 'file',
+        'handler' => 'default',
+        'handler_settings' => array(
+          'sort' => array(
+            'field' => '_none',
+            'direction' => 'ASC',
+          )
+        ),
+      ),
+    ));
+    $handler = \Drupal::getContainer()->get('plugin.manager.entity_reference.selection')->getSelectionHandler($field_definition);
+
+    if (isset($string)) {
+      // Get an array of matching entities.
+      $widget = entity_get_form_display($entity_type, $bundle_name, 'default')->getComponent($field_name);
+      $match_operator = !empty($widget['settings']['filefield_sources']['autocomplete']) ? $widget['settings']['filefield_sources']['autocomplete'] : 'CONTAINS';
+      $entity_labels = $handler->getReferenceableEntities($string, $match_operator, 10);
+
+      // Loop through the entities and convert them into autocomplete output.
+      foreach ($entity_labels as $values) {
+        foreach ($values as $entity_id => $label) {
+          $key = "$label [fid:$entity_id]";
+          // Strip things like starting/trailing white spaces, line breaks and
+          // tags.
+          $key = preg_replace('/\s\s+/', ' ', str_replace("\n", '', trim(decode_entities(strip_tags($key)))));
+          // Names containing commas or quotes must be wrapped in quotes.
+          $matches[] = array('value' => $key, 'label' => $label);
         }
       }
     }
 
-    return new JsonResponse($items);
+    return $matches;
+
+    return new JsonResponse($matches);
   }
 
   public static function routes() {
@@ -198,69 +219,14 @@ class Reference implements FilefieldSourceInterface {
     $return['source_reference']['autocomplete'] = array(
       '#title' => t('Match file name'),
       '#options' => array(
-        '0' => t('Starts with string'),
-        '1' => t('Contains string'),
+        'STARTS_WITH' => t('Starts with'),
+        'CONTAINS' => t('Contains'),
       ),
       '#type' => 'radios',
-      '#default_value' => isset($settings['source_reference']['autocomplete']) ? $settings['source_reference']['autocomplete'] : '0',
+      '#default_value' => isset($settings['source_reference']['autocomplete']) ? $settings['source_reference']['autocomplete'] : 'STARTS_WITH',
     );
 
     return $return;
-  }
-
-  /**
-   * Get all the files used within a particular field (or all fields).
-   *
-   * @param $file_name
-   *   The partial name of the file to retrieve.
-   * @param $instance
-   *   Optional. A CCK field array for which to filter returned files.
-   */
-  protected static function getFiles($filename, $instance = NULL) {
-    $instances = array();
-    if (!isset($instance)) {
-      foreach (field_info_fields() as $instance) {
-        if ($instance['type'] == 'file' || $instance['type'] == 'image') {
-          $instances[] = $instance;
-        }
-      }
-    }
-    else {
-      $instances = array($instance);
-    }
-
-    $files = array();
-    foreach ($instances as $instance) {
-      // Load the field data, which contains the schema information.
-      $field = field_info_field($instance['field_name']);
-
-      // We don't support fields that are not stored with SQL.
-      if (!isset($field['storage']['details']['sql']['FIELD_LOAD_CURRENT'])) {
-        continue;
-      }
-
-      // 1 == contains, 0 == starts with.
-      $like = empty($instance['widget']['settings']['filefield_sources']['source_reference']['autocomplete']) ? (db_like($filename) . '%') : ('%' . db_like($filename) . '%');
-
-      $table_info = reset($field['storage']['details']['sql']['FIELD_LOAD_CURRENT']);
-      $table = key($field['storage']['details']['sql']['FIELD_LOAD_CURRENT']);
-      $query = db_select($table, 'cf');
-      $query->innerJoin('file_managed', 'f', 'f.fid = cf.' . $table_info['fid']);
-      $query->fields('f');
-      $query->condition('f.status', 1);
-      $query->condition('f.filename', $like, 'LIKE');
-      $query->orderBy('f.timestamp', 'DESC');
-      $query->groupBy('f.fid');
-      $query->range(0, 30);
-      $query->addTag('filefield_source_reference_list');
-      $result = $query->execute();
-
-      foreach ($result as $file) {
-        $files[$file->fid] = $file;
-      }
-    }
-
-    return $files;
   }
 
 }
