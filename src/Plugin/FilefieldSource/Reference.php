@@ -87,6 +87,18 @@ class Reference implements FilefieldSourceInterface {
       '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
     );
 
+    $ajax_settings = array(
+      'path' => 'file/ajax',
+      'options' => array(
+        'query' => array(
+          'element_parents' => implode('/', $element['#array_parents']),
+          'form_build_id' => $complete_form['form_build_id']['#value'],
+        ),
+      ),
+      'wrapper' => $element['#id'] . '-ajax-wrapper',
+      'effect' => 'fade',
+    );
+
     $element['filefield_reference']['select'] = array(
       '#name' => implode('_', $element['#array_parents']) . '_autocomplete_select',
       '#type' => 'submit',
@@ -95,11 +107,7 @@ class Reference implements FilefieldSourceInterface {
       '#submit' => array('filefield_sources_field_submit'),
       '#name' => $element['#name'] . '[filefield_reference][button]',
       '#limit_validation_errors' => array($element['#parents']),
-      '#ajax' => array(
-        'path' => 'file/ajax/' . implode('/', $element['#array_parents']) . '/' . $complete_form['form_build_id']['#value'],
-        'wrapper' => $element['#id'] . '-ajax-wrapper',
-        'effect' => 'fade',
-      ),
+      '#ajax' => $ajax_settings,
     );
 
     return $element;
