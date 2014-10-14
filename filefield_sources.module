@@ -166,7 +166,7 @@ function filefield_sources_form($plugin, FormStateInterface $form_state) {
  */
 function filefield_sources_field_process(&$element, FormStateInterface $form_state, &$complete_form) {
   static $js_added;
-  global $user;
+  $user = \Drupal::currentUser();
 
   // Check if we are processing file field sources.
   if (!isset($element['#filefield_sources_settings'])) {
@@ -404,14 +404,6 @@ function filefield_sources_list($include_default = TRUE) {
   }
 
   return $list;
-}
-
-/**
- * Implements hook_filefield_sources_info().
- */
-function filefield_sources_filefield_sources_info() {
-  $params = array();
-  return filefield_sources_invoke_all('info', $params);
 }
 
 /**
