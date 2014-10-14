@@ -45,7 +45,7 @@ class Reference implements FilefieldSourceInterface {
           }
 
           // Check that the user has access to this file through hook_download().
-          if (!filefield_sources_file_access($file->uri)) {
+          if (!$file->access('download')) {
             $form_state->setError($element, t('You do not have permission to use the selected file.'));
           }
           elseif (filefield_sources_element_validate($element, (object) $file, $form_state)) {
