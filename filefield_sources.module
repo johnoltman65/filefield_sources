@@ -655,13 +655,13 @@ function theme_filefield_sources_list($variables) {
 /**
  * Validate a file based on the $element['#upload_validators'] property.
  */
-function filefield_sources_element_validate($element, $file) {
+function filefield_sources_element_validate($element, $file, FormStateInterface $form_state) {
   $validators = $element['#upload_validators'];
   $errors = array();
 
   // Since this frequently is used to reference existing files, check that
   // they exist first in addition to the normal validations.
-  if (!file_exists($file->uri)) {
+  if (!file_exists($file->getFileUri())) {
     $errors[] = t('The file does not exist.');
   }
   // Call the validation functions.
@@ -684,7 +684,7 @@ function filefield_sources_element_validate($element, $file) {
     else {
       $message .= ' ' . array_pop($errors);
     }
-    form_error($element, $message);
+    $form_state->setError($element, $message);
     return 0;
   }
 

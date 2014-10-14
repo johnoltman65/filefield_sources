@@ -78,13 +78,13 @@ class Remote implements FilefieldSourceInterface {
       if ($info['http_code'] != 200) {
         switch ($info['http_code']) {
           case 403:
-            form_error($element, t('The remote file could not be transferred because access to the file was denied.'));
+            $form_state->setError($element, t('The remote file could not be transferred because access to the file was denied.'));
             break;
           case 404:
-            form_error($element, t('The remote file could not be transferred because it was not found.'));
+            $form_state->setError($element, t('The remote file could not be transferred because it was not found.'));
             break;
           default:
-            form_error($element, t('The remote file could not be transferred due to an HTTP error (@code).', array('@code' => $info['http_code'])));
+            $form_state->setError($element, t('The remote file could not be transferred due to an HTTP error (@code).', array('@code' => $info['http_code'])));
         }
         return;
       }
@@ -117,7 +117,7 @@ class Remote implements FilefieldSourceInterface {
       $filepath = file_create_filename($filename, $temporary_directory);
 
       if (empty($pathinfo['extension'])) {
-        form_error($element, t('The remote URL must be a file and have an extension.'));
+        $form_state->setError($element, t('The remote URL must be a file and have an extension.'));
         return;
       }
 
@@ -125,7 +125,7 @@ class Remote implements FilefieldSourceInterface {
       $extensions = $field->settings['file_extensions'];
       $regex = '/\.('. preg_replace('/[ +]/', '|', preg_quote($extensions)) .')$/i';
       if (!empty($extensions) && !preg_match($regex, $filename)) {
-        form_error($element, t('Only files with the following extensions are allowed: %files-allowed.', array('%files-allowed' => $extensions)));
+        $form_state->setError($element, t('Only files with the following extensions are allowed: %files-allowed.', array('%files-allowed' => $extensions)));
         return;
       }
 
@@ -134,7 +134,7 @@ class Remote implements FilefieldSourceInterface {
         $max_size = $element['#upload_validators']['file_validate_size'][0];
         $file_size = $info['download_content_length'];
         if ($file_size > $max_size) {
-          form_error($element, t('The remote file is %filesize exceeding the maximum file size of %maxsize.', array('%filesize' => format_size($file_size), '%maxsize' => format_size($max_size))));
+          $form_state->setError($element, t('The remote file is %filesize exceeding the maximum file size of %maxsize.', array('%filesize' => format_size($file_size), '%maxsize' => format_size($max_size))));
           return;
         }
       }

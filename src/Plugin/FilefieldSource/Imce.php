@@ -51,7 +51,7 @@ class Imce implements FilefieldSourceInterface {
         }
       }
       else {
-        form_error($element, t('The selected file could not be used because the file does not exist in the database.'));
+        $form_state->setError($element, t('The selected file could not be used because the file does not exist in the database.'));
       }
       // No matter what happens, clear the value from the file path field.
       $input['filefield_imce']['file_path'] = '';

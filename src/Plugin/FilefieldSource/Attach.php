@@ -292,7 +292,7 @@ class Attach implements FilefieldSourceInterface {
 
       // Check that the directory exists and is writable.
       if (!file_prepare_directory($filepath, FILE_CREATE_DIRECTORY)) {
-        form_error($element['path'], t('Specified file attach path must exist or be writable.'));
+        $form_state->setError($element['path'], t('Specified file attach path must exist or be writable.'));
       }
     }
   }

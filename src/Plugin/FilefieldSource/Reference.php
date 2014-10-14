@@ -46,14 +46,14 @@ class Reference implements FilefieldSourceInterface {
 
           // Check that the user has access to this file through hook_download().
           if (!filefield_sources_file_access($file->uri)) {
-            form_error($element, t('You do not have permission to use the selected file.'));
+            $form_state->setError($element, t('You do not have permission to use the selected file.'));
           }
-          elseif (filefield_sources_element_validate($element, (object) $file)) {
+          elseif (filefield_sources_element_validate($element, (object) $file, $form_state)) {
             $input = array_merge($input, (array) $file);
           }
         }
         else {
-          form_error($element, t('The referenced file could not be used because the file does not exist in the database.'));
+          $form_state->setError($element, t('The referenced file could not be used because the file does not exist in the database.'));
         }
       }
       // No matter what happens, clear the value from the autocomplete.
