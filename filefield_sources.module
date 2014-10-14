@@ -389,6 +389,8 @@ function filefield_sources_info($include_default = TRUE) {
     );
   }
 
+  uasort($info, '_filefield_sources_sort');
+
   return $info;
 }
 
