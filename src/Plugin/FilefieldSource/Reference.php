@@ -209,7 +209,7 @@ class Reference implements FilefieldSourceInterface {
   public static function settings(WidgetInterface $plugin) {
     $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', array(
       'source_reference' => array(
-        'autocomplete' => '0'
+        'autocomplete' => 'STARTS_WITH'
       )
     ));
 
