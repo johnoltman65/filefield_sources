@@ -116,26 +116,13 @@ class Reference implements FilefieldSourceInterface {
   }
 
   /**
-   * Theme the output of the autocomplete field.
+   * Theme the output of the reference element.
    */
   public static function element($variables) {
     $element = $variables['element'];
 
     $element['autocomplete']['#field_suffix'] = drupal_render($element['select']);
     return '<div class="filefield-source filefield-source-reference clear-block">' . drupal_render($element['autocomplete']) . '</div>';
-  }
-
-  /**
-   * Theme the output of a single item in the autocomplete list.
-   */
-  public static function autocompleteElement($variables) {
-    $file = $variables['file'];
-
-    $output = '';
-    $output .= '<div class="filefield-source-reference-item">';
-    $output .= '<span class="filename">' . check_plain($file->filename) . '</span> <span class="filesize">(' . format_size($file->filesize) . ')</span>';
-    $output .= '</div>';
-    return $output;
   }
 
   /**
