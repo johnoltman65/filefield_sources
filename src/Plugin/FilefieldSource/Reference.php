@@ -49,7 +49,9 @@ class Reference implements FilefieldSourceInterface {
             $form_state->setError($element, t('You do not have permission to use the selected file.'));
           }
           elseif (filefield_sources_element_validate($element, (object) $file, $form_state)) {
-            $input = array_merge($input, (array) $file);
+            if (!in_array($file->id(), $input['fids'])) {
+              $input['fids'][] = $file->id();
+            }
           }
         }
         else {
