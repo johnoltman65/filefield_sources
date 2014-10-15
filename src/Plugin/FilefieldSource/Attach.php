@@ -179,11 +179,10 @@ class Attach implements FilefieldSourceInterface {
     return '<div class="filefield-source filefield-source-attach clear-block">' . theme('form_element', array('element' => $element)) . '</div>';
   }
 
-  protected static function getDirectory($instance, $account = NULL) {
-    $field = field_info_field($instance['field_name']);
-    $account = isset($account) ? $account : $GLOBALS['user'];
-    $path = $instance['widget']['settings']['filefield_sources']['source_attach']['path'];
-    $absolute = !empty($instance['widget']['settings']['filefield_sources']['source_attach']['absolute']);
+  protected static function getDirectory($settings, $account = NULL) {
+    $account = isset($account) ? $account : \Drupal::currentUser();
+    $path = $settings['path'];
+    $absolute = !empty($settings['absolute']);
 
     // Replace user level tokens.
     // Node level tokens require a lot of complexity like temporary storage
@@ -232,7 +231,7 @@ class Attach implements FilefieldSourceInterface {
       '#title' => t('File attach settings'),
       '#type' => 'details',
       '#description' => t('File attach allows for selecting a file from a directory on the server, commonly used in combination with FTP.') . ' <strong>' . t('This file source will ignore file size checking when used.') . '</strong>',
-      '#element_validate' => array(array(get_called_class(), 'validate')),
+      '#element_validate' => array(array(get_called_class(), 'filePathValidate')),
       '#weight' => 3,
     );
     $return['source_attach']['path'] = array(
@@ -272,7 +271,7 @@ class Attach implements FilefieldSourceInterface {
     return $return;
   }
 
-  public static function validate(&$element, FormStateInterface $form_state, &$complete_form) {
+  public static function filePathValidate(&$element, FormStateInterface $form_state, &$complete_form) {
     $parents = $element['#parents'];
     $current_element_id = array_pop($parents);
     $input_exists = FALSE;
@@ -287,8 +286,8 @@ class Attach implements FilefieldSourceInterface {
 
       // Strip slashes from the end of the file path.
       $filepath = rtrim($element['path']['#value'], '\\/');
-      form_set_value($element['path'], $filepath, $form_state);
-      $filepath = $path = static::getDirectory(($form_state['values']['instance']));
+      $form_state->setValueForElement($element['path'], $filepath);
+      $filepath = $path = static::getDirectory($input['source_attach']);
 
       // Check that the directory exists and is writable.
       if (!file_prepare_directory($filepath, FILE_CREATE_DIRECTORY)) {
