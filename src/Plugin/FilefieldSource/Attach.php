@@ -12,6 +12,7 @@ use Drupal\filefield_sources\FilefieldSourceInterface;
 use Drupal\Core\Field\WidgetInterface;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Site\Settings;
+use Drupal\Core\Template\Attribute;
 
 /**
  * A FileField source plugin to allow use of files within a server directory.
@@ -176,11 +177,10 @@ class Attach implements FilefieldSourceInterface {
       $output = $element['attach_message']['#markup'];
     }
     else {
-      $select = '';
       $size = !empty($element['filename']['#size']) ? ' size="' . $element['filename']['#size'] . '"' : '';
-      _form_set_class($element['filename'], array('form-select'));
+      $element['filename']['#attributes']['class'][] = 'form-select';
       $multiple = !empty($element['#multiple']);
-      $output = '<select name="'. $element['filename']['#name'] .''. ($multiple ? '[]' : '') .'"'. ($multiple ? ' multiple="multiple" ' : '') . drupal_attributes($element['filename']['#attributes']) .' id="'. $element['filename']['#id'] .'" '. $size .'>'. form_select_options($element['filename']) .'</select>';
+      $output = '<select name="'. $element['filename']['#name'] .''. ($multiple ? '[]' : '') .'"'. ($multiple ? ' multiple="multiple" ' : '') . new Attribute($element['filename']['#attributes']) .' id="'. $element['filename']['#id'] .'" '. $size .'>'. form_select_options($element['filename']) .'</select>';
     }
     $output .= drupal_render($element['attach']);
     $element['#children'] = $output;
