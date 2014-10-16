@@ -83,8 +83,8 @@ class Attach implements FilefieldSourceInterface {
    * {@inheritdoc}
    */
   public static function process(&$element, FormStateInterface $form_state, &$complete_form) {
-    $instance = field_widget_instance($element, $form_state);
-    $settings = $instance['widget']['settings']['filefield_sources']['source_attach'];
+    $settings = $element['#filefield_sources_settings']['source_attach'];
+    $field_name = $element['#field_name'];
 
     $element['filefield_attach'] = array(
       '#weight' => 100.5,
@@ -93,20 +93,21 @@ class Attach implements FilefieldSourceInterface {
       '#filefield_source' => TRUE, // Required for proper theming.
     );
 
-    $path = static::getDirectory($instance);
-    $options = static::getOptions($path);
+    $path = static::getDirectory($settings);
+    $options = static::getAttachOptions($path);
 
     // If we have built this element before, append the list of options that we
     // had previously. This allows files to be deleted after copying them and
     // still be considered a valid option during the validation and submit.
     $triggering_element = $form_state->getTriggeringElement();
-    if (!isset($triggering_element) && isset($form_state['filefield_sources'][$instance['field_name']]['attach_options'])) {
-      $options = $options + $form_state['filefield_sources'][$instance['field_name']]['attach_options'];
+    if (!isset($triggering_element) && $form_state->has(array('filefield_sources', $field_name, 'attach_options'))) {
+      $attach_options = $form_state->get(array('filefield_sources', $field_name, 'attach_options'));
+      $options = $options + $attach_options;
     }
     // On initial form build and rebuilds after processing input, save the
     // original list of options so they can be restored in the line above.
     else {
-      $form_state['filefield_sources'][$instance['field_name']]['attach_options'] = $options;
+      $form_state->set(array('filefield_sources', $field_name, 'attach_options'), $options);
     }
 
     $description = t('This method may be used to attach files that exceed the file size limit. Files may be attached from the %directory directory on the server, usually uploaded through FTP.', array('%directory' => realpath($path)));
@@ -140,6 +141,18 @@ class Attach implements FilefieldSourceInterface {
       $element['filefield_attach']['#description'] = $description;
     }
 
+    $ajax_settings = array(
+      'path' => 'file/ajax',
+      'options' => array(
+        'query' => array(
+          'element_parents' => implode('/', $element['#array_parents']),
+          'form_build_id' => $complete_form['form_build_id']['#value'],
+        ),
+      ),
+      'wrapper' => $element['#id'] . '-ajax-wrapper',
+      'effect' => 'fade',
+    );
+
     $element['filefield_attach']['attach'] = array(
       '#name' => implode('_', $element['#array_parents']) . '_attach',
       '#type' => 'submit',
@@ -147,12 +160,7 @@ class Attach implements FilefieldSourceInterface {
       '#validate' => array(),
       '#submit' => array('filefield_sources_field_submit'),
       '#limit_validation_errors' => array($element['#parents']),
-      '#ajax' => array(
-        'path' => 'file/ajax/' . implode('/', $element['#array_parents']) . '/' . $form['form_build_id']['#value'],
-        'wrapper' => $element['#id'] . '-ajax-wrapper',
-         'method' => 'replace',
-         'effect' => 'fade',
-      ),
+      '#ajax' => $ajax_settings,
     );
 
     return $element;
@@ -176,7 +184,8 @@ class Attach implements FilefieldSourceInterface {
     }
     $output .= drupal_render($element['attach']);
     $element['#children'] = $output;
-    return '<div class="filefield-source filefield-source-attach clear-block">' . theme('form_element', array('element' => $element)) . '</div>';
+    $element['#theme_wrappers'] = array('form_element');
+    return '<div class="filefield-source filefield-source-attach clear-block">' . drupal_render($element) . '</div>';
   }
 
   protected static function getDirectory($settings, $account = NULL) {
@@ -194,7 +203,7 @@ class Attach implements FilefieldSourceInterface {
     return $absolute ? $path : file_default_scheme() . '://' . $path;
   }
 
-  protected static function getOptions($path) {
+  protected static function getAttachOptions($path) {
     if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
       drupal_set_message(t('Specified file attach path must exist or be writable.'), 'error');
       return FALSE;
