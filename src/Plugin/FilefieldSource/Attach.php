@@ -42,7 +42,7 @@ class Attach implements FilefieldSourceInterface {
       // This first chmod check is for other systems such as S3, which don't work
       // with file_prepare_directory().
       if (!drupal_chmod($directory, $mode) && !file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
-        watchdog('file', 'File %file could not be copied, because the destination directory %destination is not configured correctly.', array('%file' => $filepath, '%destination' => drupal_realpath($directory)));
+        \Drupal::logger('filefield_sources')->log(E_NOTICE,  'File %file could not be copied, because the destination directory %destination is not configured correctly.', array('%file' => $filepath, '%destination' => drupal_realpath($directory)));
         drupal_set_message(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', array('%file' => $filepath)), 'error');
         return;
       }

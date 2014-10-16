@@ -33,7 +33,7 @@ class Clipboard implements FilefieldSourceInterface {
       // Check that the destination is writable.
       $temporary_directory = 'temporary://';
       if (!file_prepare_directory($temporary_directory, FILE_MODIFY_PERMISSIONS)) {
-        watchdog('file', 'The directory %directory is not writable, because it does not have the correct permissions set.', array('%directory' => drupal_realpath($temporary_directory)));
+        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'The directory %directory is not writable, because it does not have the correct permissions set.', array('%directory' => drupal_realpath($temporary_directory)));
         drupal_set_message(t('The file could not be transferred because the temporary directory is not writable.'), 'error');
         return;
       }
@@ -44,7 +44,8 @@ class Clipboard implements FilefieldSourceInterface {
       // This first chmod check is for other systems such as S3, which don't work
       // with file_prepare_directory().
       if (!drupal_chmod($directory, $mode) && !file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
-        watchdog('file', 'File %file could not be copied, because the destination directory %destination is not configured correctly.', array('%file' => $url, '%destination' => drupal_realpath($directory)));
+        $url = $input['filefield_clipboard']['filename'];
+        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'File %file could not be copied, because the destination directory %destination is not configured correctly.', array('%file' => $url, '%destination' => drupal_realpath($directory)));
         drupal_set_message(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', array('%file' => $url)), 'error');
         return;
       }

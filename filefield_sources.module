@@ -525,7 +525,7 @@ function filefield_sources_save_file($filepath, $validators = array(), $destinat
   $file->setFileUri($file->destination);
   if (!file_unmanaged_copy($filepath, $file->getFileUri(), $replace)) {
     drupal_set_message(t('File upload error. Could not move uploaded file.'), 'error');
-    watchdog('file', 'Upload error. Could not move uploaded file %file to destination %destination.', array('%file' => $file->getFilename(), '%destination' => $file->getFileUri()));
+    \Drupal::logger('filefield_sources')->log(E_NOTICE, 'Upload error. Could not move uploaded file %file to destination %destination.', array('%file' => $file->getFilename(), '%destination' => $file->getFileUri()));
     return FALSE;
   }
 
