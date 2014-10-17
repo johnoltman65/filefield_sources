@@ -159,6 +159,7 @@ class Attach implements FilefieldSourceInterface {
       '#type' => 'submit',
       '#value' => t('Attach'),
       '#validate' => array(),
+      '#access' => $attach_message ? FALSE : TRUE,
       '#submit' => array('filefield_sources_field_submit'),
       '#limit_validation_errors' => array($element['#parents']),
       '#ajax' => $ajax_settings,
