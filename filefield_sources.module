@@ -335,7 +335,8 @@ function filefield_sources_field_submit(&$form, FormStateInterface $form_state) 
     WidgetBase::setWidgetState($element['#field_parents'], $field_name, $form_state, $field_state);
   }
 
-  // NestedArray::setValue($form_state->getUserInput(), $element['#parents'], NULL);
+  // Clear out input as it will need to be rebuilt.
+  NestedArray::setValue($form_state->getUserInput(), array_slice($triggering_element['#parents'], 0, -3), NULL);
   $form_state->setRebuild();
 }
 
