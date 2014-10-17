@@ -66,7 +66,7 @@ class Attach implements FilefieldSourceInterface {
         }
 
         // Delete the original file if "moving" the file instead of copying.
-        if ($element['#filefield_sources_settings']['filefield_sources']['source_attach']['attach_mode'] !== 'copy') {
+        if ($element['#filefield_sources_settings']['source_attach']['attach_mode'] !== 'copy') {
           @unlink($filepath);
         }
       }

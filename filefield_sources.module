@@ -288,6 +288,10 @@ function filefield_sources_field_validate(&$element, FormStateInterface $form_st
   // Do all processing as needed by each source.
   $sources = filefield_sources_info();
   foreach ($sources as $source) {
+    if (!isset($source['class'])) {
+      continue;
+    }
+
     $callback = array($source['class'], 'validate');
     if (is_callable($callback)) {
       call_user_func_array($callback, array($element, $form_state, $complete_form));
@@ -321,7 +325,7 @@ function filefield_sources_field_submit(&$form, FormStateInterface $form_state) 
     // Update sort order according to weight. Note that this is always stored in
     // form state. Sort does not work using regular upload, but that is a core
     // bug.
-    usort($field_values, '_field_sort_items_helper');
+    //usort($field_values, '_field_multiple_value_form_sort_helper');
 
     // Update form_state values.
     NestedArray::setValue($form_state->getValues(), array_slice($triggering_element['#array_parents'], 0, -3), $field_values);
