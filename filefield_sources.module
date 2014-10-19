@@ -725,15 +725,3 @@ function module_get_weight($module) {
   }
   throw new InvalidArgumentException(format_string('The module %module is not installed.', array('%module' => $module)));
 }
-
-function field_widget_instance($element, $form_state) {
-  //$field_instance = entity_load('field_instance_config', $entity_type_id . '.' . $bundle . '.' . $field_name);
-  //$instance = current(entity_load_multiple_by_properties('field_instance_config', array('entity_type' => 'entity_test', 'field_name' => $instance_definition['field_name'], 'bundle' => $instance_definition['bundle'], 'include_deleted' => TRUE)));
-  $field_state = WidgetBase::getWidgetState($element['#field_parents'], $element['#field_name'], $form_state);
-  return $field_state['instance'];
-}
-
-function field_widget_field($element, $form_state) {
-  $field_state = WidgetBase::getWidgetState($element['#field_parents'], $element['#field_name'], $form_state);
-  return $field_state['field'];
-}
