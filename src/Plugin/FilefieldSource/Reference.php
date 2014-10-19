@@ -153,7 +153,7 @@ class Reference implements FilefieldSourceInterface {
     if (isset($string)) {
       // Get an array of matching entities.
       $widget = entity_get_form_display($entity_type, $bundle_name, 'default')->getComponent($field_name);
-      $match_operator = !empty($widget['settings']['filefield_sources']['autocomplete']) ? $widget['settings']['filefield_sources']['autocomplete'] : 'CONTAINS';
+      $match_operator = !empty($widget['third_party_settings']['filefield_sources']['filefield_sources']['source_reference']['autocomplete']) ? $widget['third_party_settings']['filefield_sources']['filefield_sources']['source_reference']['autocomplete'] : 'CONTAINS';
       $entity_labels = $handler->getReferenceableEntities($string, $match_operator, 10);
 
       // Loop through the entities and convert them into autocomplete output.
