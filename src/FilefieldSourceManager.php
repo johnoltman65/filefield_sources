@@ -37,4 +37,15 @@ class FilefieldSourceManager extends DefaultPluginManager {
     parent::__construct('Plugin/FilefieldSource', $namespaces, $module_handler, 'Drupal\filefield_sources\FilefieldSourceInterface', 'Drupal\filefield_sources\Annotation\FilefieldSource');
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function getDefinitions() {
+    $definitions = parent::getDefinitions();
+    if (!\Drupal::moduleHandler()->moduleExists('imce') || !imce_access()) {
+      unset($definitions['imce']);
+    }
+    return $definitions;
+  }
+
 }

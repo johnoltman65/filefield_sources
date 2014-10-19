@@ -14,7 +14,6 @@ use Drupal\Core\Field\WidgetInterface;
 
 /**
  * A FileField source plugin to allow referencing of files from IMCE.
- * @todo Check if module imce exists: \Drupal::moduleHandler()->moduleExists('imce') && imce_access()
  *
  * @FilefieldSource(
  *   id = "imce",
