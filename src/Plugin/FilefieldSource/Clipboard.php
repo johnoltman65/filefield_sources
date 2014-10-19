@@ -9,7 +9,6 @@ namespace Drupal\filefield_sources\Plugin\FilefieldSource;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\filefield_sources\FilefieldSourceInterface;
-use Symfony\Component\Routing\Route;
 use Drupal\Core\Site\Settings;
 
 /**
@@ -113,18 +112,27 @@ class Clipboard implements FilefieldSourceInterface {
       '#type' => 'hidden',
       '#attributes' => array('class' => array('filefield-source-clipboard-contents')),
     );
+
+    $ajax_settings = array(
+      'path' => 'file/ajax',
+      'options' => array(
+        'query' => array(
+          'element_parents' => implode('/', $element['#array_parents']),
+          'form_build_id' => $complete_form['form_build_id']['#value'],
+        ),
+      ),
+      'wrapper' => $element['#id'] . '-ajax-wrapper',
+      'effect' => 'fade',
+      'progress' => array(
+        'type' => 'throbber',
+        'message' => t('Transfering file...'),
+      ),
+    );
+
     $element['filefield_clipboard']['upload'] = array(
       '#type' => 'submit',
       '#value' => t('Upload'),
-      '#ajax' => array(
-        'path' => 'file/ajax/' . implode('/', $element['#array_parents']) . '/' . $complete_form['form_build_id']['#value'],
-        'wrapper' => $element['#id'] . '-ajax-wrapper',
-        'effect' => 'fade',
-        'progress' => array(
-          'type' => 'throbber',
-          'message' => t('Transfering file...'),
-        ),
-      ),
+      '#ajax' => $ajax_settings,
       '#validate' => array(),
       '#submit' => array('filefield_sources_field_submit'),
       '#limit_validation_errors' => array($element['#parents']),
