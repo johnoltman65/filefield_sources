@@ -86,6 +86,7 @@ class Attach implements FilefieldSourceInterface {
   public static function process(&$element, FormStateInterface $form_state, &$complete_form) {
     $settings = $element['#filefield_sources_settings']['source_attach'];
     $field_name = $element['#field_name'];
+    $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $field_name);
 
     $element['filefield_attach'] = array(
       '#weight' => 100.5,
@@ -116,7 +117,7 @@ class Attach implements FilefieldSourceInterface {
     // Error messages.
     if ($options === FALSE || empty($settings['path'])) {
       $attach_message = t('A file attach directory could not be located.');
-      $attach_description = t('Please check your settings for the %field field.',  array('%field' => $instance['label']));
+      $attach_description = t('Please check your settings for the %field field.',  array('%field' => $instance->getLabel()));
     }
     elseif (!count($options)) {
       $attach_message = t('There currently are no files to attach.');
