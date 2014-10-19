@@ -11,6 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\filefield_sources\FilefieldSourceInterface;
 use Symfony\Component\Routing\Route;
 use Drupal\Core\Field\WidgetInterface;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * A FileField source plugin to allow referencing of files from IMCE.
@@ -30,10 +31,11 @@ class Imce implements FilefieldSourceInterface {
    */
   public static function value(&$element, &$input, FormStateInterface $form_state) {
     if (isset($input['filefield_imce']['file_path']) && $input['filefield_imce']['file_path'] != '') {
-      $field = field_info_field($element['#field_name']);
+      $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
+      $field_settings = $instance->getSettings();
+      $scheme = $field_settings['uri_scheme'];
 
-      $scheme = $field['settings']['uri_scheme'];
-      $wrapper = file_stream_wrapper_get_instance_by_scheme($scheme);
+      $wrapper = \Drupal::service('stream_wrapper_manager')->getViaScheme($scheme);
       $file_directory_prefix = $scheme == 'private' ? 'system/files' : $wrapper->getDirectoryPath();
       $uri = preg_replace('/^' . preg_quote(base_path() . $file_directory_prefix . '/', '/') . '/', $scheme . '://', $input['filefield_imce']['file_path']);
 
@@ -46,7 +48,9 @@ class Imce implements FilefieldSourceInterface {
       if ($fid) {
         $file = file_load($fid);
         if (filefield_sources_element_validate($element, $file)) {
-          $input = array_merge($input, (array) $file);
+          if (!in_array($file->id(), $input['fids'])) {
+            $input['fids'][] = $file->id();
+          }
         }
       }
       else {
@@ -61,7 +65,7 @@ class Imce implements FilefieldSourceInterface {
    * {@inheritdoc}
    */
   public static function process(&$element, FormStateInterface $form_state, &$complete_form) {
-    $instance = field_widget_instance($element, $form_state);
+    $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
 
     $element['filefield_imce'] = array(
       '#weight' => 100.5,
@@ -86,10 +90,22 @@ class Imce implements FilefieldSourceInterface {
       ),
     );
 
-    $imce_function = 'window.open(\'' . \Drupal::url('filefield_sources.imce', array('entity_type' => $element['#entity_type'], 'bundle' => $element['#bundle'], 'field_name' => $element['#field_name']), array('query' => array('app' => $instance['label'] . '|url@' . $filepath_id))) . '\', \'\', \'width=760,height=560,resizable=1\'); return false;';
+    $imce_function = 'window.open(\'' . \Drupal::url('filefield_sources.imce', array('entity_type' => $element['#entity_type'], 'bundle' => $element['#bundle'], 'field_name' => $element['#field_name']), array('query' => array('app' => $instance->getLabel() . '|url@' . $filepath_id))) . '\', \'\', \'width=760,height=560,resizable=1\'); return false;';
     $element['filefield_imce']['display_path'] = array(
       '#type' => 'markup',
       '#markup' => '<span id="' . $display_id . '" class="filefield-sources-imce-display">' . t('No file selected') . '</span> (<a class="filefield-sources-imce-browse" href="#" onclick="' . $imce_function . '">' . t('browse') . '</a>)',
+    );
+
+    $ajax_settings = array(
+      'path' => 'file/ajax',
+      'options' => array(
+        'query' => array(
+          'element_parents' => implode('/', $element['#array_parents']),
+          'form_build_id' => $complete_form['form_build_id']['#value'],
+        ),
+      ),
+      'wrapper' => $element['#id'] . '-ajax-wrapper',
+      'effect' => 'fade',
     );
 
     $element['filefield_imce']['select'] = array(
@@ -102,12 +118,7 @@ class Imce implements FilefieldSourceInterface {
       '#name' => $element['#name'] . '[filefield_imce][button]',
       '#id' => $select_id,
       '#attributes' => array('style' => 'display: none;'),
-      '#ajax' => array(
-        'path' => 'file/ajax/' . implode('/', $element['#array_parents']) . '/' . $complete_form['form_build_id']['#value'],
-        'wrapper' => $element['#id'] . '-ajax-wrapper',
-        'method' => 'replace',
-        'effect' => 'fade',
-      ),
+      '#ajax' => $ajax_settings,
     );
 
     return $element;
@@ -119,7 +130,7 @@ class Imce implements FilefieldSourceInterface {
   public static function element($variables) {
     $element = $variables['element'];
 
-    $output = drupal_render_children($element);;
+    $output = drupal_render_children($element);
     return '<div class="filefield-source filefield-source-imce clear-block">' . $output . '</div>';
   }
 
@@ -131,25 +142,49 @@ class Imce implements FilefieldSourceInterface {
 
     // Check access.
     if (!\Drupal::moduleHandler()->moduleExists('imce') || !imce_access() || !$instance = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name)) {
-      return drupal_access_denied();
+      throw new AccessDeniedHttpException();
     }
-    $field = field_info_field($field_name);
+    $settings = $instance->getSettings();
 
+    $widget = entity_get_form_display($entity_type, $bundle_name, 'default')->getComponent($field_name);
     // Full mode
-    if (!empty($instance['widget']['settings']['filefield_sources']['source_imce']['imce_mode'])) {
+    if (!empty($widget['third_party_settings']['filefield_sources']['filefield_sources']['source_imce']['imce_mode'])) {
       $conf['imce_custom_scan'] = array(get_called_class(), 'customScanFull');
     }
     // Restricted mode
     else {
       $conf['imce_custom_scan'] = array(get_called_class(), 'customScanRestricted');
-      $conf['imce_custom_field'] = $field + array('_uri' => file_field_widget_uri($field, $instance));
+      $conf['imce_custom_context'] = array(
+        'field_storage' => entity_load('field_storage_config', $entity_type . '.' . $field_name),
+        'uri' => static::getUploadLocation($settings)
+      );
     }
 
     // Disable absolute URLs.
     $conf['imce_settings_absurls'] = 0;
 
     module_load_include('inc', 'imce', 'inc/imce.page');
-    return imce($field['settings']['uri_scheme']);
+    return imce($settings['uri_scheme']);
+  }
+
+  /**
+   * Determines the URI for a file field.
+   *
+   * @param $data
+   *   An array of token objects to pass to token_replace().
+   *
+   * @return
+   *   A file directory URI with tokens replaced.
+   *
+   * @see token_replace()
+   */
+  public static function getUploadLocation($settings, $data = array()) {
+    $destination = trim($settings['file_directory'], '/');
+
+    // Replace tokens.
+    $destination = \Drupal::token()->replace($destination, $data);
+
+    return $settings['uri_scheme'] . '://' . $destination;
   }
 
   /**
@@ -187,9 +222,10 @@ class Imce implements FilefieldSourceInterface {
    * Scan directory and return file list, subdirectories, and total size for Restricted Mode.
    */
   protected static function customScanRestricted($dirname, &$imce) {
-    $field = $GLOBALS['conf']['imce_custom_field'];
+    $context = $GLOBALS['conf']['imce_custom_context'];
+    $field_storage = $context['field_storage'];
     $root = $imce['scheme'] . '://';
-    $field_uri = $field['_uri'];
+    $field_uri = $context['uri'];
     $is_root = $field_uri == $root;
 
     // Process IMCE. Make field directory the only accessible one.
@@ -202,8 +238,8 @@ class Imce implements FilefieldSourceInterface {
     // Create directory info
     $directory = array('dirsize' => 0, 'files' => array(), 'subdirectories' => array(), 'error' => FALSE);
 
-    if (isset($field['storage']['details']['sql']['FIELD_LOAD_CURRENT'])) {
-      $storage = $field['storage']['details']['sql']['FIELD_LOAD_CURRENT'];
+    if (isset($field_storage['storage']['details']['sql']['FIELD_LOAD_CURRENT'])) {
+      $storage = $field_storage['storage']['details']['sql']['FIELD_LOAD_CURRENT'];
       $table_info = reset($storage);
       $table = key($storage);
       $sql_uri = $field_uri . ($is_root ? '' : '/');
