@@ -245,6 +245,7 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
           $element[$key][$subkey]['#ajax']['path'] = $new_path;
           $element[$key][$subkey]['#ajax']['options'] = $new_options;
           $element[$key][$subkey]['#ajax']['wrapper'] = $new_wrapper;
+          $element[$key][$subkey]['#limit_validation_errors'] = array(array_slice($element['#array_parents'], 0, -2));
         }
       }
     }
@@ -325,7 +326,7 @@ function filefield_sources_field_submit(&$form, FormStateInterface $form_state) 
     // Update sort order according to weight. Note that this is always stored in
     // form state. Sort does not work using regular upload, but that is a core
     // bug.
-    //usort($field_values, '_field_multiple_value_form_sort_helper');
+    usort($field_values, '_field_sort_items_helper');
 
     // Update form_state values.
     NestedArray::setValue($form_state->getValues(), array_slice($triggering_element['#array_parents'], 0, -3), $field_values);
@@ -338,6 +339,16 @@ function filefield_sources_field_submit(&$form, FormStateInterface $form_state) 
   // Clear out input as it will need to be rebuilt.
   NestedArray::setValue($form_state->getUserInput(), array_slice($triggering_element['#parents'], 0, -3), NULL);
   $form_state->setRebuild();
+}
+
+/**
+ * Sort function for items order.
+ * (copied form element_sort(), which acts on #weight keys)
+ */
+function _field_sort_items_helper($a, $b) {
+  $a_weight = (is_array($a) ? $a['_weight'] : 0);
+  $b_weight = (is_array($b) ? $b['_weight'] : 0);
+  return $a_weight - $b_weight;
 }
 
 /**
