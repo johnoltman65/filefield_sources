@@ -13,17 +13,15 @@ use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Render\Element;
 
 /**
- * Implements hook_element_info().
+ * Implements hook_element_info_alter().
  */
-function filefield_sources_element_info() {
-  $elements = array();
-
-  $elements['managed_file']['#process'] = array('filefield_sources_field_process');
-  $elements['managed_file']['#pre_render'] = array('filefield_sources_field_pre_render');
-  $elements['managed_file']['#element_validate'] = array('filefield_sources_field_validate');
-  $elements['managed_file']['#file_value_callbacks'] = array('filefield_sources_field_value');
-
-  return $elements;
+function filefield_sources_element_info_alter(&$type) {
+  if (isset($type['managed_file'])) {
+    $type['managed_file']['#process'][] = 'filefield_sources_field_process';
+    $type['managed_file']['#pre_render'][] = 'filefield_sources_field_pre_render';
+    $type['managed_file']['#element_validate'][] = 'filefield_sources_field_validate';
+    $type['managed_file']['#file_value_callbacks'][] = 'filefield_sources_field_value';
+  }
 }
 
 /**
