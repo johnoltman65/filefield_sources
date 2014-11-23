@@ -14,6 +14,7 @@ use Drupal\Core\Field\WidgetInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Site\Settings;
+use Drupal\Component\Utility\Unicode;
 
 define('FILEFIELD_SOURCE_REMOTE_HINT_TEXT', 'http://example.com/files/file.png');
 
@@ -259,7 +260,7 @@ class Remote implements FilefieldSourceInterface {
    */
   protected static function mimeExtension($curl_mime_type = NULL) {
     static $extension = NULL;
-    $mimetype = drupal_strtolower($curl_mime_type);
+    $mimetype = Unicode::strtolower($curl_mime_type);
     $result = \Drupal::service('file.mime_type.guesser.extension')->convertMimeTypeToMostCommonExtension($mimetype);
     if ($result) {
       $extension = $result;

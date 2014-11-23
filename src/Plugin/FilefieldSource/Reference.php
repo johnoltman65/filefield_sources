@@ -13,6 +13,7 @@ use Symfony\Component\Routing\Route;
 use Drupal\Core\Field\WidgetInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Drupal\Component\Utility\Unicode;
 
 define('FILEFIELD_SOURCE_REFERENCE_HINT_TEXT', 'example.png [fid:123]');
 
@@ -130,7 +131,7 @@ class Reference implements FilefieldSourceInterface {
    */
   public static function autocomplete(Request $request, $entity_type, $bundle_name, $field_name) {
     $matches = array();
-    $string = drupal_strtolower($request->query->get('q'));
+    $string = Unicode::strtolower($request->query->get('q'));
 
     $field_definition = entity_create('field_config', array(
       'field_name' => $field_name,
