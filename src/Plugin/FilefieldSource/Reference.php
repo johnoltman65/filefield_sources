@@ -171,8 +171,6 @@ class Reference implements FilefieldSourceInterface {
       }
     }
 
-    return $matches;
-
     return new JsonResponse($matches);
   }
 
