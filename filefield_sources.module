@@ -141,7 +141,7 @@ function filefield_sources_form($plugin, FormStateInterface $form_state) {
   );
 
   $sources = filefield_sources_list();
-  $form['filefield_sources']['filefield_sources'] = array(
+  $form['filefield_sources']['sources'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Enabled sources'),
     '#options' => $sources,
@@ -702,11 +702,11 @@ function _filefield_sources_sort($a, $b) {
  * @see http://drupal.org/node/932994
  */
 function _filefield_sources_enabled($settings) {
-  if (!isset($settings['filefield_sources']['upload'])) {
-    $settings['filefield_sources']['upload'] = 'upload';
+  if (!isset($settings['sources']['upload'])) {
+    $settings['sources']['upload'] = 'upload';
   }
 
-  $enabled = array_keys(array_filter($settings['filefield_sources']));
+  $enabled = array_keys(array_filter($settings['sources']));
   return array_combine($enabled, $enabled);
 }
 

@@ -85,10 +85,6 @@ class Clipboard implements FilefieldSourceInterface {
    * {@inheritdoc}
    */
   public static function process(&$element, FormStateInterface $form_state, &$complete_form) {
-    // If settings are needed later:
-    //$instance = field_widget_instance($element, $form_state);
-    //$settings = $instance['widget']['settings']['filefield_sources']['source_clipboard'];
-
     $element['filefield_clipboard'] = array(
       '#weight' => 100.5,
       '#theme' => 'filefield_sources_element',

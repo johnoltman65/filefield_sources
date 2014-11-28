@@ -291,7 +291,7 @@ class Attach implements FilefieldSourceInterface {
     $input = NestedArray::getValue($form_state->getValues(), $parents, $input_exists);
     if ($input_exists) {
       // Only validate if this source is enabled.
-      if (!$input['filefield_sources']['attach']) {
+      if (!$input['sources']['attach']) {
         return;
       }
 
