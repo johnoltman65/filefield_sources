@@ -28,13 +28,20 @@ class UploadSourceTest extends FileFieldSourcesTestBase {
     $this->drupalGet($add_node);
     $this->assertNoLink('Upload');
 
-    // Upload source still work.
+    // Test upload file by upload source.
     $test_file_text = $this->getTestFile('text');
     $name = 'files[' . $this->field_name . '_0]';
     $edit = array($name => drupal_realpath($test_file_text->getFileUri()));
     $button = $this->xpath('//input[@type="submit" and @value="' . t('Upload') . '"]');
     $this->drupalPostAjaxForm(NULL, $edit, array((string) $button[0]['name'] => (string) $button[0]['value']));
     $this->assertFieldByXPath('//input[@type="submit"]', t('Remove'), t('After uploading a file, "Remove" button displayed.'));
+    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Upload'), t('After uploading a file, "Upload" button is no longer displayed.'));
+
+    // Test remove uploaded file.
+    $button = $this->xpath('//input[@type="submit" and @value="' . t('Remove') . '"]');
+    $this->drupalPostAjaxForm(NULL, array(), array((string) $button[0]['name'] => (string) $button[0]['value']));
+    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'After clicking the "Remove" button, it is no longer displayed.');
+    $this->assertFieldByXpath('//input[@type="submit"]', t('Upload'), 'After clicking the "Remove" button, the "Upload" button is displayed.');
   }
 
   /**
@@ -71,12 +78,19 @@ class UploadSourceTest extends FileFieldSourcesTestBase {
       $this->assertLink($label);
     }
 
-    // Upload source still work.
+    // Test upload file by upload source.
     $test_file_text = $this->getTestFile('text');
     $name = 'files[' . $this->field_name . '_0]';
     $edit = array($name => drupal_realpath($test_file_text->getFileUri()));
     $button = $this->xpath('//input[@type="submit" and @value="' . t('Upload') . '"]');
     $this->drupalPostAjaxForm(NULL, $edit, array((string) $button[0]['name'] => (string) $button[0]['value']));
     $this->assertFieldByXPath('//input[@type="submit"]', t('Remove'), t('After uploading a file, "Remove" button displayed.'));
+    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Upload'), t('After uploading a file, "Upload" button is no longer displayed.'));
+
+    // Test remove uploaded file.
+    $button = $this->xpath('//input[@type="submit" and @value="' . t('Remove') . '"]');
+    $this->drupalPostAjaxForm(NULL, array(), array((string) $button[0]['name'] => (string) $button[0]['value']));
+    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'After clicking the "Remove" button, it is no longer displayed.');
+    $this->assertFieldByXpath('//input[@type="submit"]', t('Upload'), 'After clicking the "Remove" button, the "Upload" button is displayed.');
   }
 }
