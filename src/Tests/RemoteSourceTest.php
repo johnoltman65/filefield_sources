@@ -47,15 +47,15 @@ class RemoteSourceTest extends FileFieldSourcesTestBase {
     // Test upload file by remote source.
     $name = $this->field_name . '[0][filefield_remote][url]';
     $edit = array($name => 'https://www.drupal.org/README.txt');
-    $button = $this->xpath('//input[@type="submit" and @value="' . t('Transfer') . '"]');
-    $this->drupalPostAjaxForm(NULL, $edit, array((string) $button[0]['name'] => (string) $button[0]['value']));
+    $this->drupalPostForm(NULL, $edit, t('Transfer'));
+    $this->assertLink('README.txt');
     $this->assertFieldByXPath('//input[@type="submit"]', t('Remove'), t('After uploading a file, "Remove" button displayed.'));
-    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Upload'), t('After uploading a file, "Transfer" button is no longer displayed.'));
+    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Transfer'), t('After uploading a file, "Transfer" button is no longer displayed.'));
 
     // Test remove uploaded file.
     $button = $this->xpath('//input[@type="submit" and @value="' . t('Remove') . '"]');
     $this->drupalPostAjaxForm(NULL, array(), array((string) $button[0]['name'] => (string) $button[0]['value']));
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'After clicking the "Remove" button, it is no longer displayed.');
-    $this->assertFieldByXpath('//input[@type="submit"]', t('Upload'), 'After clicking the "Remove" button, the "Transfer" button is displayed.');
+    $this->assertFieldByXpath('//input[@type="submit"]', t('Transfer'), 'After clicking the "Remove" button, the "Transfer" button is displayed.');
   }
 }
