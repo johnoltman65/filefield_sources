@@ -214,9 +214,10 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
     if (isset($element[$key]['#filefield_sources_hint_text']) && !isset($js_added[$key])) {
       $type = str_replace('filefield_', '', $key);
 
-      $element['#attached']['js'][] = array(
-        'type' => 'setting',
-        'data' => array('fileFieldSources' => array($type => array('hintText' => $element[$key]['#filefield_sources_hint_text']))),
+      $element['#attached']['drupalSettings']['fileFieldSources'] = array(
+        $type => array(
+          'hintText' => $element[$key]['#filefield_sources_hint_text']
+        )
       );
 
       $js_added[$key] = TRUE;
