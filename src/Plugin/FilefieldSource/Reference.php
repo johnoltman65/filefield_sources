@@ -134,22 +134,7 @@ class Reference implements FilefieldSourceInterface {
     $matches = array();
     $string = Unicode::strtolower($request->query->get('q'));
 
-    $field_definition = entity_create('field_config', array(
-      'field_name' => $field_name,
-      'entity_type' => $entity_type,
-      'bundle' => $bundle_name,
-      'type' => 'entity_reference',
-      'settings' => array(
-        'target_type' => 'file',
-        'handler' => 'default',
-        'handler_settings' => array(
-          'sort' => array(
-            'field' => '_none',
-            'direction' => 'ASC',
-          )
-        ),
-      ),
-    ));
+    $field_definition = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name);
     $handler = \Drupal::getContainer()->get('plugin.manager.entity_reference.selection')->getSelectionHandler($field_definition);
 
     if (isset($string)) {
