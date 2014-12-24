@@ -42,4 +42,57 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
     $this->createFileField($this->field_name, 'node', $this->type_name);
   }
 
+  /**
+   * Enable file field sources.
+   *
+   * @param type $sources
+   */
+  public function enableSources($sources = array()) {
+    $sources += array('upload' => TRUE);
+    $map = array(
+      'upload' => 'Upload',
+      'remote' => 'Remote URL',
+      'clipboard' => 'Clipboard',
+      'reference' => 'Reference existing',
+      'attach' => 'File attach',
+    );
+    $sources = array_intersect_key($sources, $map);
+    ksort($sources);
+
+    // Upload source enabled by default.
+    $manage_display = 'admin/structure/types/manage/' . $this->type_name . '/form-display';
+    $this->drupalGet($manage_display);
+    $this->assertText("File field sources: upload", 'The expected summary is displayed.');
+
+    // Click on the widget settings button to open the widget settings form.
+    $this->drupalPostAjaxForm(NULL, array(), $this->field_name . "_settings_edit");
+
+    // Enable all sources.
+    $prefix = 'fields[' . $this->field_name . '][settings_edit_form][third_party_settings][filefield_sources][filefield_sources][sources]';
+    $edit = array();
+    foreach ($sources as $source => $enabled) {
+      $edit[$prefix . '[' . $source . ']'] = $enabled ? TRUE : FALSE;
+    }
+    $this->drupalPostAjaxForm(NULL, $edit, $this->field_name . '_plugin_settings_update');
+    $this->assertText("File field sources: " . implode(', ', array_keys($sources)), 'The expected summary is displayed.');
+
+    // Save the form to save the third party settings.
+    $this->drupalPostForm(NULL, array(), t('Save'));
+
+    $add_node = 'node/add/' . $this->type_name;
+    $this->drupalGet($add_node);
+    if (count($sources) > 1) {
+      // We can swith between sources.
+      foreach ($sources as $source => $enabled) {
+        $label = $map[$source];
+        $this->assertLink($label);
+      }
+    }
+    else {
+      foreach ($map as $source => $label) {
+        $this->assertNoLink($label);
+      }
+    }
+  }
+
 }

@@ -708,6 +708,7 @@ function _filefield_sources_enabled($settings) {
   }
 
   $enabled = array_keys(array_filter($settings['sources']));
+  asort($enabled);
   return array_combine($enabled, $enabled);
 }
 
