@@ -19,17 +19,12 @@ class ReferenceSourceTest extends FileFieldSourcesTestBase {
    */
   function testReferenceSourceEnabled() {
 
-    // Create test files.
-    $file = $this->getTestFile('text');
-    // Only permanent file can be referred.
-    $file->status = FILE_STATUS_PERMANENT;
-    // Author has permission to access file.
-    $file->uid = $this->admin_user->id();
-    $file->save();
+    // Create test file.
+    $test_file = $this->createPermanentFile();
 
     // Test autocompletion.
-    $autocomplete_result = $this->drupalGetJSON('file/reference/node/' . $this->type_name . '/' . $this->field_name, array('query' => array('q' => $file->getFileName())));
-    $this->assertEqual($autocomplete_result[0]['label'], $file->getFileName(), 'Autocompletion has been returned correct result.');
+    $autocomplete_result = $this->drupalGetJSON('file/reference/node/' . $this->type_name . '/' . $this->field_name, array('query' => array('q' => $test_file->getFileName())));
+    $this->assertEqual($autocomplete_result[0]['label'], $test_file->getFileName(), 'Autocompletion has been returned correct result.');
 
     $this->enableSources(array(
       'reference' => TRUE,
@@ -45,7 +40,7 @@ class ReferenceSourceTest extends FileFieldSourcesTestBase {
     $this->drupalPostForm(NULL, $edit, t('Select'));
 
     // Ensure file is uploaded.
-    $this->assertLink($file->getFileName());
+    $this->assertLink($test_file->getFileName());
     $this->assertFieldByXPath('//input[@type="submit"]', t('Remove'), t('After uploading a file, "Remove" button displayed.'));
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Select'), t('After uploading a file, "Select" button is no longer displayed.'));
 

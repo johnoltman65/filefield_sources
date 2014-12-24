@@ -27,6 +27,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
 
   protected $type_name;
   protected $field_name;
+  protected $node;
 
   protected function setUp() {
     WebTestBase::setUp();
@@ -36,6 +37,9 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
     // Create content type.
     $this->type_name = 'article';
     $this->drupalCreateContentType(array('type' => $this->type_name, 'name' => 'Article'));
+
+    // Add node.
+    $this->node = $this->drupalCreateNode();
 
     // Add file field.
     $this->field_name = strtolower($this->randomMachineName());
@@ -93,6 +97,40 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
         $this->assertNoLink($label);
       }
     }
+  }
+
+  /**
+   * Create permanent file.
+   *
+   * @return object
+   */
+  public function createPermanentFile() {
+    $file = $this->getTestFile('text');
+    // Only permanent file can be referred.
+    $file->status = FILE_STATUS_PERMANENT;
+    // Author has permission to access file.
+    $file->uid = $this->admin_user->id();
+    $file->save();
+
+    // Permanent file must be used by an entity.
+    \Drupal::service('file.usage')->add($file, 'file', 'node', $this->node->id());
+
+    return $file;
+  }
+
+  /**
+   * Create temporary file.
+   *
+   * @return object
+   */
+  public function createTemporaryFile() {
+    $data = current($this->drupalGetTestFiles('text'));
+
+    // Add a filesize property to files as would be read by file_load().
+    $data->filesize = filesize($data->uri);
+
+    $file = entity_create('file', (array) $data);
+    return $file;
   }
 
 }

@@ -21,9 +21,9 @@ class ClipboardSourceTest extends FileFieldSourcesTestBase {
     $this->enableSources(array(
       'clipboard' => TRUE,
     ));
+    $test_file = $this->createTemporaryFile();
 
     // Upload a file by 'Clipboard' source.
-    $test_file = $this->getTestFile('text');
     $prefix = $this->field_name . '[0][filefield_clipboard]';
     $edit = array(
       $prefix . '[filename]' => $test_file->getFilename(),

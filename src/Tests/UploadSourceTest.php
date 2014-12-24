@@ -21,7 +21,7 @@ class UploadSourceTest extends FileFieldSourcesTestBase {
     $this->enableSources(array(
       'upload' => TRUE,
     ));
-    $test_file = $this->getTestFile('text');
+    $test_file = $this->createTemporaryFile();
 
     // Upload a file by 'Upload' source.
     $name = 'files[' . $this->field_name . '_0]';
@@ -54,7 +54,7 @@ class UploadSourceTest extends FileFieldSourcesTestBase {
       'reference' => TRUE,
       'attach' => TRUE,
     ));
-    $test_file = $this->getTestFile('text');
+    $test_file = $this->createTemporaryFile();
 
     // Upload a file by 'Upload' source.
     $name = 'files[' . $this->field_name . '_0]';
