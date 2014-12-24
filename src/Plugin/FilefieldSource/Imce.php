@@ -12,6 +12,7 @@ use Drupal\filefield_sources\FilefieldSourceInterface;
 use Symfony\Component\Routing\Route;
 use Drupal\Core\Field\WidgetInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Drupal\Core\Url;
 
 /**
  * A FileField source plugin to allow referencing of files from IMCE.
@@ -96,28 +97,28 @@ class Imce implements FilefieldSourceInterface {
       '#markup' => '<span id="' . $display_id . '" class="filefield-sources-imce-display">' . t('No file selected') . '</span> (<a class="filefield-sources-imce-browse" href="#" onclick="' . $imce_function . '">' . t('browse') . '</a>)',
     );
 
-    $ajax_settings = array(
-      'path' => 'file/ajax',
-      'options' => array(
-        'query' => array(
+    $ajax_settings = [
+      'url' => Url::fromRoute('file.ajax_upload'),
+      'options' => [
+        'query' => [
           'element_parents' => implode('/', $element['#array_parents']),
           'form_build_id' => $complete_form['form_build_id']['#value'],
-        ),
-      ),
+        ],
+      ],
       'wrapper' => $element['#id'] . '-ajax-wrapper',
       'effect' => 'fade',
-    );
+    ];
 
     $element['filefield_imce']['select'] = array(
-      '#name' => implode('_', $element['#array_parents']) . '_imce_select',
+      '#name' => implode('_', $element['#parents']) . '_imce_select',
       '#type' => 'submit',
       '#value' => t('Select'),
-      '#validate' => array(),
+      '#validate' => [],
       '#submit' => array('filefield_sources_field_submit'),
-      '#limit_validation_errors' => array($element['#parents']),
+      '#limit_validation_errors' => [$element['#parents']],
       '#name' => $element['#name'] . '[filefield_imce][button]',
       '#id' => $select_id,
-      '#attributes' => array('style' => 'display: none;'),
+      '#attributes' => ['class' => ['js-hide']],
       '#ajax' => $ajax_settings,
     );
 

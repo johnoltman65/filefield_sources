@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Site\Settings;
 use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Url;
 
 define('FILEFIELD_SOURCE_REMOTE_HINT_TEXT', 'http://example.com/files/file.png');
 
@@ -298,32 +299,32 @@ class Remote implements FilefieldSourceInterface {
       '#maxlength' => NULL,
     );
 
-    $ajax_settings = array(
-      'path' => 'file/ajax',
-      'options' => array(
-        'query' => array(
+    $ajax_settings = [
+      'url' => Url::fromRoute('file.ajax_upload'),
+      'options' => [
+        'query' => [
           'element_parents' => implode('/', $element['#array_parents']),
           'form_build_id' => $complete_form['form_build_id']['#value'],
-        ),
-      ),
+        ],
+      ],
       'wrapper' => $element['#id'] . '-ajax-wrapper',
       'effect' => 'fade',
-      'progress' => array(
+      'progress' => [
         'type' => 'bar',
         'path' => 'file/remote/progress/' . $element['#entity_type'] . '/' . $element['#bundle'] . '/' . $element['#field_name'] . '/' . $element['#delta'],
         'message' => t('Starting transfer...'),
-      ),
-    );
+      ],
+    ];
 
-    $element['filefield_remote']['transfer'] = array(
-      '#name' => implode('_', $element['#array_parents']) . '_transfer',
+    $element['filefield_remote']['transfer'] = [
+      '#name' => implode('_', $element['#parents']) . '_transfer',
       '#type' => 'submit',
       '#value' => t('Transfer'),
       '#validate' => array(),
-      '#submit' => array('filefield_sources_field_submit'),
-      '#limit_validation_errors' => array($element['#parents']),
+      '#submit' => ['filefield_sources_field_submit'],
+      '#limit_validation_errors' => [$element['#parents']],
       '#ajax' => $ajax_settings,
-    );
+    ];
 
     return $element;
   }

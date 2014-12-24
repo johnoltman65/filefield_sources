@@ -13,6 +13,7 @@ use Drupal\Core\Field\WidgetInterface;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Template\Attribute;
+use Drupal\Core\Url;
 
 /**
  * A FileField source plugin to allow use of files within a server directory.
@@ -143,28 +144,28 @@ class Attach implements FilefieldSourceInterface {
       $element['filefield_attach']['#description'] = $description;
     }
 
-    $ajax_settings = array(
-      'path' => 'file/ajax',
-      'options' => array(
-        'query' => array(
+    $ajax_settings = [
+      'url' => Url::fromRoute('file.ajax_upload'),
+      'options' => [
+        'query' => [
           'element_parents' => implode('/', $element['#array_parents']),
           'form_build_id' => $complete_form['form_build_id']['#value'],
-        ),
-      ),
+        ],
+      ],
       'wrapper' => $element['#id'] . '-ajax-wrapper',
       'effect' => 'fade',
-    );
+    ];
 
-    $element['filefield_attach']['attach'] = array(
-      '#name' => implode('_', $element['#array_parents']) . '_attach',
+    $element['filefield_attach']['attach'] = [
+      '#name' => implode('_', $element['#parents']) . '_attach',
       '#type' => 'submit',
       '#value' => t('Attach'),
-      '#validate' => array(),
-      '#access' => $attach_message ? FALSE : TRUE,
-      '#submit' => array('filefield_sources_field_submit'),
-      '#limit_validation_errors' => array($element['#parents']),
+      '#validate' => [],
+      '#access' => isset($attach_message) ? FALSE : TRUE,
+      '#submit' => ['filefield_sources_field_submit'],
+      '#limit_validation_errors' => [$element['#parents']],
       '#ajax' => $ajax_settings,
-    );
+    ];
 
     return $element;
   }

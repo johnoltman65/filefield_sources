@@ -10,6 +10,7 @@ namespace Drupal\filefield_sources\Plugin\FilefieldSource;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\filefield_sources\FilefieldSourceInterface;
 use Drupal\Core\Site\Settings;
+use Drupal\Core\Url;
 
 /**
  * A FileField source plugin to allow transfer of files through the clipboard.
@@ -109,31 +110,32 @@ class Clipboard implements FilefieldSourceInterface {
       '#attributes' => array('class' => array('filefield-source-clipboard-contents')),
     );
 
-    $ajax_settings = array(
-      'path' => 'file/ajax',
-      'options' => array(
-        'query' => array(
+    $ajax_settings = [
+      'url' => Url::fromRoute('file.ajax_upload'),
+      'options' => [
+        'query' => [
           'element_parents' => implode('/', $element['#array_parents']),
           'form_build_id' => $complete_form['form_build_id']['#value'],
-        ),
-      ),
+        ],
+      ],
       'wrapper' => $element['#id'] . '-ajax-wrapper',
       'effect' => 'fade',
-      'progress' => array(
+      'progress' => [
         'type' => 'throbber',
         'message' => t('Transfering file...'),
-      ),
-    );
+      ],
+    ];
 
-    $element['filefield_clipboard']['upload'] = array(
+    $element['filefield_clipboard']['upload'] = [
+      '#name' => implode('_', $element['#parents']) . '_clipboard_upload_button',
       '#type' => 'submit',
       '#value' => t('Upload'),
+      '#attributes' => ['class' => ['js-hide']],
+      '#validate' => [],
+      '#submit' => ['filefield_sources_field_submit'],
+      '#limit_validation_errors' => [$element['#parents']],
       '#ajax' => $ajax_settings,
-      '#validate' => array(),
-      '#submit' => array('filefield_sources_field_submit'),
-      '#limit_validation_errors' => array($element['#parents']),
-      '#attributes' => array('style' => 'display: none;'),
-    );
+    ];
 
     return $element;
   }
