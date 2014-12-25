@@ -10,7 +10,7 @@ namespace Drupal\filefield_sources\Tests;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 
 /**
- * Tests the upload source.
+ * Tests multiple sources on multiple values field.
  *
  * @group filefield_sources
  */
@@ -32,8 +32,8 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     ));
 
     $uploaded_files = 0;
-    $permanent_file = $this->createPermanentFile();
-    $temporary_file = $this->createTemporaryFile();
+    $permanent_file = $this->createPermanentFileEntity();
+    $temporary_file = $this->createTemporaryFileEntity();
 
     // Ensure no files has been uploaded.
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'There are no file have been uploaded.');

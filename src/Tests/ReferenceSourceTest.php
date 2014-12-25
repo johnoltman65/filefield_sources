@@ -15,12 +15,12 @@ namespace Drupal\filefield_sources\Tests;
 class ReferenceSourceTest extends FileFieldSourcesTestBase {
 
   /**
-   * Tests remote source enabled.
+   * Tests reference source enabled.
    */
   function testReferenceSourceEnabled() {
 
     // Create test file.
-    $test_file = $this->createPermanentFile();
+    $test_file = $this->createPermanentFileEntity();
 
     $this->enableSources(array(
       'reference' => TRUE,
@@ -53,7 +53,7 @@ class ReferenceSourceTest extends FileFieldSourcesTestBase {
 
     // Create test file.
     // Test file's file name just like 'text-123.txt'.
-    $test_file = $this->createPermanentFile();
+    $test_file = $this->createPermanentFileEntity();
 
     // Switch to 'Starts with' match type.
     $this->updateFilefieldSourcesSettings('source_reference', 'autocomplete', 'STARTS_WITH');

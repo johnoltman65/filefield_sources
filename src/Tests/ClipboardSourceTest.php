@@ -15,13 +15,13 @@ namespace Drupal\filefield_sources\Tests;
 class ClipboardSourceTest extends FileFieldSourcesTestBase {
 
   /**
-   * Tests remote source enabled.
+   * Tests clipboard source enabled.
    */
   function testClipboardSourceEnabled() {
     $this->enableSources(array(
       'clipboard' => TRUE,
     ));
-    $test_file = $this->createTemporaryFile();
+    $test_file = $this->createTemporaryFileEntity();
 
     // Upload a file by 'Clipboard' source.
     $prefix = $this->field_name . '[0][filefield_clipboard]';

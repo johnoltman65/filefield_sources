@@ -9,6 +9,7 @@ namespace Drupal\filefield_sources\Tests;
 
 use Drupal\file\Tests\FileFieldTestBase;
 use Drupal\simpletest\WebTestBase;
+use Drupal\Core\Site\Settings;
 
 /**
  * Provides methods specifically for testing File Field Sources module's field
@@ -100,11 +101,11 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
   }
 
   /**
-   * Create permanent file.
+   * Create permanent file entity.
    *
    * @return object
    */
-  public function createPermanentFile() {
+  public function createPermanentFileEntity() {
     $file = $this->getTestFile('text');
     // Only permanent file can be referred.
     $file->status = FILE_STATUS_PERMANENT;
@@ -119,17 +120,40 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
   }
 
   /**
+   * Create temporary file entity.
+   *
+   * @return object
+   */
+  public function createTemporaryFileEntity() {
+    return $this->getTestFile('text');
+  }
+
+  /**
    * Create temporary file.
    *
    * @return object
    */
-  public function createTemporaryFile() {
-    $data = current($this->drupalGetTestFiles('text'));
+  public function createTemporaryFile($path = '') {
+    $file_name = $this->randomMachineName() . '.txt';
+    if (empty($path)) {
+      $path = file_default_scheme()  . '://';
+    }
+    $filepath = $path . '/' . $file_name;
+    $contents = $this->randomString();
 
-    // Add a filesize property to files as would be read by file_load().
-    $data->filesize = filesize($data->uri);
+    // Change mode so that we can create files.
+    file_prepare_directory($path, FILE_CREATE_DIRECTORY);
+    drupal_chmod($path, FILE_CHMOD_DIRECTORY);
 
-    $file = entity_create('file', (array) $data);
+    file_put_contents($filepath, $contents);
+    $this->assertTrue(is_file($filepath), 'The temporary file has been created.');
+
+    // Change mode so that we can delete created file.
+    drupal_chmod($filepath, FILE_CHMOD_FILE);
+
+    $file = new \stdClass();
+    $file->uri = $filepath;
+    $file->file_name = $file_name;
     return $file;
   }
 
