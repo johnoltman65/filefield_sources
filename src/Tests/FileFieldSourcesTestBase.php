@@ -71,7 +71,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
     // Click on the widget settings button to open the widget settings form.
     $this->drupalPostAjaxForm(NULL, array(), $this->field_name . "_settings_edit");
 
-    // Enable all sources.
+    // Enable sources.
     $prefix = 'fields[' . $this->field_name . '][settings_edit_form][third_party_settings][filefield_sources][filefield_sources][sources]';
     $edit = array();
     foreach ($sources as $source => $enabled) {
@@ -131,6 +131,29 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
 
     $file = entity_create('file', (array) $data);
     return $file;
+  }
+
+  /**
+   * Update file field sources settings.
+   *
+   * @param string $source_key
+   * @param string $key
+   * @param mixed $value
+   */
+  public function updateFilefieldSourcesSettings($source_key, $key, $value) {
+    $manage_display = 'admin/structure/types/manage/' . $this->type_name . '/form-display';
+    $this->drupalGet($manage_display);
+
+    // Click on the widget settings button to open the widget settings form.
+    $this->drupalPostAjaxForm(NULL, array(), $this->field_name . "_settings_edit");
+
+    // Update settings.
+    $name = 'fields[' . $this->field_name . '][settings_edit_form][third_party_settings][filefield_sources][filefield_sources]' . "[$source_key][$key]";
+    $edit = array($name => $value);
+    $this->drupalPostAjaxForm(NULL, $edit, $this->field_name . '_plugin_settings_update');
+
+    // Save the form to save the third party settings.
+    $this->drupalPostForm(NULL, array(), t('Save'));
   }
 
 }

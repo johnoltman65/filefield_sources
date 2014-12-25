@@ -22,21 +22,13 @@ class ReferenceSourceTest extends FileFieldSourcesTestBase {
     // Create test file.
     $test_file = $this->createPermanentFile();
 
-    // Test autocompletion.
-    $autocomplete_result = $this->drupalGetJSON('file/reference/node/' . $this->type_name . '/' . $this->field_name, array('query' => array('q' => $test_file->getFileName())));
-    $this->assertEqual($autocomplete_result[0]['label'], $test_file->getFileName(), 'Autocompletion has been returned correct result.');
-
     $this->enableSources(array(
       'reference' => TRUE,
     ));
 
-    // Ensure autocomplete textbox exists.
-    $result = $this->xpath('//input[@name="' . $this->field_name . '[0][filefield_reference][autocomplete]" and contains(@data-autocomplete-path, "/file/reference/node/' . $this->type_name . '/' . $this->field_name . '")]');
-    $this->assertEqual(count($result), 1, 'There is a textbox with autocompletion.');
-
     // Upload a file by 'Reference' source.
     $name = $this->field_name . '[0][filefield_reference][autocomplete]';
-    $edit = array($name => $autocomplete_result[0]['value']);
+    $edit = array($name => $test_file->getFilename() . ' [fid:' . $test_file->id() . ']');
     $this->drupalPostForm(NULL, $edit, t('Select'));
 
     // Ensure file is uploaded.
@@ -51,5 +43,44 @@ class ReferenceSourceTest extends FileFieldSourcesTestBase {
     // Ensure file is removed.
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'After clicking the "Remove" button, it is no longer displayed.');
     $this->assertFieldByXpath('//input[@type="submit"]', t('Select'), 'After clicking the "Remove" button, the "Select" button is displayed.');
+  }
+
+  /**
+   * Test autocompletion.
+   */
+  function testAutocompletion() {
+    // No need to enable 'Reference' source to use autocompletion feature.
+
+    // Create test file.
+    // Test file's file name just like 'text-123.txt'.
+    $test_file = $this->createPermanentFile();
+
+    // Switch to 'Starts with' match type.
+    $this->updateFilefieldSourcesSettings('source_reference', 'autocomplete', 'STARTS_WITH');
+
+    // Test empty results.
+    $query = 'e';
+    $autocomplete_result = $this->drupalGetJSON('file/reference/node/' . $this->type_name . '/' . $this->field_name, array('query' => array('q' => $query)));
+    $this->assertEqual($autocomplete_result, array(), "No files that have name starts with '$query'");
+
+    // Test not empty results.
+    $query = 't';
+    $autocomplete_result = $this->drupalGetJSON('file/reference/node/' . $this->type_name . '/' . $this->field_name, array('query' => array('q' => $query)));
+    $this->assertEqual($autocomplete_result[0]['label'], $test_file->getFileName(), 'Autocompletion return correct label.');
+    $this->assertEqual($autocomplete_result[0]['value'], $test_file->getFilename() . ' [fid:' . $test_file->id() . ']', 'Autocompletion return correct value.');
+
+    // Switch to 'Contains' match type.
+    $this->updateFilefieldSourcesSettings('source_reference', 'autocomplete', 'CONTAINS');
+
+    // Test empty results.
+    $query = 'a';
+    $autocomplete_result = $this->drupalGetJSON('file/reference/node/' . $this->type_name . '/' . $this->field_name, array('query' => array('q' => $query)));
+    $this->assertEqual($autocomplete_result, array(), "No files that have name contains '$query'");
+
+    // Test not empty results.
+    $query = 'x';
+    $autocomplete_result = $this->drupalGetJSON('file/reference/node/' . $this->type_name . '/' . $this->field_name, array('query' => array('q' => $query)));
+    $this->assertEqual($autocomplete_result[0]['label'], $test_file->getFileName(), 'Autocompletion return correct label.');
+    $this->assertEqual($autocomplete_result[0]['value'], $test_file->getFilename() . ' [fid:' . $test_file->id() . ']', 'Autocompletion return correct value.');
   }
 }
