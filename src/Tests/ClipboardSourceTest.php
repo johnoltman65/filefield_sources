@@ -29,8 +29,7 @@ class ClipboardSourceTest extends FileFieldSourcesTestBase {
       $prefix . '[filename]' => $test_file->getFilename(),
       $prefix . '[contents]' => 'data:text/plain;base64,' . base64_encode(file_get_contents($test_file->getFileUri())),
     );
-    $upload_button = $this->xpath('//input[@type="submit" and @value="' . t('Upload') . '"]');
-    $this->drupalPostAjaxForm(NULL, $edit, array((string) $upload_button[0]['name'] => (string) $upload_button[0]['value']));
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->field_name . '_0_clipboard_upload_button' => t('Upload')));
 
     // Ensure file is uploaded.
     $this->assertLink($test_file->getFilename());
