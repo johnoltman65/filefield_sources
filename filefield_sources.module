@@ -12,6 +12,18 @@ use Drupal\Core\Field\WidgetInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Render\Element;
 
+const FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH = 'file_attach';
+const FILEFIELD_SOURCE_ATTACH_RELATIVE = 0;
+const FILEFIELD_SOURCE_ATTACH_ABSOLUTE = 1;
+const FILEFIELD_SOURCE_ATTACH_MODE_MOVE = 'move';
+const FILEFIELD_SOURCE_ATTACH_MODE_COPY = 'copy';
+
+const FILEFIELD_SOURCE_REFERENCE_HINT_TEXT = 'example.png [fid:123]';
+const FILEFIELD_SOURCE_REMOTE_HINT_TEXT = 'http://example.com/files/file.png';
+
+const FILEFIELD_SOURCE_REFERENCE_STARTS_WITH_AUTOCOMPLETE_TYPE = 'STARTS_WITH';
+const FILEFIELD_SOURCE_REFERENCE_CONTAINS_AUTOCOMPLETE_TYPE = 'CONTAINS';
+
 /**
  * Implements hook_element_info_alter().
  */

@@ -67,7 +67,7 @@ class Attach implements FilefieldSourceInterface {
         }
 
         // Delete the original file if "moving" the file instead of copying.
-        if ($element['#filefield_sources_settings']['source_attach']['attach_mode'] !== 'copy') {
+        if ($element['#filefield_sources_settings']['source_attach']['attach_mode'] !== FILEFIELD_SOURCE_ATTACH_MODE_COPY) {
           @unlink($filepath);
         }
       }
@@ -233,9 +233,9 @@ class Attach implements FilefieldSourceInterface {
   public static function settings(WidgetInterface $plugin) {
     $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', array(
       'source_attach' => array(
-        'path' => 'file_attach',
-        'absolute' => 0,
-        'attach_mode' => 'move',
+        'path' => FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH,
+        'absolute' => FILEFIELD_SOURCE_ATTACH_RELATIVE,
+        'attach_mode' => FILEFIELD_SOURCE_ATTACH_MODE_MOVE,
       )
     ));
 
@@ -264,8 +264,8 @@ class Attach implements FilefieldSourceInterface {
       '#type' => 'radios',
       '#title' => t('File attach location'),
       '#options' => array(
-        0 => t('Within the files directory'),
-        1 => t('Absolute server path'),
+        FILEFIELD_SOURCE_ATTACH_RELATIVE => t('Within the files directory'),
+        FILEFIELD_SOURCE_ATTACH_ABSOLUTE => t('Absolute server path'),
       ),
       '#default_value' => $settings['source_attach']['absolute'],
       '#description' => t('The <em>File attach path</em> may be with the files directory (%file_directory) or from the root of your server. If an absolute path is used and it does not start with a "/" your path will be relative to your site directory: %realpath.', array('%file_directory' => drupal_realpath(file_default_scheme() . '://'), '%realpath' => realpath('./'))),
@@ -274,8 +274,8 @@ class Attach implements FilefieldSourceInterface {
       '#type' => 'radios',
       '#title' => t('Attach method'),
       '#options' => array(
-        'move' => t('Move the file directly to the final location'),
-        'copy' => t('Leave a copy of the file in the attach directory'),
+        FILEFIELD_SOURCE_ATTACH_MODE_MOVE => t('Move the file directly to the final location'),
+        FILEFIELD_SOURCE_ATTACH_MODE_COPY => t('Leave a copy of the file in the attach directory'),
       ),
       '#default_value' => isset($settings['source_attach']['attach_mode']) ? $settings['source_attach']['attach_mode'] : 'move',
     );

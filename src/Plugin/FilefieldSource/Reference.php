@@ -17,8 +17,6 @@ use Drupal\Component\Utility\Unicode;
 use Drupal\Component\Utility\String;
 use Drupal\Core\Url;
 
-define('FILEFIELD_SOURCE_REFERENCE_HINT_TEXT', 'example.png [fid:123]');
-
 /**
  * A FileField source plugin to allow referencing of existing files.
  *
@@ -141,7 +139,7 @@ class Reference implements FilefieldSourceInterface {
       // Get an array of matching entities.
       $widget = entity_get_form_display($entity_type, $bundle_name, 'default')->getComponent($field_name);
       $autocomplete_type = $widget['third_party_settings']['filefield_sources']['filefield_sources']['source_reference']['autocomplete'];
-      $match_operator = $autocomplete_type == 'STARTS_WITH' ? 'STARTS_WITH' : 'CONTAINS';
+      $match_operator = !empty($autocomplete_type) ? $autocomplete_type : FILEFIELD_SOURCE_REFERENCE_CONTAINS_AUTOCOMPLETE_TYPE;
       $entity_labels = $handler->getReferenceableEntities($string, $match_operator, 10);
 
       // Loop through the entities and convert them into autocomplete output.
@@ -182,7 +180,7 @@ class Reference implements FilefieldSourceInterface {
   public static function settings(WidgetInterface $plugin) {
     $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', array(
       'source_reference' => array(
-        'autocomplete' => 'STARTS_WITH'
+        'autocomplete' => FILEFIELD_SOURCE_REFERENCE_STARTS_WITH_AUTOCOMPLETE_TYPE
       )
     ));
 
@@ -194,11 +192,11 @@ class Reference implements FilefieldSourceInterface {
     $return['source_reference']['autocomplete'] = array(
       '#title' => t('Match file name'),
       '#options' => array(
-        'STARTS_WITH' => t('Starts with'),
-        'CONTAINS' => t('Contains'),
+        FILEFIELD_SOURCE_REFERENCE_STARTS_WITH_AUTOCOMPLETE_TYPE => t('Starts with'),
+        FILEFIELD_SOURCE_REFERENCE_CONTAINS_AUTOCOMPLETE_TYPE => t('Contains'),
       ),
       '#type' => 'radios',
-      '#default_value' => isset($settings['source_reference']['autocomplete']) ? $settings['source_reference']['autocomplete'] : 'STARTS_WITH',
+      '#default_value' => isset($settings['source_reference']['autocomplete']) ? $settings['source_reference']['autocomplete'] : FILEFIELD_SOURCE_REFERENCE_STARTS_WITH_AUTOCOMPLETE_TYPE,
     );
 
     return $return;

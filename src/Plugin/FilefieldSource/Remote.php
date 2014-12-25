@@ -17,8 +17,6 @@ use Drupal\Core\Site\Settings;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Url;
 
-define('FILEFIELD_SOURCE_REMOTE_HINT_TEXT', 'http://example.com/files/file.png');
-
 /**
  * A FileField source plugin to allow downloading a file from a remote server.
  *
