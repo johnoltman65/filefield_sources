@@ -32,8 +32,11 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     ));
 
     $uploaded_files = 0;
-    $permanent_file = $this->createPermanentFileEntity();
-    $temporary_file = $this->createTemporaryFileEntity();
+    $permanent_file_entity = $this->createPermanentFileEntity();
+    $temporary_file_entity = $this->createTemporaryFileEntity();
+
+    $path = file_default_scheme()  . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH;
+    $temporary_file = $this->createTemporaryFile($path);
 
     // Ensure no files has been uploaded.
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'There are no file have been uploaded.');
@@ -46,22 +49,28 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
 
     // Upload a file by 'Reference' source.
     $name = $this->field_name . '[' . $uploaded_files . '][filefield_reference][autocomplete]';
-    $edit = array($name => $permanent_file->getFilename() . ' [fid:' . $permanent_file->id() . ']');
+    $edit = array($name => $permanent_file_entity->getFilename() . ' [fid:' . $permanent_file_entity->id() . ']');
     $this->drupalPostForm(NULL, $edit, t('Select'));
     $uploaded_files++;
 
     // Upload a file by 'Clipboard' source.
     $prefix = $this->field_name . '[' . $uploaded_files . '][filefield_clipboard]';
     $edit = array(
-      $prefix . '[filename]' => $temporary_file->getFilename(),
-      $prefix . '[contents]' => 'data:text/plain;base64,' . base64_encode(file_get_contents($temporary_file->getFileUri())),
+      $prefix . '[filename]' => $temporary_file_entity->getFilename(),
+      $prefix . '[contents]' => 'data:text/plain;base64,' . base64_encode(file_get_contents($temporary_file_entity->getFileUri())),
     );
     $this->drupalPostAjaxForm(NULL, $edit, array($this->field_name . '_' . $uploaded_files . '_clipboard_upload_button' => t('Upload')));
     $uploaded_files++;
 
+    // Upload a file by 'Attach' source.
+    $edit = array(
+      $this->field_name . '[0][filefield_attach][filename]' => $temporary_file->uri
+    );
+    $this->drupalPostForm(NULL, $edit, t('Attach'));
+
     // Upload a file by 'Upload' source.
     $name = 'files[' . $this->field_name . '_' . $uploaded_files . '][]';
-    $edit = array($name => drupal_realpath($temporary_file->getFileUri()));
+    $edit = array($name => drupal_realpath($temporary_file_entity->getFileUri()));
     $this->drupalPostAjaxForm(NULL, $edit, array($this->field_name . '_' . $uploaded_files . '_upload_button' => t('Upload')));
     $uploaded_files++;
 
