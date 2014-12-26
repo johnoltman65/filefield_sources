@@ -42,14 +42,14 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'There are no file have been uploaded.');
 
     // Upload a file by 'Remote' source.
-    $name = $this->field_name . '[' . $uploaded_files . '][filefield_remote][url]';
-    $edit = array($name => 'https://www.drupal.org/README.txt');
+    $input = $this->field_name . '[' . $uploaded_files . '][filefield_remote][url]';
+    $edit = array($input => 'https://www.drupal.org/README.txt');
     $this->drupalPostForm(NULL, $edit, t('Transfer'));
     $uploaded_files++;
 
     // Upload a file by 'Reference' source.
-    $name = $this->field_name . '[' . $uploaded_files . '][filefield_reference][autocomplete]';
-    $edit = array($name => $permanent_file_entity->getFilename() . ' [fid:' . $permanent_file_entity->id() . ']');
+    $input = $this->field_name . '[' . $uploaded_files . '][filefield_reference][autocomplete]';
+    $edit = array($input => $permanent_file_entity->getFilename() . ' [fid:' . $permanent_file_entity->id() . ']');
     $this->drupalPostForm(NULL, $edit, t('Select'));
     $uploaded_files++;
 
@@ -64,19 +64,20 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
 
     // Upload a file by 'Attach' source.
     $edit = array(
-      $this->field_name . '[0][filefield_attach][filename]' => $temporary_file->uri
+      $this->field_name . '[' . $uploaded_files . '][filefield_attach][filename]' => $temporary_file->uri
     );
     $this->drupalPostForm(NULL, $edit, t('Attach'));
+    $uploaded_files++;
 
     // Upload a file by 'Upload' source.
-    $name = 'files[' . $this->field_name . '_' . $uploaded_files . '][]';
-    $edit = array($name => drupal_realpath($temporary_file_entity->getFileUri()));
+    $input = 'files[' . $this->field_name . '_' . $uploaded_files . '][]';
+    $edit = array($input => drupal_realpath($temporary_file_entity->getFileUri()));
     $this->drupalPostAjaxForm(NULL, $edit, array($this->field_name . '_' . $uploaded_files . '_upload_button' => t('Upload')));
     $uploaded_files++;
 
     // Ensure files have been uploaded.
     $remove_buttons = $this->xpath('//input[@type="submit" and @value="' . t('Remove') . '"]');
-    $this->assertEqual(count($remove_buttons), $uploaded_files, "There are $uploaded_files files have been uploaded");
+    $this->assertEqual(count($remove_buttons), $uploaded_files, "There are $uploaded_files files have been uploaded.");
 
     // Remove all uploaded files.
     for ($i = 0; $i < count($remove_buttons); $i++) {
