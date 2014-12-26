@@ -43,7 +43,7 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
 
     // Upload a file by 'Remote' source.
     $input = $this->field_name . '[' . $uploaded_files . '][filefield_remote][url]';
-    $edit = array($input => 'https://www.drupal.org/README.txt');
+    $edit = array($input => $GLOBALS['base_url'] . '/README.txt');
     $this->drupalPostForm(NULL, $edit, t('Transfer'));
     $this->assertLink('README.txt');
     $uploaded_files++;

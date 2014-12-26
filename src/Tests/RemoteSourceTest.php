@@ -24,7 +24,7 @@ class RemoteSourceTest extends FileFieldSourcesTestBase {
 
     // Upload a file by 'Remote' source.
     $name = $this->field_name . '[0][filefield_remote][url]';
-    $edit = array($name => 'https://www.drupal.org/README.txt');
+    $edit = array($name => $GLOBALS['base_url'] . '/README.txt');
     $this->drupalPostForm(NULL, $edit, t('Transfer'));
 
     // Ensure file is uploaded.
