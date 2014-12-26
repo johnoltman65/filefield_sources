@@ -55,12 +55,13 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     $remove_button = $this->xpath('//input[@type="submit" and @value="' . t('Remove') . '"]');
     $this->drupalPostAjaxForm(NULL, array(), array((string) $remove_button[0]['name'] => (string) $remove_button[0]['value']));
 
-    // Ensure there are no files to attach.
+    // Ensure empty message exists.
     $this->assertText('There currently are no files to attach.', "'No files to attach' message exists.");
 
     // Ensure file is removed.
+    $this->assertNoLink($file->file_name);
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'After clicking the "Remove" button, it is no longer displayed.');
-    $this->assertNoFieldByXpath('//input[@type="submit"]', t('Attach'), 'The "Attach" button is not displayed.');
+    $this->assertFieldByXpath('//input[@type="submit"]', t('Attach'), 'After clicking the "Remove" button, the "Attach" button is displayed.');
   }
 
   /**
