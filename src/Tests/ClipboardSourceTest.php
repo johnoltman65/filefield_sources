@@ -41,6 +41,7 @@ class ClipboardSourceTest extends FileFieldSourcesTestBase {
     $this->drupalPostAjaxForm(NULL, array(), array((string) $remove_button[0]['name'] => (string) $remove_button[0]['value']));
 
     // Ensure file is removed.
+    $this->assertNoLink($test_file->getFilename());
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'After clicking the "Remove" button, it is no longer displayed.');
     $this->assertFieldByXpath('//input[@type="submit"]', t('Upload'), 'After clicking the "Remove" button, the "Upload" button is displayed.');
   }
