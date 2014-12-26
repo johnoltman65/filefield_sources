@@ -45,12 +45,14 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $input = $this->field_name . '[' . $uploaded_files . '][filefield_remote][url]';
     $edit = array($input => 'https://www.drupal.org/README.txt');
     $this->drupalPostForm(NULL, $edit, t('Transfer'));
+    $this->assertLink('README.txt');
     $uploaded_files++;
 
     // Upload a file by 'Reference' source.
     $input = $this->field_name . '[' . $uploaded_files . '][filefield_reference][autocomplete]';
     $edit = array($input => $permanent_file_entity->getFilename() . ' [fid:' . $permanent_file_entity->id() . ']');
     $this->drupalPostForm(NULL, $edit, t('Select'));
+    $this->assertLink($permanent_file_entity->getFilename());
     $uploaded_files++;
 
     // Upload a file by 'Clipboard' source.
@@ -60,6 +62,7 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
       $prefix . '[contents]' => 'data:text/plain;base64,' . base64_encode(file_get_contents($temporary_file_entity->getFileUri())),
     );
     $this->drupalPostAjaxForm(NULL, $edit, array($this->field_name . '_' . $uploaded_files . '_clipboard_upload_button' => t('Upload')));
+    $this->assertLink($temporary_file_entity->getFilename());
     $uploaded_files++;
 
     // Upload a file by 'Attach' source.
@@ -67,12 +70,14 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
       $this->field_name . '[' . $uploaded_files . '][filefield_attach][filename]' => $temporary_file->uri
     );
     $this->drupalPostForm(NULL, $edit, t('Attach'));
+    $this->assertLink($temporary_file_entity->getFilename(), 1);
     $uploaded_files++;
 
     // Upload a file by 'Upload' source.
     $input = 'files[' . $this->field_name . '_' . $uploaded_files . '][]';
     $edit = array($input => drupal_realpath($temporary_file_entity->getFileUri()));
     $this->drupalPostAjaxForm(NULL, $edit, array($this->field_name . '_' . $uploaded_files . '_upload_button' => t('Upload')));
+    $this->assertLink($temporary_file_entity->getFilename(), 2);
     $uploaded_files++;
 
     // Ensure files have been uploaded.
@@ -85,6 +90,9 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     }
 
     // Ensure all files have been removed.
+    $this->assertNoLink('README.txt');
+    $this->assertNoLink($permanent_file_entity->getFilename());
+    $this->assertNoLink($temporary_file_entity->getFilename());
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'All files have been removed.');
   }
 }
