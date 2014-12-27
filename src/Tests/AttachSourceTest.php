@@ -22,7 +22,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     // Create test file.
     $path = file_default_scheme()  . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH;
     $file = $this->createTemporaryFile($path);
-    $dest_uri = file_default_scheme() . '://' . $file->file_name;
+    $dest_uri = file_default_scheme() . '://' . $file->filename;
 
     $this->enableSources(array(
       'attach' => TRUE,
@@ -43,7 +43,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     $this->assertFalse(isset($options[0]), 'File option no longer exists.');
 
     // Ensure file is uploaded.
-    $this->assertLink($file->file_name);
+    $this->assertLink($file->filename);
     $this->assertFieldByXPath('//input[@type="submit"]', t('Remove'), t('After uploading a file, "Remove" button displayed.'));
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Attach'), t('After uploading a file, "Attach" button is no longer displayed.'));
 
@@ -59,7 +59,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     $this->assertText('There currently are no files to attach.', "'No files to attach' message exists.");
 
     // Ensure file is removed.
-    $this->assertNoLink($file->file_name);
+    $this->assertNoLink($file->filename);
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'After clicking the "Remove" button, it is no longer displayed.');
     $this->assertFieldByXpath('//input[@type="submit"]', t('Attach'), 'After clicking the "Remove" button, the "Attach" button is displayed.');
   }
@@ -77,7 +77,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
 
     // Create test file.
     $file = $this->createTemporaryFile($path);
-    $dest_uri = file_default_scheme() . '://' . $file->file_name;
+    $dest_uri = file_default_scheme() . '://' . $file->filename;
 
     // Change settings.
     $this->updateFilefieldSourcesSettings('source_attach', 'path', $path);
@@ -99,7 +99,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     $this->drupalPostForm(NULL, $edit, t('Attach'));
 
     // Ensure file is uploaded.
-    $this->assertLink($file->file_name);
+    $this->assertLink($file->filename);
     $this->assertFieldByXPath('//input[@type="submit"]', t('Remove'), t('After uploading a file, "Remove" button displayed.'));
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Attach'), t('After uploading a file, "Attach" button is no longer displayed.'));
 
@@ -115,7 +115,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     $this->assertNoText('There currently are no files to attach.', "'No files to attach' message does not exist.");
 
     // Ensure file is removed.
-    $this->assertNoLink($file->file_name);
+    $this->assertNoLink($file->filename);
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'After clicking the "Remove" button, it is no longer displayed.');
     $this->assertFieldByXpath('//input[@type="submit"]', t('Attach'), 'After clicking the "Remove" button, the "Attach" button is displayed.');
   }

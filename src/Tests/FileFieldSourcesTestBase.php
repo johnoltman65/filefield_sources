@@ -9,7 +9,6 @@ namespace Drupal\filefield_sources\Tests;
 
 use Drupal\file\Tests\FileFieldTestBase;
 use Drupal\simpletest\WebTestBase;
-use Drupal\Core\Site\Settings;
 
 /**
  * Provides methods specifically for testing File Field Sources module's field
@@ -32,6 +31,8 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
 
   protected function setUp() {
     WebTestBase::setUp();
+
+    // Create admin user, then login.
     $this->admin_user = $this->drupalCreateUser(array('access content', 'access administration pages', 'administer site configuration', 'administer users', 'administer permissions', 'administer content types', 'administer node fields', 'administer node display', 'administer node form display', 'administer nodes', 'bypass node access'));
     $this->drupalLogin($this->admin_user);
 
@@ -106,7 +107,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * @return object
    */
   public function createPermanentFileEntity() {
-    $file = $this->getTestFile('text');
+    $file = $this->createTemporaryFileEntity();
     // Only permanent file can be referred.
     $file->status = FILE_STATUS_PERMANENT;
     // Author has permission to access file.
@@ -125,7 +126,12 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * @return object
    */
   public function createTemporaryFileEntity() {
-    return $this->getTestFile('text');
+    $file = $this->createTemporaryFile();
+
+    // Add a filesize property to files as would be read by file_load().
+    $file->filesize = filesize($file->uri);
+
+    return entity_create('file', (array) $file);
   }
 
   /**
@@ -134,26 +140,28 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * @return object
    */
   public function createTemporaryFile($path = '') {
-    $file_name = $this->randomMachineName() . '.txt';
+    $filename = $this->randomMachineName() . '.txt';
     if (empty($path)) {
       $path = file_default_scheme()  . '://';
     }
-    $filepath = $path . '/' . $file_name;
+    $uri = $path . '/' . $filename;
     $contents = $this->randomString();
 
     // Change mode so that we can create files.
     file_prepare_directory($path, FILE_CREATE_DIRECTORY);
     drupal_chmod($path, FILE_CHMOD_DIRECTORY);
 
-    file_put_contents($filepath, $contents);
-    $this->assertTrue(is_file($filepath), 'The temporary file has been created.');
+    file_put_contents($uri, $contents);
+    $this->assertTrue(is_file($uri), 'The temporary file has been created.');
 
     // Change mode so that we can delete created file.
-    drupal_chmod($filepath, FILE_CHMOD_FILE);
+    drupal_chmod($uri, FILE_CHMOD_FILE);
 
+    // Return object similar to file_scan_directory().
     $file = new \stdClass();
-    $file->uri = $filepath;
-    $file->file_name = $file_name;
+    $file->uri = $uri;
+    $file->filename = $filename;
+    $file->name = pathinfo($filename, PATHINFO_FILENAME);
     return $file;
   }
 
