@@ -64,6 +64,22 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
   }
 
   /**
+   * Tests uploading files and saving node.
+   */
+  function testUploadFilesThenSaveNode() {
+    $this->uploadFiles();
+
+    $this->drupalPostForm(NULL, array('title[0][value]' => $this->randomMachineName()), t('Save and publish'));
+
+    // Ensure all files are saved to node.
+    $this->assertLink('README.txt');
+    $this->assertLink($this->permanent_file_entity->getFilename());
+    $this->assertLink($this->temporary_file_entity_1->getFilename());
+    $this->assertLink($this->temporary_file_entity_2->getFilename());
+    $this->assertLink($this->temporary_file->filename);
+  }
+
+  /**
    * Upload files.
    *
    * @return int
