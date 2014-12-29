@@ -33,19 +33,21 @@ class Reference implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function value(&$element, &$input, FormStateInterface $form_state) {
+  public static function value(array &$element, &$input, FormStateInterface $form_state) {
     if (isset($input['filefield_reference']['autocomplete']) && strlen($input['filefield_reference']['autocomplete']) > 0 && $input['filefield_reference']['autocomplete'] != FILEFIELD_SOURCE_REFERENCE_HINT_TEXT) {
       $matches = array();
       if (preg_match('/\[fid:(\d+)\]/', $input['filefield_reference']['autocomplete'], $matches)) {
         $fid = $matches[1];
         if ($file = file_load($fid)) {
 
-          // Remove file size restrictions, since the file already exists on disk.
+          // Remove file size restrictions, since the file already exists on
+          // disk.
           if (isset($element['#upload_validators']['file_validate_size'])) {
             unset($element['#upload_validators']['file_validate_size']);
           }
 
-          // Check that the user has access to this file through hook_download().
+          // Check that the user has access to this file through
+          // hook_download().
           if (!$file->access('download')) {
             $form_state->setError($element, t('You do not have permission to use the selected file.'));
           }
@@ -67,13 +69,14 @@ class Reference implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function process(&$element, FormStateInterface $form_state, &$complete_form) {
+  public static function process(array &$element, FormStateInterface $form_state, array &$complete_form) {
 
     $element['filefield_reference'] = array(
       '#weight' => 100.5,
       '#theme' => 'filefield_sources_element',
       '#source_id' => 'reference',
-      '#filefield_source' => TRUE, // Required for proper theming.
+      // Required for proper theming.
+      '#filefield_source' => TRUE,
       '#filefield_sources_hint_text' => FILEFIELD_SOURCE_REFERENCE_HINT_TEXT,
     );
 
@@ -158,6 +161,12 @@ class Reference implements FilefieldSourceInterface {
     return new JsonResponse($matches);
   }
 
+  /**
+   * Define routes for Reference source.
+   *
+   * @return array
+   *   Array of routes.
+   */
   public static function routes() {
     $routes = array();
 
@@ -180,8 +189,8 @@ class Reference implements FilefieldSourceInterface {
   public static function settings(WidgetInterface $plugin) {
     $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', array(
       'source_reference' => array(
-        'autocomplete' => FILEFIELD_SOURCE_REFERENCE_STARTS_WITH_AUTOCOMPLETE_TYPE
-      )
+        'autocomplete' => FILEFIELD_SOURCE_REFERENCE_STARTS_WITH_AUTOCOMPLETE_TYPE,
+      ),
     ));
 
     $return['source_reference'] = array(

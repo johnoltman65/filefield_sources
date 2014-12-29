@@ -1,10 +1,13 @@
+/**
+ * @file
+ * Defines Javascript behaviors for the filefield_sources module.
+ */
+
 (function ($, Drupal) {
 
 "use strict";
 
-/**
- * Behavior to add source options to configured fields.
- */
+// Behavior to add source options to configured fields.
 Drupal.behaviors.fileFieldSources = {};
 Drupal.behaviors.fileFieldSources.attach = function(context, settings) {
   $('div.filefield-sources-list:not(.filefield-sources-processed)', context).each(function() {
@@ -47,9 +50,7 @@ Drupal.behaviors.fileFieldSources.attach = function(context, settings) {
   }
 };
 
-/**
- * Helper functions used by FileField Sources.
- */
+// Helper functions used by FileField Sources.
 Drupal.fileFieldSources = {
   /**
    * Update the hint text when clicking between source types.
@@ -134,10 +135,7 @@ Drupal.fileFieldSources = {
   pasteEvent: function(e) {
     var clipboardData = null;
     var targetElement = this;
-
-    // $.browser has been remove from jquery from 1.9
-    jQuery.browser = {};
-    jQuery.browser.mozilla = /mozilla/.test(navigator.userAgent.toLowerCase()) && !/webkit/.test(navigator.userAgent.toLowerCase());
+    var userAgent = navigator.userAgent.toLowerCase();
 
     // Chrome.
     if (window.event && window.event.clipboardData && window.event.clipboardData.items) {
@@ -148,7 +146,7 @@ Drupal.fileFieldSources = {
       clipboardData = e.originalEvent.clipboardData;
     }
     // Firefox with content editable pastes as img tag with data href.
-    else if ($.browser.mozilla) {
+    else if (userAgent.match(/mozilla/) && !userAgent.match(/webkit/)) {
       Drupal.fileFieldSources.waitForPaste(targetElement);
       return true;
     }
@@ -180,9 +178,9 @@ Drupal.fileFieldSources = {
         break;
       }
       // Handle files that a copy/pasted as a file reference.
-      //if (types[n] && types[n] === 'Files') {
-      //  TODO: Figure out how to capture copy/paste of entire files from desktop.
-      //}
+      /* if (types[n] && types[n] === 'Files') {
+          TODO: Figure out how to capture copy/paste of entire files from desktop.
+       }*/
     }
     if (!fileFound) {
       Drupal.fileFieldSources.pasteError(targetElement, Drupal.t('No file in clipboard.'));

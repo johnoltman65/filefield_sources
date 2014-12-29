@@ -1,10 +1,11 @@
 <?php
 /**
  * @file
- * This file documents hooks provided by the FileField Sources module. Note that
- * none of this code is executed by using FileField Sources module, it is
- * provided here for reference as an example how to implement these hooks in
- * your own module.
+ * This file documents hooks provided by the FileField Sources module.
+ *
+ * Note that none of this code is executed by using FileField Sources module,
+ * it is provided here for reference as an example how to implement these hooks
+ * in your own module.
  */
 
 /**

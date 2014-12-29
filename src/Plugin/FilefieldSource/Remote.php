@@ -32,7 +32,7 @@ class Remote implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function value(&$element, &$input, FormStateInterface $form_state) {
+  public static function value(array &$element, &$input, FormStateInterface $form_state) {
     if (isset($input['filefield_remote']['url']) && strlen($input['filefield_remote']['url']) > 0 && UrlHelper::isValid($input['filefield_remote']['url']) && $input['filefield_remote']['url'] != FILEFIELD_SOURCE_REMOTE_HINT_TEXT) {
       $field = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
       $url = $input['filefield_remote']['url'];
@@ -49,15 +49,16 @@ class Remote implements FilefieldSourceInterface {
       $directory = $element['#upload_location'];
       $mode = Settings::get('file_chmod_directory', FILE_CHMOD_DIRECTORY);
 
-      // This first chmod check is for other systems such as S3, which don't work
-      // with file_prepare_directory().
+      // This first chmod check is for other systems such as S3, which don't
+      // work with file_prepare_directory().
       if (!drupal_chmod($directory, $mode) && !file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
         \Drupal::logger('filefield_sources')->log(E_NOTICE, 'File %file could not be copied, because the destination directory %destination is not configured correctly.', array('%file' => $url, '%destination' => drupal_realpath($directory)));
         drupal_set_message(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', array('%file' => $url)), 'error');
         return;
       }
 
-      // Check the headers to make sure it exists and is within the allowed size.
+      // Check the headers to make sure it exists and is within the allowed
+      // size.
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_URL, $url);
       curl_setopt($ch, CURLOPT_HEADER, TRUE);
@@ -80,9 +81,11 @@ class Remote implements FilefieldSourceInterface {
           case 403:
             $form_state->setError($element, t('The remote file could not be transferred because access to the file was denied.'));
             break;
+
           case 404:
             $form_state->setError($element, t('The remote file could not be transferred because it was not found.'));
             break;
+
           default:
             $form_state->setError($element, t('The remote file could not be transferred due to an HTTP error (@code).', array('@code' => $info['http_code'])));
         }
@@ -123,7 +126,7 @@ class Remote implements FilefieldSourceInterface {
 
       // Perform basic extension check on the file before trying to transfer.
       $extensions = $field->settings['file_extensions'];
-      $regex = '/\.('. preg_replace('/[ +]/', '|', preg_quote($extensions)) .')$/i';
+      $regex = '/\.(' . preg_replace('/[ +]/', '|', preg_quote($extensions)) . ')$/i';
       if (!empty($extensions) && !preg_match($regex, $filename)) {
         $form_state->setError($element, t('Only files with the following extensions are allowed: %files-allowed.', array('%files-allowed' => $extensions)));
         return;
@@ -147,8 +150,8 @@ class Remote implements FilefieldSourceInterface {
       static::setTransferOptions($options);
 
       $transfer_success = FALSE;
-      // If we've already downloaded the entire file because the header-retrieval
-      // failed, just ave the contents we have.
+      // If we've already downloaded the entire file because the
+      // header-retrieval failed, just ave the contents we have.
       if (isset($file_contents)) {
         if ($fp = @fopen($filepath, 'w')) {
           fwrite($fp, $file_contents);
@@ -197,7 +200,7 @@ class Remote implements FilefieldSourceInterface {
   }
 
   /**
-   * cURL write function to save the file to disk. Also updates progress bar.
+   * Save the file to disk. Also updates progress bar.
    */
   protected static function curlWrite(&$ch, $data) {
     $progress_update = 0;
@@ -213,7 +216,7 @@ class Remote implements FilefieldSourceInterface {
         'total' => curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD),
       );
       // Set a cache so that we can retrieve this value from the progress bar.
-      $cid = 'filefield_transfer:'. session_id() . ':' . $options['key'];
+      $cid = 'filefield_transfer:' . session_id() . ':' . $options['key'];
       if ($progress['current'] != $progress['total']) {
         \Drupal::cache()->set($cid, $progress, time() + 300);
       }
@@ -281,13 +284,14 @@ class Remote implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function process(&$element, FormStateInterface $form_state, &$complete_form) {
+  public static function process(array &$element, FormStateInterface $form_state, array &$complete_form) {
 
     $element['filefield_remote'] = array(
       '#weight' => 100.5,
       '#theme' => 'filefield_sources_element',
       '#source_id' => 'remote',
-      '#filefield_source' => TRUE, // Required for proper theming.
+       // Required for proper theming.
+      '#filefield_source' => TRUE,
       '#filefield_sources_hint_text' => FILEFIELD_SOURCE_REMOTE_HINT_TEXT,
     );
 
@@ -347,7 +351,7 @@ class Remote implements FilefieldSourceInterface {
       'percentage' => -1,
     );
 
-    if ($cache = \Drupal::cache()->get('filefield_transfer:'. session_id() . ':' . $key)) {
+    if ($cache = \Drupal::cache()->get('filefield_transfer:' . session_id() . ':' . $key)) {
       $current = $cache->data['current'];
       $total = $cache->data['total'];
       $progress['message'] = t('Transferring... (@current of @total)', array('@current' => format_size($current), '@total' => format_size($total)));
@@ -357,6 +361,12 @@ class Remote implements FilefieldSourceInterface {
     return new JsonResponse($progress);
   }
 
+  /**
+   * Define routes for Remote source.
+   *
+   * @return array
+   *   Array of routes.
+   */
   public static function routes() {
     $routes = array();
 
@@ -378,8 +388,6 @@ class Remote implements FilefieldSourceInterface {
    */
   public static function settings(WidgetInterface $plugin) {
     $return = array();
-
-    // Add settings to the FileField widget form.
 
     return $return;
 

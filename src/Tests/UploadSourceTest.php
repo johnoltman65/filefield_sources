@@ -17,7 +17,7 @@ class UploadSourceTest extends FileFieldSourcesTestBase {
   /**
    * Tests upload source enabled.
    */
-  function testUploadSourceEnabled() {
+  public function testUploadSourceEnabled() {
     $this->enableSources(array(
       'upload' => TRUE,
     ));
@@ -28,7 +28,7 @@ class UploadSourceTest extends FileFieldSourcesTestBase {
   /**
    * Tests all sources enabled.
    */
-  function testAllSourcesEnabled() {
+  public function testAllSourcesEnabled() {
     $this->enableSources(array(
       'upload' => TRUE,
       'remote' => TRUE,
@@ -43,13 +43,13 @@ class UploadSourceTest extends FileFieldSourcesTestBase {
   /**
    * Tests upload source still working properly.
    */
-  function assertUploadSourceWorkProperly() {
+  protected function assertUploadSourceWorkProperly() {
     $test_file = $this->createTemporaryFileEntity();
 
     // Upload a file by 'Upload' source.
-    $name = 'files[' . $this->field_name . '_0]';
+    $name = 'files[' . $this->fieldName . '_0]';
     $edit = array($name => drupal_realpath($test_file->getFileUri()));
-    $this->drupalPostAjaxForm(NULL, $edit, array($this->field_name . '_0_upload_button' => t('Upload')));
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_0_upload_button' => t('Upload')));
 
     // Ensure file is uploaded.
     $this->assertLink($test_file->getFilename());

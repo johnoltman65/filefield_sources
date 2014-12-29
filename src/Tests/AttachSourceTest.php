@@ -15,10 +15,11 @@ namespace Drupal\filefield_sources\Tests;
 class AttachSourceTest extends FileFieldSourcesTestBase {
 
   /**
-   * Tests move file from relative path. Default settings:
-   * Move file from public://file_attach to public://
+   * Tests move file from relative path.
+   *
+   * Default settings: Move file from 'public://file_attach' to 'public://'.
    */
-  function testMoveFileFromRelativePath() {
+  public function testMoveFileFromRelativePath() {
     // Create test file.
     $path = file_default_scheme()  . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH;
     $file = $this->createTemporaryFile($path);
@@ -29,17 +30,23 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     ));
 
     // Ensure option exists.
-    $options = $this->xpath('//select[@name=:name]/option[@value=:option]', array(':name' => $this->field_name . '[0][filefield_attach][filename]', ':option' => $file->uri));
+    $options = $this->xpath('//select[@name=:name]/option[@value=:option]', array(
+      ':name' => $this->fieldName . '[0][filefield_attach][filename]',
+      ':option' => $file->uri,
+    ));
     $this->assertTrue(isset($options[0]), 'File option exists.');
 
     // Upload a file by 'Attach' source.
     $edit = array(
-      $this->field_name . '[0][filefield_attach][filename]' => $file->uri
+      $this->fieldName . '[0][filefield_attach][filename]' => $file->uri,
     );
     $this->drupalPostForm(NULL, $edit, t('Attach'));
 
     // Ensure option no longer exists.
-    $options = $this->xpath('//select[@name=:name]/option[@value=:option]', array(':name' => $this->field_name . '[0][filefield_attach][filename]', ':option' => $file->uri));
+    $options = $this->xpath('//select[@name=:name]/option[@value=:option]', array(
+      ':name' => $this->fieldName . '[0][filefield_attach][filename]',
+      ':option' => $file->uri,
+    ));
     $this->assertFalse(isset($options[0]), 'File option no longer exists.');
 
     // Ensure file is uploaded.
@@ -66,9 +73,10 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
 
   /**
    * Tests copy file from absolute path.
-   * Copy file from sites/default/files/custom_file_attach to public://
+   *
+   * Copy file from 'sites/default/files/custom_file_attach' to 'public://'.
    */
-  function testCopyFileFromAbsolutePath() {
+  public function testCopyFileFromAbsolutePath() {
     // Calculate custom absolute path.
     $path = drupal_realpath(file_default_scheme() . '://');
     $path = str_replace(realpath('./'), '', $path);
@@ -89,12 +97,15 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     ));
 
     // Ensure option exists.
-    $options = $this->xpath('//select[@name=:name]/option[@value=:option]', array(':name' => $this->field_name . '[0][filefield_attach][filename]', ':option' => $file->uri));
+    $options = $this->xpath('//select[@name=:name]/option[@value=:option]', array(
+      ':name' => $this->fieldName . '[0][filefield_attach][filename]',
+      ':option' => $file->uri,
+    ));
     $this->assertTrue(isset($options[0]), 'File option exists.');
 
     // Upload a file by 'Attach' source.
     $edit = array(
-      $this->field_name . '[0][filefield_attach][filename]' => $file->uri
+      $this->fieldName . '[0][filefield_attach][filename]' => $file->uri,
     );
     $this->drupalPostForm(NULL, $edit, t('Attach'));
 

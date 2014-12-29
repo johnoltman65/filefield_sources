@@ -19,9 +19,9 @@ class EmptyValuesTest extends FileFieldSourcesTestBase {
   /**
    * Tests all sources enabled.
    */
-  function testAllSourcesEnabled() {
+  public function testAllSourcesEnabled() {
     // Change allowed number of values.
-    $this->drupalPostForm('admin/structure/types/manage/' . $this->type_name . '/fields/node.' . $this->type_name . '.' . $this->field_name . '/storage', array('field_storage[cardinality]' => FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED), t('Save field settings'));
+    $this->drupalPostForm('admin/structure/types/manage/' . $this->typeName . '/fields/node.' . $this->typeName . '.' . $this->fieldName . '/storage', array('field_storage[cardinality]' => FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED), t('Save field settings'));
 
     $this->enableSources(array(
       'upload' => TRUE,
@@ -32,50 +32,60 @@ class EmptyValuesTest extends FileFieldSourcesTestBase {
     ));
 
     // Upload a file by 'Remote' source.
-    $input = $this->field_name . '[0][filefield_remote][url]';
-    $button_name = $this->field_name . '_0_transfer';
+    $input = $this->fieldName . '[0][filefield_remote][url]';
+    $button_name = $this->fieldName . '_0_transfer';
     $button_label = t('Transfer');
     $this->drupalPostForm(NULL, array($input => ''), $button_label);
 
     $this->assertNoFilesUploaded($button_name, $button_label);
 
     // Upload a file by 'Reference' source.
-    $input = $this->field_name . '[0][filefield_reference][autocomplete]';
-    $button_name = $this->field_name . '_0_autocomplete_select';
+    $input = $this->fieldName . '[0][filefield_reference][autocomplete]';
+    $button_name = $this->fieldName . '_0_autocomplete_select';
     $button_label = t('Select');
     $this->drupalPostForm(NULL, array($input => ''), $button_label);
 
     $this->assertNoFilesUploaded($button_name, $button_label);
 
     // Upload a file by 'Clipboard' source.
-    $prefix = $this->field_name . '[0][filefield_clipboard]';
+    $prefix = $this->fieldName . '[0][filefield_clipboard]';
     $edit = array(
       $prefix . '[filename]' => '',
       $prefix . '[contents]' => '',
     );
-    $button_name = $this->field_name . '_0_clipboard_upload_button';
+    $button_name = $this->fieldName . '_0_clipboard_upload_button';
     $button_label = t('Upload');
     $this->drupalPostAjaxForm(NULL, $edit, array($button_name => $button_label));
 
     $this->assertNoFilesUploaded($button_name, $button_label);
 
     // Upload a file by 'Attach' source.
-    $button_name = $this->field_name . '_0_attach';
+    $button_name = $this->fieldName . '_0_attach';
     $button_label = t('Attach');
     $this->drupalPostForm(NULL, array(), $button_label);
 
     $this->assertNoFilesUploaded($button_name, $button_label);
 
     // Upload a file by 'Upload' source.
-    $input = 'files[' . $this->field_name . '_0][]';
-    $button_name = $this->field_name . '_0_upload_button';
+    $input = 'files[' . $this->fieldName . '_0][]';
+    $button_name = $this->fieldName . '_0_upload_button';
     $button_label = t('Upload');
     $this->drupalPostAjaxForm(NULL, array($input => ''), array($button_name => $button_label));
 
     $this->assertNoFilesUploaded($button_name, $button_label);
   }
 
-  function assertNoFilesUploaded($button_name, $button_label) {
+  /**
+   * Assert that no files have been uploaded.
+   *
+   * Also check that submit button of a source is unique.
+   *
+   * @param string $button_name
+   *   Submit button's name.
+   * @param string $button_label
+   *   Submit button's label.
+   */
+  protected function assertNoFilesUploaded($button_name, $button_label) {
     // Ensure that there are no remove buttons.
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'There are no remove buttons.');
 

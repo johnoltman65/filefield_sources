@@ -17,13 +17,13 @@ class RemoteSourceTest extends FileFieldSourcesTestBase {
   /**
    * Tests remote source enabled.
    */
-  function testRemoteSourceEnabled() {
+  public function testRemoteSourceEnabled() {
     $this->enableSources(array(
       'remote' => TRUE,
     ));
 
     // Upload a file by 'Remote' source.
-    $name = $this->field_name . '[0][filefield_remote][url]';
+    $name = $this->fieldName . '[0][filefield_remote][url]';
     $edit = array($name => $GLOBALS['base_url'] . '/README.txt');
     $this->drupalPostForm(NULL, $edit, t('Transfer'));
 

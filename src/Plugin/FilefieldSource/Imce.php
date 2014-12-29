@@ -30,7 +30,7 @@ class Imce implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function value(&$element, &$input, FormStateInterface $form_state) {
+  public static function value(array &$element, &$input, FormStateInterface $form_state) {
     if (isset($input['filefield_imce']['file_path']) && $input['filefield_imce']['file_path'] != '') {
       $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
       $field_settings = $instance->getSettings();
@@ -65,14 +65,15 @@ class Imce implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function process(&$element, FormStateInterface $form_state, &$complete_form) {
+  public static function process(array &$element, FormStateInterface $form_state, array &$complete_form) {
     $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
 
     $element['filefield_imce'] = array(
       '#weight' => 100.5,
       '#theme' => 'filefield_sources_element',
       '#source_id' => 'imce',
-      '#filefield_source' => TRUE, // Required for proper theming.
+      // Required for proper theming.
+      '#filefield_source' => TRUE,
       '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
     );
 
@@ -91,7 +92,15 @@ class Imce implements FilefieldSourceInterface {
       ),
     );
 
-    $imce_function = 'window.open(\'' . \Drupal::url('filefield_sources.imce', array('entity_type' => $element['#entity_type'], 'bundle' => $element['#bundle'], 'field_name' => $element['#field_name']), array('query' => array('app' => $instance->getLabel() . '|url@' . $filepath_id))) . '\', \'\', \'width=760,height=560,resizable=1\'); return false;';
+    $imce_function = 'window.open(\'' . \Drupal::url('filefield_sources.imce', array(
+      'entity_type' => $element['#entity_type'],
+      'bundle' => $element['#bundle'],
+      'field_name' => $element['#field_name']),
+      array(
+        'query' => array(
+          'app' => $instance->getLabel() . '|url@' . $filepath_id,
+        ),
+      )) . '\', \'\', \'width=760,height=560,resizable=1\'); return false;';
     $element['filefield_imce']['display_path'] = array(
       '#type' => 'markup',
       '#markup' => '<span id="' . $display_id . '" class="filefield-sources-imce-display">' . t('No file selected') . '</span> (<a class="filefield-sources-imce-browse" href="#" onclick="' . $imce_function . '">' . t('browse') . '</a>)',
@@ -148,16 +157,16 @@ class Imce implements FilefieldSourceInterface {
     $settings = $instance->getSettings();
 
     $widget = entity_get_form_display($entity_type, $bundle_name, 'default')->getComponent($field_name);
-    // Full mode
+    // Full mode.
     if (!empty($widget['third_party_settings']['filefield_sources']['filefield_sources']['source_imce']['imce_mode'])) {
       $conf['imce_custom_scan'] = array(get_called_class(), 'customScanFull');
     }
-    // Restricted mode
+    // Restricted mode.
     else {
       $conf['imce_custom_scan'] = array(get_called_class(), 'customScanRestricted');
       $conf['imce_custom_context'] = array(
         'field_storage' => entity_load('field_storage_config', $entity_type . '.' . $field_name),
-        'uri' => static::getUploadLocation($settings)
+        'uri' => static::getUploadLocation($settings),
       );
     }
 
@@ -171,10 +180,10 @@ class Imce implements FilefieldSourceInterface {
   /**
    * Determines the URI for a file field.
    *
-   * @param $data
+   * @param array $data
    *   An array of token objects to pass to token_replace().
    *
-   * @return
+   * @return string
    *   A file directory URI with tokens replaced.
    *
    * @see token_replace()
@@ -220,7 +229,9 @@ class Imce implements FilefieldSourceInterface {
   }
 
   /**
-   * Scan directory and return file list, subdirectories, and total size for Restricted Mode.
+   * Scan directory and return file list, subdirectories, and total size.
+   *
+   * This only work on Restricted Mode.
    */
   protected static function customScanRestricted($dirname, &$imce) {
     $context = $GLOBALS['conf']['imce_custom_context'];
@@ -236,8 +247,13 @@ class Imce implements FilefieldSourceInterface {
       static::disablePerms($imce, array('browse'));
     }
 
-    // Create directory info
-    $directory = array('dirsize' => 0, 'files' => array(), 'subdirectories' => array(), 'error' => FALSE);
+    // Create directory info.
+    $directory = array(
+      'dirsize' => 0,
+      'files' => array(),
+      'subdirectories' => array(),
+      'error' => FALSE,
+    );
 
     if (isset($field_storage['storage']['details']['sql']['FIELD_LOAD_CURRENT'])) {
       $storage = $field_storage['storage']['details']['sql']['FIELD_LOAD_CURRENT'];
@@ -252,9 +268,9 @@ class Imce implements FilefieldSourceInterface {
         ->condition('f.uri', $sql_uri . '%/%', 'NOT LIKE')
         ->execute();
       foreach ($result as $file) {
-        // Get real name
+        // Get real name.
         $name = basename($file->uri);
-        // Get dimensions
+        // Get dimensions.
         $width = $height = 0;
         if ($img = imce_image_info($file->uri)) {
           $width = $img['width'];
@@ -287,6 +303,12 @@ class Imce implements FilefieldSourceInterface {
     $imce['directories'][$imce['dir']] = array('name' => $imce['dir']) + $imce['perm'];
   }
 
+  /**
+   * Define routes for Imce source.
+   *
+   * @return array
+   *   Array of routes.
+   */
   public static function routes() {
     $routes = array();
 
@@ -309,8 +331,8 @@ class Imce implements FilefieldSourceInterface {
   public static function settings(WidgetInterface $plugin) {
     $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', array(
       'source_imce' => array(
-        'imce_mode' => 0
-      )
+        'imce_mode' => 0,
+      ),
     ));
 
     $return['source_imce'] = array(
@@ -319,7 +341,7 @@ class Imce implements FilefieldSourceInterface {
       '#access' => \Drupal::moduleHandler()->moduleExists('imce'),
     );
 
-    //$imce_admin_url = \Drupal::url('imce.admin');
+    // $imce_admin_url = \Drupal::url('imce.admin');
     $imce_admin_url = 'admin/config/media/imce';
     $return['source_imce']['imce_mode'] = array(
       '#type' => 'radios',

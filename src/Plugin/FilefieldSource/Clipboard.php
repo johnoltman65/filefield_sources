@@ -28,7 +28,7 @@ class Clipboard implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function value(&$element, &$input, FormStateInterface $form_state) {
+  public static function value(array &$element, &$input, FormStateInterface $form_state) {
     if (isset($input['filefield_clipboard']['contents']) && strlen($input['filefield_clipboard']['contents']) > 0) {
       // Check that the destination is writable.
       $temporary_directory = 'temporary://';
@@ -41,8 +41,8 @@ class Clipboard implements FilefieldSourceInterface {
       $directory = $element['#upload_location'];
       $mode = Settings::get('file_chmod_directory', FILE_CHMOD_DIRECTORY);
 
-      // This first chmod check is for other systems such as S3, which don't work
-      // with file_prepare_directory().
+      // This first chmod check is for other systems such as S3, which don't
+      // work with file_prepare_directory().
       if (!drupal_chmod($directory, $mode) && !file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
         $url = $input['filefield_clipboard']['filename'];
         \Drupal::logger('filefield_sources')->log(E_NOTICE, 'File %file could not be copied, because the destination directory %destination is not configured correctly.', array('%file' => $url, '%destination' => drupal_realpath($directory)));
@@ -61,7 +61,7 @@ class Clipboard implements FilefieldSourceInterface {
 
       $filename = trim($input['filefield_clipboard']['filename']);
       $filename = preg_replace('/\.[a-z0-9]{3,4}$/', '', $filename);
-      $filename = (empty($filename) ? 'paste_' . REQUEST_TIME : $filename). '.' . $extension;
+      $filename = (empty($filename) ? 'paste_' . REQUEST_TIME : $filename) . '.' . $extension;
       $filepath = file_create_filename($filename, $temporary_directory);
 
       $copy_success = FALSE;
@@ -85,12 +85,13 @@ class Clipboard implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function process(&$element, FormStateInterface $form_state, &$complete_form) {
+  public static function process(array &$element, FormStateInterface $form_state, array &$complete_form) {
     $element['filefield_clipboard'] = array(
       '#weight' => 100.5,
       '#theme' => 'filefield_sources_element',
       '#source_id' => 'clipboard',
-      '#filefield_source' => TRUE, // Required for proper theming.
+      // Required for proper theming.
+      '#filefield_source' => TRUE,
       '#filefield_sources_hint_text' => t('Enter filename then paste.'),
       '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
     );

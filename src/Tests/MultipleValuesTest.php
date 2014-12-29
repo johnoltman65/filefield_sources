@@ -16,6 +16,9 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
  */
 class MultipleValuesTest extends FileFieldSourcesTestBase {
 
+  /**
+   * Sets up for multiple values test case.
+   */
   protected function setUp() {
     parent::setUp();
 
@@ -28,7 +31,7 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $this->temporary_file = $this->createTemporaryFile($path);
 
     // Change allowed number of values.
-    $this->drupalPostForm('admin/structure/types/manage/' . $this->type_name . '/fields/node.' . $this->type_name . '.' . $this->field_name . '/storage', array('field_storage[cardinality]' => FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED), t('Save field settings'));
+    $this->drupalPostForm('admin/structure/types/manage/' . $this->typeName . '/fields/node.' . $this->typeName . '.' . $this->fieldName . '/storage', array('field_storage[cardinality]' => FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED), t('Save field settings'));
 
     $this->enableSources(array(
       'upload' => TRUE,
@@ -42,7 +45,7 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
   /**
    * Tests uploading then removing files.
    */
-  function testUploadThenRemoveFiles() {
+  public function testUploadThenRemoveFiles() {
     $uploaded_files = $this->uploadFiles();
 
     // Ensure files have been uploaded.
@@ -51,7 +54,7 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
 
     // Remove all uploaded files.
     for ($i = 0; $i < count($remove_buttons); $i++) {
-      $this->drupalPostAjaxForm(NULL, array(), array($this->field_name . '_0_remove_button' => t('Remove')));
+      $this->drupalPostAjaxForm(NULL, array(), array($this->fieldName . '_0_remove_button' => t('Remove')));
     }
 
     // Ensure all files have been removed.
@@ -66,7 +69,7 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
   /**
    * Tests uploading files and saving node.
    */
-  function testUploadFilesThenSaveNode() {
+  public function testUploadFilesThenSaveNode() {
     $this->uploadFiles();
 
     $this->drupalPostForm(NULL, array('title[0][value]' => $this->randomMachineName()), t('Save and publish'));
@@ -83,49 +86,50 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
    * Upload files.
    *
    * @return int
+   *   Number of files uploaded.
    */
-  function uploadFiles() {
+  protected function uploadFiles() {
     $uploaded_files = 0;
 
     // Ensure no files has been uploaded.
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'There are no file have been uploaded.');
 
     // Upload a file by 'Remote' source.
-    $input = $this->field_name . '[' . $uploaded_files . '][filefield_remote][url]';
+    $input = $this->fieldName . '[' . $uploaded_files . '][filefield_remote][url]';
     $edit = array($input => $GLOBALS['base_url'] . '/README.txt');
     $this->drupalPostForm(NULL, $edit, t('Transfer'));
     $this->assertLink('README.txt');
     $uploaded_files++;
 
     // Upload a file by 'Reference' source.
-    $input = $this->field_name . '[' . $uploaded_files . '][filefield_reference][autocomplete]';
+    $input = $this->fieldName . '[' . $uploaded_files . '][filefield_reference][autocomplete]';
     $edit = array($input => $this->permanent_file_entity->getFilename() . ' [fid:' . $this->permanent_file_entity->id() . ']');
     $this->drupalPostForm(NULL, $edit, t('Select'));
     $this->assertLink($this->permanent_file_entity->getFilename());
     $uploaded_files++;
 
     // Upload a file by 'Clipboard' source.
-    $prefix = $this->field_name . '[' . $uploaded_files . '][filefield_clipboard]';
+    $prefix = $this->fieldName . '[' . $uploaded_files . '][filefield_clipboard]';
     $edit = array(
       $prefix . '[filename]' => $this->temporary_file_entity_1->getFilename(),
       $prefix . '[contents]' => 'data:text/plain;base64,' . base64_encode(file_get_contents($this->temporary_file_entity_1->getFileUri())),
     );
-    $this->drupalPostAjaxForm(NULL, $edit, array($this->field_name . '_' . $uploaded_files . '_clipboard_upload_button' => t('Upload')));
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $uploaded_files . '_clipboard_upload_button' => t('Upload')));
     $this->assertLink($this->temporary_file_entity_1->getFilename());
     $uploaded_files++;
 
     // Upload a file by 'Attach' source.
     $edit = array(
-      $this->field_name . '[' . $uploaded_files . '][filefield_attach][filename]' => $this->temporary_file->uri
+      $this->fieldName . '[' . $uploaded_files . '][filefield_attach][filename]' => $this->temporary_file->uri,
     );
     $this->drupalPostForm(NULL, $edit, t('Attach'));
     $this->assertLink($this->temporary_file->filename);
     $uploaded_files++;
 
     // Upload a file by 'Upload' source.
-    $input = 'files[' . $this->field_name . '_' . $uploaded_files . '][]';
+    $input = 'files[' . $this->fieldName . '_' . $uploaded_files . '][]';
     $edit = array($input => drupal_realpath($this->temporary_file_entity_2->getFileUri()));
-    $this->drupalPostAjaxForm(NULL, $edit, array($this->field_name . '_' . $uploaded_files . '_upload_button' => t('Upload')));
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $uploaded_files . '_upload_button' => t('Upload')));
     $this->assertLink($this->temporary_file_entity_2->getFilename());
     $uploaded_files++;
 

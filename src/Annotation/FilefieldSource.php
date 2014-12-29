@@ -24,8 +24,9 @@ class FilefieldSource extends Plugin {
   public $id;
 
   /**
-   * The name of the file field source plugin that will be displayed in a select
-   * list.
+   * The name of the file field source plugin.
+   *
+   * It will be displayed in a select list.
    *
    * @ingroup plugin_translatable
    *

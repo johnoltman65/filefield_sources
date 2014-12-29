@@ -11,47 +11,66 @@ use Drupal\file\Tests\FileFieldTestBase;
 use Drupal\simpletest\WebTestBase;
 
 /**
- * Provides methods specifically for testing File Field Sources module's field
- * handling.
+ * Base class for File Field Sources test cases.
  */
 abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
 
   /**
-  * Modules to enable.
-  *
-  * @var array
-  */
+   * Modules to enable.
+   *
+   * @var array
+   */
   public static $modules = array('filefield_sources');
 
-  protected $admin_user;
+  protected $adminUser;
 
-  protected $type_name;
-  protected $field_name;
+  protected $typeName;
+  protected $fieldName;
   protected $node;
 
+  /**
+   * Sets up for file field sources test cases.
+   */
   protected function setUp() {
     WebTestBase::setUp();
 
     // Create admin user, then login.
-    $this->admin_user = $this->drupalCreateUser(array('access content', 'access administration pages', 'administer site configuration', 'administer users', 'administer permissions', 'administer content types', 'administer node fields', 'administer node display', 'administer node form display', 'administer nodes', 'bypass node access'));
-    $this->drupalLogin($this->admin_user);
+    $this->adminUser = $this->drupalCreateUser(array(
+      'access content',
+      'access administration pages',
+      'administer site configuration',
+      'administer users',
+      'administer permissions',
+      'administer content types',
+      'administer node fields',
+      'administer node display',
+      'administer node form display',
+      'administer nodes',
+      'bypass node access',
+    ));
+    $this->drupalLogin($this->adminUser);
 
     // Create content type.
-    $this->type_name = 'article';
-    $this->drupalCreateContentType(array('type' => $this->type_name, 'name' => 'Article'));
+    $this->typeName = 'article';
+    $this->drupalCreateContentType(array('type' => $this->typeName, 'name' => 'Article'));
 
     // Add node.
     $this->node = $this->drupalCreateNode();
 
     // Add file field.
-    $this->field_name = strtolower($this->randomMachineName());
-    $this->createFileField($this->field_name, 'node', $this->type_name);
+    $this->fieldName = strtolower($this->randomMachineName());
+    $this->createFileField($this->fieldName, 'node', $this->typeName);
   }
 
   /**
    * Enable file field sources.
    *
-   * @param type $sources
+   * @param array $sources
+   *   List of sources to enable or disable. e.g
+   *   array(
+   *     'upload' => FALSE,
+   *     'remote' => TRUE,
+   *   ).
    */
   public function enableSources($sources = array()) {
     $sources += array('upload' => TRUE);
@@ -66,26 +85,26 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
     ksort($sources);
 
     // Upload source enabled by default.
-    $manage_display = 'admin/structure/types/manage/' . $this->type_name . '/form-display';
+    $manage_display = 'admin/structure/types/manage/' . $this->typeName . '/form-display';
     $this->drupalGet($manage_display);
     $this->assertText("File field sources: upload", 'The expected summary is displayed.');
 
     // Click on the widget settings button to open the widget settings form.
-    $this->drupalPostAjaxForm(NULL, array(), $this->field_name . "_settings_edit");
+    $this->drupalPostAjaxForm(NULL, array(), $this->fieldName . "_settings_edit");
 
     // Enable sources.
-    $prefix = 'fields[' . $this->field_name . '][settings_edit_form][third_party_settings][filefield_sources][filefield_sources][sources]';
+    $prefix = 'fields[' . $this->fieldName . '][settings_edit_form][third_party_settings][filefield_sources][filefield_sources][sources]';
     $edit = array();
     foreach ($sources as $source => $enabled) {
       $edit[$prefix . '[' . $source . ']'] = $enabled ? TRUE : FALSE;
     }
-    $this->drupalPostAjaxForm(NULL, $edit, $this->field_name . '_plugin_settings_update');
+    $this->drupalPostAjaxForm(NULL, $edit, $this->fieldName . '_plugin_settings_update');
     $this->assertText("File field sources: " . implode(', ', array_keys($sources)), 'The expected summary is displayed.');
 
     // Save the form to save the third party settings.
     $this->drupalPostForm(NULL, array(), t('Save'));
 
-    $add_node = 'node/add/' . $this->type_name;
+    $add_node = 'node/add/' . $this->typeName;
     $this->drupalGet($add_node);
     if (count($sources) > 1) {
       // We can swith between sources.
@@ -105,13 +124,14 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * Create permanent file entity.
    *
    * @return object
+   *   Permanent file entity.
    */
   public function createPermanentFileEntity() {
     $file = $this->createTemporaryFileEntity();
     // Only permanent file can be referred.
     $file->status = FILE_STATUS_PERMANENT;
     // Author has permission to access file.
-    $file->uid = $this->admin_user->id();
+    $file->uid = $this->adminUser->id();
     $file->save();
 
     // Permanent file must be used by an entity.
@@ -124,6 +144,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * Create temporary file entity.
    *
    * @return object
+   *   Temporary file entity.
    */
   public function createTemporaryFileEntity() {
     $file = $this->createTemporaryFile();
@@ -138,6 +159,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * Create temporary file.
    *
    * @return object
+   *   Permanent file object.
    */
   public function createTemporaryFile($path = '') {
     $filename = $this->randomMachineName() . '.txt';
@@ -169,20 +191,23 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * Update file field sources settings.
    *
    * @param string $source_key
+   *   Wrapper, defined by each source.
    * @param string $key
+   *   Key, defined by each source.
    * @param mixed $value
+   *   Value to set.
    */
   public function updateFilefieldSourcesSettings($source_key, $key, $value) {
-    $manage_display = 'admin/structure/types/manage/' . $this->type_name . '/form-display';
+    $manage_display = 'admin/structure/types/manage/' . $this->typeName . '/form-display';
     $this->drupalGet($manage_display);
 
     // Click on the widget settings button to open the widget settings form.
-    $this->drupalPostAjaxForm(NULL, array(), $this->field_name . "_settings_edit");
+    $this->drupalPostAjaxForm(NULL, array(), $this->fieldName . "_settings_edit");
 
     // Update settings.
-    $name = 'fields[' . $this->field_name . '][settings_edit_form][third_party_settings][filefield_sources][filefield_sources]' . "[$source_key][$key]";
+    $name = 'fields[' . $this->fieldName . '][settings_edit_form][third_party_settings][filefield_sources][filefield_sources]' . "[$source_key][$key]";
     $edit = array($name => $value);
-    $this->drupalPostAjaxForm(NULL, $edit, $this->field_name . '_plugin_settings_update');
+    $this->drupalPostAjaxForm(NULL, $edit, $this->fieldName . '_plugin_settings_update');
 
     // Save the form to save the third party settings.
     $this->drupalPostForm(NULL, array(), t('Save'));

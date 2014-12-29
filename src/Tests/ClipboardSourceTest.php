@@ -17,19 +17,19 @@ class ClipboardSourceTest extends FileFieldSourcesTestBase {
   /**
    * Tests clipboard source enabled.
    */
-  function testClipboardSourceEnabled() {
+  public function testClipboardSourceEnabled() {
     $this->enableSources(array(
       'clipboard' => TRUE,
     ));
     $test_file = $this->createTemporaryFileEntity();
 
     // Upload a file by 'Clipboard' source.
-    $prefix = $this->field_name . '[0][filefield_clipboard]';
+    $prefix = $this->fieldName . '[0][filefield_clipboard]';
     $edit = array(
       $prefix . '[filename]' => $test_file->getFilename(),
       $prefix . '[contents]' => 'data:text/plain;base64,' . base64_encode(file_get_contents($test_file->getFileUri())),
     );
-    $this->drupalPostAjaxForm(NULL, $edit, array($this->field_name . '_0_clipboard_upload_button' => t('Upload')));
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_0_clipboard_upload_button' => t('Upload')));
 
     // Ensure file is uploaded.
     $this->assertLink($test_file->getFilename());

@@ -31,7 +31,7 @@ class Attach implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function value(&$element, &$input, FormStateInterface $form_state) {
+  public static function value(array &$element, &$input, FormStateInterface $form_state) {
     if (!empty($input['filefield_attach']['filename'])) {
       $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
       $filepath = $input['filefield_attach']['filename'];
@@ -40,10 +40,13 @@ class Attach implements FilefieldSourceInterface {
       $directory = $element['#upload_location'];
       $mode = Settings::get('file_chmod_directory', FILE_CHMOD_DIRECTORY);
 
-      // This first chmod check is for other systems such as S3, which don't work
-      // with file_prepare_directory().
+      // This first chmod check is for other systems such as S3, which don't
+      // work with file_prepare_directory().
       if (!drupal_chmod($directory, $mode) && !file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
-        \Drupal::logger('filefield_sources')->log(E_NOTICE,  'File %file could not be copied, because the destination directory %destination is not configured correctly.', array('%file' => $filepath, '%destination' => drupal_realpath($directory)));
+        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'File %file could not be copied, because the destination directory %destination is not configured correctly.', array(
+          '%file' => $filepath,
+          '%destination' => drupal_realpath($directory),
+        ));
         drupal_set_message(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', array('%file' => $filepath)), 'error');
         return;
       }
@@ -84,7 +87,7 @@ class Attach implements FilefieldSourceInterface {
   /**
    * {@inheritdoc}
    */
-  public static function process(&$element, FormStateInterface $form_state, &$complete_form) {
+  public static function process(array &$element, FormStateInterface $form_state, array &$complete_form) {
     $settings = $element['#filefield_sources_settings']['source_attach'];
     $field_name = $element['#field_name'];
     $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $field_name);
@@ -93,7 +96,8 @@ class Attach implements FilefieldSourceInterface {
       '#weight' => 100.5,
       '#theme' => 'filefield_sources_element',
       '#source_id' => 'attach',
-      '#filefield_source' => TRUE, // Required for proper theming.
+      // Required for proper theming.
+      '#filefield_source' => TRUE,
     );
 
     $path = static::getDirectory($settings);
@@ -103,8 +107,13 @@ class Attach implements FilefieldSourceInterface {
     // had previously. This allows files to be deleted after copying them and
     // still be considered a valid option during the validation and submit.
     $triggering_element = $form_state->getTriggeringElement();
-    if (!isset($triggering_element) && $form_state->has(array('filefield_sources', $field_name, 'attach_options'))) {
-      $attach_options = $form_state->get(array('filefield_sources', $field_name, 'attach_options'));
+    $property = array(
+      'filefield_sources',
+      $field_name,
+      'attach_options',
+    );
+    if (!isset($triggering_element) && $form_state->has($property)) {
+      $attach_options = $form_state->get($property);
       $options = $options + $attach_options;
     }
     // On initial form build and rebuilds after processing input, save the
@@ -118,7 +127,7 @@ class Attach implements FilefieldSourceInterface {
     // Error messages.
     if ($options === FALSE || empty($settings['path'])) {
       $attach_message = t('A file attach directory could not be located.');
-      $attach_description = t('Please check your settings for the %field field.',  array('%field' => $instance->getLabel()));
+      $attach_description = t('Please check your settings for the %field field.', array('%field' => $instance->getLabel()));
     }
     elseif (!count($options)) {
       $attach_message = t('There currently are no files to attach.');
@@ -182,7 +191,7 @@ class Attach implements FilefieldSourceInterface {
       $size = !empty($element['filename']['#size']) ? ' size="' . $element['filename']['#size'] . '"' : '';
       $element['filename']['#attributes']['class'][] = 'form-select';
       $multiple = !empty($element['#multiple']);
-      $output = '<select name="'. $element['filename']['#name'] .''. ($multiple ? '[]' : '') .'"'. ($multiple ? ' multiple="multiple" ' : '') . new Attribute($element['filename']['#attributes']) .' id="'. $element['filename']['#id'] .'" '. $size .'>'. form_select_options($element['filename']) .'</select>';
+      $output = '<select name="' . $element['filename']['#name'] . '' . ($multiple ? '[]' : '') . '"' . ($multiple ? ' multiple="multiple" ' : '') . new Attribute($element['filename']['#attributes']) . ' id="' . $element['filename']['#id'] . '" ' . $size . '>' . form_select_options($element['filename']) . '</select>';
     }
     $output .= drupal_render($element['attach']);
     $element['#children'] = $output;
@@ -190,7 +199,18 @@ class Attach implements FilefieldSourceInterface {
     return '<div class="filefield-source filefield-source-attach clear-block">' . drupal_render($element) . '</div>';
   }
 
-  protected static function getDirectory($settings, $account = NULL) {
+  /**
+   * Get directory from settings.
+   *
+   * @param array $settings
+   *   Attach source's settings.
+   * @param object $account
+   *   User to replace token.
+   *
+   * @return string
+   *   Path that contains files to attach.
+   */
+  protected static function getDirectory(array $settings, $account = NULL) {
     $account = isset($account) ? $account : \Drupal::currentUser();
     $path = $settings['path'];
     $absolute = !empty($settings['absolute']);
@@ -205,6 +225,15 @@ class Attach implements FilefieldSourceInterface {
     return $absolute ? $path : file_default_scheme() . '://' . $path;
   }
 
+  /**
+   * Get attach options.
+   *
+   * @param string $path
+   *   Path to scan files.
+   *
+   * @return array
+   *   List of options.
+   */
   protected static function getAttachOptions($path) {
     if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
       drupal_set_message(t('Specified file attach path must exist or be writable.'), 'error');
@@ -235,7 +264,7 @@ class Attach implements FilefieldSourceInterface {
         'path' => FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH,
         'absolute' => FILEFIELD_SOURCE_ATTACH_RELATIVE,
         'attach_mode' => FILEFIELD_SOURCE_ATTACH_MODE_MOVE,
-      )
+      ),
     ));
 
     $return['source_attach'] = array(
@@ -282,7 +311,17 @@ class Attach implements FilefieldSourceInterface {
     return $return;
   }
 
-  public static function filePathValidate(&$element, FormStateInterface $form_state, &$complete_form) {
+  /**
+   * Validate file path.
+   *
+   * @param array $element
+   *   Form element.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   Form state.
+   * @param array $complete_form
+   *   Complete form.
+   */
+  public static function filePathValidate(array &$element, FormStateInterface $form_state, array &$complete_form) {
     $parents = $element['#parents'];
     $current_element_id = array_pop($parents);
     $input_exists = FALSE;
