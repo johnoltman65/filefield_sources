@@ -17,13 +17,14 @@ Author: Nathan Haug (quicksketch)
 Installation
 ------------
 1) Place this module directory in your modules folder (this will usually be
-   "sites/all/modules/").
+   "modules/").
 
 2) Enable the module within your Drupal site.
 
 3) Add or configure an existing file or image field. To configure a typical node
-   field, visit Admin -> Structure -> Content types and click "manage fields"
-   on a type you'd like to modify. Add a new file field or edit an existing one.
+   field, visit Manage -> Structure -> Content types and click
+   "Manage form display" on a type you'd like to modify. Add a new file field or
+   edit an existing one.
 
    While editing the file or image field, you'll have new options available
    under a "File sources" details. You can enable the desired sources for that
