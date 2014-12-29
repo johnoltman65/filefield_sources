@@ -323,7 +323,7 @@ class Attach implements FilefieldSourceInterface {
    */
   public static function filePathValidate(array &$element, FormStateInterface $form_state, array &$complete_form) {
     $parents = $element['#parents'];
-    $current_element_id = array_pop($parents);
+    array_pop($parents);
     $input_exists = FALSE;
 
     // Get input of the whole parent element.
@@ -337,7 +337,7 @@ class Attach implements FilefieldSourceInterface {
       // Strip slashes from the end of the file path.
       $filepath = rtrim($element['path']['#value'], '\\/');
       $form_state->setValueForElement($element['path'], $filepath);
-      $filepath = $path = static::getDirectory($input['source_attach']);
+      $filepath = static::getDirectory($input['source_attach']);
 
       // Check that the directory exists and is writable.
       if (!file_prepare_directory($filepath, FILE_CREATE_DIRECTORY)) {

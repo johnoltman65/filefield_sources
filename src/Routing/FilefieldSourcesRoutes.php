@@ -21,7 +21,7 @@ class FilefieldSourcesRoutes {
   public function routes() {
     $routes = array();
 
-    foreach (\Drupal::service('filefield_sources')->getDefinitions() as $plugin_id => $definition) {
+    foreach (\Drupal::service('filefield_sources')->getDefinitions() as $definition) {
       // Get routes defined by each plugin.
       $callback = array($definition['class'], 'routes');
       if (is_callable($callback)) {

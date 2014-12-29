@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function filefield_sources_install() {
   // FileField Sources needs to load after both ImageField and FileField.
