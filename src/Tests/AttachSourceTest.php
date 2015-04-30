@@ -41,8 +41,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     $edit = array(
       $this->fieldName . '[0][filefield_attach][filename]' => $file->uri,
     );
-    $this->drupalPostAjaxForm(NULL, $edit, $this->fieldName . '_0_attach');
-    //$this->drupalPostForm(NULL, $edit, t('Attach'));
+    $this->drupalPostForm(NULL, $edit, t('Attach'));
 
     // Ensure file is uploaded.
     $this->assertFileUploaded($file->filename);
@@ -114,7 +113,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     $this->assertFalse(is_file($file->uri), 'Source file has been removed.');
     $this->assertTrue(is_file($dest_uri), 'Destination file has been created.');
 
-    $this->removeFile($file->filename);
+    $this->removeFile($file);
 
     // Ensure empty message exists.
     $this->assertText('There currently are no files to attach.', "'No files to attach' message exists.");
@@ -165,7 +164,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     $this->assertTrue(is_file($file->uri), 'Source file still exists.');
     $this->assertTrue(is_file($dest_uri), 'Destination file has been created.');
 
-    $this->removeFile($file->filename);
+    $this->removeFile($file);
 
     // Ensure there are files to attach.
     $this->assertNoText('There currently are no files to attach.', "'No files to attach' message does not exist.");
