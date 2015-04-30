@@ -447,7 +447,7 @@ function filefield_sources_save_file($filepath, $validators = array(), $destinat
     'status' => FILE_EXISTS_RENAME,
   ));
   $file->setFilename(trim(basename($filepath), '.'));
-  $file->setMimeType(file_get_mimetype($file->getFilename()));
+  $file->setMimeType(\Drupal::service('file.mime_type.guesser')->guess($file->getFilename()));
   $file->setSize(filesize($filepath));
 
   $extensions = '';
