@@ -21,7 +21,7 @@ class EmptyValuesTest extends FileFieldSourcesTestBase {
    */
   public function testAllSourcesEnabled() {
     // Change allowed number of values.
-    $this->drupalPostForm('admin/structure/types/manage/' . $this->typeName . '/fields/node.' . $this->typeName . '.' . $this->fieldName . '/storage', array('field_storage[cardinality]' => FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED), t('Save field settings'));
+    $this->drupalPostForm('admin/structure/types/manage/' . $this->typeName . '/fields/node.' . $this->typeName . '.' . $this->fieldName . '/storage', array('cardinality' => FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED), t('Save field settings'));
 
     $this->enableSources(array(
       'upload' => TRUE,
