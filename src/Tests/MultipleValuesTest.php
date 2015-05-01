@@ -103,13 +103,7 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $uploaded_files++;
 
     // Upload a file by 'Clipboard' source.
-    $prefix = $this->fieldName . '[' . $uploaded_files . '][filefield_clipboard]';
-    $edit = array(
-      $prefix . '[filename]' => $this->temporary_file_entity_1->getFilename(),
-      $prefix . '[contents]' => 'data:text/plain;base64,' . base64_encode(file_get_contents($this->temporary_file_entity_1->getFileUri())),
-    );
-    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $uploaded_files . '_clipboard_upload_button' => t('Upload')));
-    $this->assertLink($this->temporary_file_entity_1->getFilename());
+    $this->uploadFileByClipboardSource($this->temporary_file_entity_1->getFileUri(), $this->temporary_file_entity_1->getFileName(), $uploaded_files);
     $uploaded_files++;
 
     // Upload a file by 'Attach' source.
@@ -117,7 +111,10 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $uploaded_files++;
 
     // Upload a file by 'Upload' source.
-    $this->uploadFileByClipboardSource($this->temporary_file_entity_2->getFileUri(), $this->temporary_file_entity_2->getFileName(), $uploaded_files);
+    $input = 'files[' . $this->fieldName . '_' . $uploaded_files . '][]';
+    $edit = array($input => drupal_realpath($this->temporary_file_entity_2->getFileUri()));
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $uploaded_files . '_upload_button' => t('Upload')));
+    $this->assertLink($this->temporary_file_entity_2->getFilename());
     $uploaded_files++;
 
     return $uploaded_files;
