@@ -17,10 +17,10 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
   /**
    * Check to see if a option is present.
    *
-   * @param type $uri
+   * @param string $uri
    *   The option to check.
    *
-   * @return
+   * @return bool
    *   TRUE if the option is present, FALSE otherwise.
    */
   public function isOptionPresent($uri) {
@@ -50,7 +50,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
   /**
    * Check to see if file is uploaded.
    *
-   * @param $filename
+   * @param string $filename
    *   The file name to check.
    */
   public function assertFileUploaded($filename) {
@@ -76,13 +76,41 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
   /**
    * Check to see if file is removed.
    *
-   * @param type $filename
+   * @param string $filename
    *   The file name to check.
    */
   public function assertFileRemoved($filename) {
     $this->assertNoLink($filename);
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'After clicking the "Remove" button, it is no longer displayed.');
     $this->assertFieldByXpath('//input[@type="submit"]', t('Attach'), 'After clicking the "Remove" button, the "Attach" button is displayed.');
+  }
+
+  /**
+   * Check to see if can attach file.
+   *
+   * @param object $file
+   *   File to attach.
+   */
+  public function assertCanAttachFile($file) {
+    // Ensure option is present.
+    $this->assertTrue($this->isOptionPresent($file->uri), 'File option is present.');
+
+    // Ensure empty message is not present.
+    $this->assertNoText('There currently are no files to attach.', "Empty message is not present.");
+  }
+
+  /**
+   * Check to see if can attach file.
+   *
+   * @param object $file
+   *   File to attach.
+   */
+  public function assertCanNotAttachFile($file) {
+    // Ensure option is not present.
+    $this->assertFalse($this->isOptionPresent($file->uri), 'File option is not present.');
+
+    // Ensure empty message is present.
+    $this->assertText('There currently are no files to attach.', "Empty message is present.");
   }
 
   /**
@@ -100,14 +128,10 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
       'attach' => TRUE,
     ));
 
-    // Ensure option is present.
-    $this->assertTrue($this->isOptionPresent($file->uri), 'File option exists.');
+    $this->assertCanAttachFile($file);
 
     // Upload a file.
     $this->uploadFile($file);
-
-    // Ensure option is no longer present.
-    $this->assertFalse($this->isOptionPresent($file->uri), 'File option no longer exists.');
 
     // Ensure file is moved.
     $this->assertFalse(is_file($file->uri), 'Source file has been removed.');
@@ -115,8 +139,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
 
     $this->removeFile($file);
 
-    // Ensure empty message exists.
-    $this->assertText('There currently are no files to attach.', "'No files to attach' message exists.");
+    $this->assertCanNotAttachFile($file);
   }
 
   /**
@@ -151,14 +174,10 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
       'attach' => TRUE,
     ));
 
-    // Ensure option is present.
-    $this->assertTrue($this->isOptionPresent($file->uri), 'File option exists.');
+    $this->assertCanAttachFile($file);
 
     // Upload a file.
     $this->uploadFile($file);
-
-    // Ensure option is no longer present.
-    $this->assertFalse($this->isOptionPresent($file->uri), 'File option no longer exists.');
 
     // Ensure file is copied.
     $this->assertTrue(is_file($file->uri), 'Source file still exists.');
@@ -166,7 +185,6 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
 
     $this->removeFile($file);
 
-    // Ensure there are files to attach.
-    $this->assertNoText('There currently are no files to attach.', "'No files to attach' message does not exist.");
+    $this->assertCanAttachFile($file);
   }
 }
