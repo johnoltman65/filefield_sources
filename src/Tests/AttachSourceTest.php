@@ -32,60 +32,6 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
   }
 
   /**
-   * Upload file by 'Attach' source.
-   *
-   * @param object $file
-   *   The file object.
-   */
-  public function uploadFile($file) {
-    $edit = array(
-      $this->fieldName . '[0][filefield_attach][filename]' => $file->uri,
-    );
-    $this->drupalPostForm(NULL, $edit, t('Attach'));
-
-    // Ensure file is uploaded.
-    $this->assertFileUploaded($file->filename);
-  }
-
-  /**
-   * Check to see if file is uploaded.
-   *
-   * @param string $filename
-   *   The file name to check.
-   */
-  public function assertFileUploaded($filename) {
-    $this->assertLink($filename);
-    $this->assertFieldByXPath('//input[@type="submit"]', t('Remove'), 'After uploading a file, "Remove" button is displayed.');
-    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Attach'), 'After uploading a file, "Attach" button is no longer displayed.');
-  }
-
-  /**
-   * Remove uploaded file.
-   *
-   * @param object $file
-   *   The file object.
-   */
-  public function removeFile($file) {
-    $remove_button = $this->xpath('//input[@type="submit" and @value="' . t('Remove') . '"]');
-    $this->drupalPostAjaxForm(NULL, array(), array((string) $remove_button[0]['name'] => (string) $remove_button[0]['value']));
-
-    // Ensure file is removed.
-    $this->assertFileRemoved($file->filename);
-  }
-
-  /**
-   * Check to see if file is removed.
-   *
-   * @param string $filename
-   *   The file name to check.
-   */
-  public function assertFileRemoved($filename) {
-    $this->assertNoLink($filename);
-    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'After clicking the "Remove" button, it is no longer displayed.');
-    $this->assertFieldByXpath('//input[@type="submit"]', t('Attach'), 'After clicking the "Remove" button, the "Attach" button is displayed.');
-  }
-
-  /**
    * Check to see if can attach file.
    *
    * @param object $file
@@ -97,6 +43,9 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
 
     // Ensure empty message is not present.
     $this->assertNoText('There currently are no files to attach.', "Empty message is not present.");
+
+    // Attach button is always present.
+    $this->assertFieldByXpath('//input[@type="submit"]', t('Attach'), 'Attach button is present.');
   }
 
   /**
@@ -111,6 +60,9 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
 
     // Ensure empty message is present.
     $this->assertText('There currently are no files to attach.', "Empty message is present.");
+
+    // Attach button is always present.
+    $this->assertFieldByXpath('//input[@type="submit"]', t('Attach'), 'Attach button is present.');
   }
 
   /**
@@ -131,13 +83,16 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     $this->assertCanAttachFile($file);
 
     // Upload a file.
-    $this->uploadFile($file);
+    $this->uploadFileByAttachSource($file->uri, $file->filename, 0);
+
+    // We can only attach one file on single value field.
+    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Attach'), 'After uploading a file, "Attach" button is no longer displayed.');
 
     // Ensure file is moved.
     $this->assertFalse(is_file($file->uri), 'Source file has been removed.');
     $this->assertTrue(is_file($dest_uri), 'Destination file has been created.');
 
-    $this->removeFile($file);
+    $this->removeFile($file->filename, 0);
 
     $this->assertCanNotAttachFile($file);
   }
@@ -177,13 +132,16 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     $this->assertCanAttachFile($file);
 
     // Upload a file.
-    $this->uploadFile($file);
+    $this->uploadFileByAttachSource($file->uri, $file->filename, 0);
+
+    // We can only attach one file on single value field.
+    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Attach'), 'After uploading a file, "Attach" button is no longer displayed.');
 
     // Ensure file is copied.
     $this->assertTrue(is_file($file->uri), 'Source file still exists.');
     $this->assertTrue(is_file($dest_uri), 'Destination file has been created.');
 
-    $this->removeFile($file);
+    $this->removeFile($file->filename, 0);
 
     $this->assertCanAttachFile($file);
   }

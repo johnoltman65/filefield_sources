@@ -53,16 +53,13 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $this->assertEqual(count($remove_buttons), $uploaded_files, "There are $uploaded_files files have been uploaded.");
 
     // Remove all uploaded files.
-    for ($i = 0; $i < count($remove_buttons); $i++) {
-      $this->drupalPostAjaxForm(NULL, array(), array($this->fieldName . '_0_remove_button' => t('Remove')));
-    }
+    $this->removeFile('README.txt');
+    $this->removeFile($this->permanent_file_entity->getFilename());
+    $this->removeFile($this->temporary_file_entity_1->getFilename());
+    $this->removeFile($this->temporary_file_entity_2->getFilename());
+    $this->removeFile($this->temporary_file->filename);
 
     // Ensure all files have been removed.
-    $this->assertNoLink('README.txt');
-    $this->assertNoLink($this->permanent_file_entity->getFilename());
-    $this->assertNoLink($this->temporary_file_entity_1->getFilename());
-    $this->assertNoLink($this->temporary_file_entity_2->getFilename());
-    $this->assertNoLink($this->temporary_file->filename);
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'All files have been removed.');
   }
 
@@ -119,18 +116,11 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $uploaded_files++;
 
     // Upload a file by 'Attach' source.
-    $edit = array(
-      $this->fieldName . '[' . $uploaded_files . '][filefield_attach][filename]' => $this->temporary_file->uri,
-    );
-    $this->drupalPostForm(NULL, $edit, t('Attach'));
-    $this->assertLink($this->temporary_file->filename);
+    $this->uploadFileByAttachSource($this->temporary_file->uri, $this->temporary_file->filename, $uploaded_files);
     $uploaded_files++;
 
     // Upload a file by 'Upload' source.
-    $input = 'files[' . $this->fieldName . '_' . $uploaded_files . '][]';
-    $edit = array($input => drupal_realpath($this->temporary_file_entity_2->getFileUri()));
-    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $uploaded_files . '_upload_button' => t('Upload')));
-    $this->assertLink($this->temporary_file_entity_2->getFilename());
+    $this->uploadFileByClipboardSource($this->temporary_file_entity_2->getFileUri(), $this->temporary_file_entity_2->getFileName(), $uploaded_files);
     $uploaded_files++;
 
     return $uploaded_files;

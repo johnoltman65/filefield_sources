@@ -213,4 +213,75 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
     $this->drupalPostForm(NULL, array(), t('Save'));
   }
 
+  /**
+   * Upload file by 'Attach' source.
+   *
+   * @param string $uri
+   * @param string $filename
+   * @param int $index
+   */
+  public function uploadFileByAttachSource($uri, $filename, $index = 0) {
+    $edit = array(
+      $this->fieldName . '[' . $index . '][filefield_attach][filename]' => $uri,
+    );
+    $this->drupalPostAjaxForm(NULL, $edit, $this->fieldName . '_' . $index . '_attach');
+
+    // Ensure file is uploaded.
+    $this->assertFileUploaded($filename, $index);
+  }
+
+  /**
+   * Upload file by 'Clipboard' source.
+   *
+   * @param string $uri
+   * @param string $filename
+   * @param int $index
+   */
+  public function uploadFileByClipboardSource($uri, $filename, $index = 0) {
+    $prefix = $this->fieldName . '[' . $index . '][filefield_clipboard]';
+    $edit = array(
+      $prefix . '[filename]' => $filename,
+      $prefix . '[contents]' => 'data:text/plain;base64,' . base64_encode(file_get_contents($uri)),
+    );
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $index . '_clipboard_upload_button' => t('Upload')));
+
+    // Ensure file is uploaded.
+    $this->assertFileUploaded($filename, $index);
+  }
+
+  /**
+   * Check to see if file is uploaded.
+   *
+   * @param string $filename
+   * @param int $index
+   */
+  public function assertFileUploaded($filename, $index = 0) {
+    $this->assertLink($filename);
+    $this->assertFieldByXPath('//input[@name="' . $this->fieldName . '_' . $index . '_remove_button"]', t('Remove'), 'After uploading a file, "Remove" button is displayed.');
+  }
+
+  /**
+   * Remove uploaded file.
+   *
+   * @param string $filename
+   * @param int $index
+   */
+  public function removeFile($filename, $index = 0) {
+    $this->drupalPostAjaxForm(NULL, array(), $this->fieldName . '_' . $index . '_remove_button');
+
+    // Ensure file is removed.
+    $this->assertFileRemoved($filename, $index);
+  }
+
+  /**
+   * Check to see if file is removed.
+   *
+   * @param string $filename
+   * @param int $index
+   */
+  public function assertFileRemoved($filename, $index = 0) {
+    $this->assertNoLink($filename);
+    $this->assertNoFieldByXPath('//input[@name="' . $this->fieldName . '_' . $index . '_remove_button"]', t('Remove'), 'After clicking the "Remove" button, it is no longer displayed.');
+  }
+
 }
