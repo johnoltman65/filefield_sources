@@ -288,8 +288,11 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * @param string $filename
    * @param int $index
    */
-  public function uploadFileByUploadSource($uri, $filename, $index = 0) {
+  public function uploadFileByUploadSource($uri, $filename, $index = 0, $multiple = FALSE) {
     $name = 'files[' . $this->fieldName . '_' . $index . ']';
+    if ($multiple) {
+      $name .= '[]';
+    }
     $edit = array($name => drupal_realpath($uri));
     $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $index . '_upload_button' => t('Upload')));
 
@@ -318,18 +321,16 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
     $this->drupalPostAjaxForm(NULL, array(), array($this->fieldName . '_' . $index . '_remove_button' => t('Remove')));
 
     // Ensure file is removed.
-    $this->assertFileRemoved($filename, $index);
+    $this->assertFileRemoved($filename);
   }
 
   /**
    * Check to see if file is removed.
    *
    * @param string $filename
-   * @param int $index
    */
-  public function assertFileRemoved($filename, $index = 0) {
+  public function assertFileRemoved($filename) {
     $this->assertNoLink($filename);
-    $this->assertNoFieldByXPath('//input[@name="' . $this->fieldName . '_' . $index . '_remove_button"]', t('Remove'), 'After clicking the "Remove" button, it is no longer displayed.');
   }
 
 }

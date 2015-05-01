@@ -47,7 +47,7 @@ class UploadSourceTest extends FileFieldSourcesTestBase {
     $file = $this->createTemporaryFileEntity();
 
     // Upload a file by 'Upload' source.
-    $this->uploadFileByUploadSource($file->getFileUri(), $file->getFilename(), 0);
+    $this->uploadFileByUploadSource($file->getFileUri(), $file->getFilename(), 0, FALSE);
 
     // We can only upload one file on single value field.
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Upload'), t('After uploading a file, "Upload" button is no longer displayed.'));

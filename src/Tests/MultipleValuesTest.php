@@ -46,18 +46,14 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
    * Tests uploading then removing files.
    */
   public function testUploadThenRemoveFiles() {
-    $uploaded_files = $this->uploadFiles();
-
-    // Ensure files have been uploaded.
-    $remove_buttons = $this->xpath('//input[@type="submit" and @value="' . t('Remove') . '"]');
-    $this->assertEqual(count($remove_buttons), $uploaded_files, "There are $uploaded_files files have been uploaded.");
+    $this->uploadFiles();
 
     // Remove all uploaded files.
-    $this->removeFile('README.txt');
-    $this->removeFile($this->permanent_file_entity->getFilename());
-    $this->removeFile($this->temporary_file_entity_1->getFilename());
-    $this->removeFile($this->temporary_file_entity_2->getFilename());
-    $this->removeFile($this->temporary_file->filename);
+    $this->removeFile($this->temporary_file_entity_2->getFilename(), 4);
+    $this->removeFile('INSTALL.txt', 0);
+    $this->removeFile($this->temporary_file_entity_1->getFilename(), 1);
+    $this->removeFile($this->temporary_file->filename, 1);
+    $this->removeFile($this->permanent_file_entity->getFilename(), 0);
 
     // Ensure all files have been removed.
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'All files have been removed.');
@@ -72,7 +68,7 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $this->drupalPostForm(NULL, array('title[0][value]' => $this->randomMachineName()), t('Save and publish'));
 
     // Ensure all files are saved to node.
-    $this->assertLink('README.txt');
+    $this->assertLink('INSTALL.txt');
     $this->assertLink($this->permanent_file_entity->getFilename());
     $this->assertLink($this->temporary_file_entity_1->getFilename());
     $this->assertLink($this->temporary_file_entity_2->getFilename());
@@ -108,8 +104,12 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $uploaded_files++;
 
     // Upload a file by 'Upload' source.
-    $this->uploadFileByUploadSource($this->temporary_file_entity_2->getFileUri(), $this->temporary_file_entity_2->getFilename(), $uploaded_files);
+    $this->uploadFileByUploadSource($this->temporary_file_entity_2->getFileUri(), $this->temporary_file_entity_2->getFilename(), $uploaded_files, TRUE);
     $uploaded_files++;
+
+    // Ensure files have been uploaded.
+    $remove_buttons = $this->xpath('//input[@type="submit" and @value="' . t('Remove') . '"]');
+    $this->assertEqual(count($remove_buttons), $uploaded_files, "There are $uploaded_files files have been uploaded.");
 
     return $uploaded_files;
   }
