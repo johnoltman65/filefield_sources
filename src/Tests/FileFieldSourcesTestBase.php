@@ -282,6 +282,22 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
   }
 
   /**
+   * Upload file by 'Upload' source.
+   *
+   * @param string $uri
+   * @param string $filename
+   * @param int $index
+   */
+  public function uploadFileByUploadSource($uri, $filename, $index = 0) {
+    $name = 'files[' . $this->fieldName . '_' . $index . ']';
+    $edit = array($name => drupal_realpath($uri));
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $index . '_upload_button' => t('Upload')));
+
+    // Ensure file is uploaded.
+    $this->assertFileUploaded($filename, $index);
+  }
+
+  /**
    * Check to see if file is uploaded.
    *
    * @param string $filename

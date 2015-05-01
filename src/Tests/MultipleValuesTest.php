@@ -108,10 +108,7 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $uploaded_files++;
 
     // Upload a file by 'Upload' source.
-    $input = 'files[' . $this->fieldName . '_' . $uploaded_files . '][]';
-    $edit = array($input => drupal_realpath($this->temporary_file_entity_2->getFileUri()));
-    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $uploaded_files . '_upload_button' => t('Upload')));
-    $this->assertLink($this->temporary_file_entity_2->getFilename());
+    $this->uploadFileByUploadSource($this->temporary_file_entity_2->getFileUri(), $this->temporary_file_entity_2->getFilename(), $uploaded_files);
     $uploaded_files++;
 
     return $uploaded_files;
