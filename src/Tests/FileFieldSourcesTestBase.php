@@ -266,6 +266,22 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
   }
 
   /**
+   * Upload file by 'Remote' source.
+   *
+   * @param string $url
+   * @param string $filename
+   * @param int $index
+   */
+  public function uploadFileByRemoteSource($url, $filename, $index = 0) {
+    $name = $this->fieldName . '[' . $index . '][filefield_remote][url]';
+    $edit = array($name => $url);
+    $this->drupalPostAjaxForm(NULL, $edit, $this->fieldName . '_' . $index . '_transfer');
+
+    // Ensure file is uploaded.
+    $this->assertFileUploaded($filename, $index);
+  }
+
+  /**
    * Check to see if file is uploaded.
    *
    * @param string $filename

@@ -23,21 +23,15 @@ class RemoteSourceTest extends FileFieldSourcesTestBase {
     ));
 
     // Upload a file by 'Remote' source.
-    $name = $this->fieldName . '[0][filefield_remote][url]';
-    $edit = array($name => $GLOBALS['base_url'] . '/README.txt');
-    $this->drupalPostForm(NULL, $edit, t('Transfer'));
+    $this->uploadFileByRemoteSource($GLOBALS['base_url'] . '/README.txt', 'README.txt', 0);
 
-    // Ensure file is uploaded.
-    $this->assertLink('README.txt');
-    $this->assertFieldByXPath('//input[@type="submit"]', t('Remove'), t('After uploading a file, "Remove" button displayed.'));
+    // We can only transfer one file on single value field.
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Transfer'), t('After uploading a file, "Transfer" button is no longer displayed.'));
 
     // Remove uploaded file.
-    $remove_button = $this->xpath('//input[@type="submit" and @value="' . t('Remove') . '"]');
-    $this->drupalPostAjaxForm(NULL, array(), array((string) $remove_button[0]['name'] => (string) $remove_button[0]['value']));
+    $this->removeFile('README.txt', 0);
 
-    // Ensure file is removed.
-    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'After clicking the "Remove" button, it is no longer displayed.');
+    // Can transfer file again.
     $this->assertFieldByXpath('//input[@type="submit"]', t('Transfer'), 'After clicking the "Remove" button, the "Transfer" button is displayed.');
   }
 }

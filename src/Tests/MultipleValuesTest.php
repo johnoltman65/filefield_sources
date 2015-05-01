@@ -92,10 +92,7 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'There are no file have been uploaded.');
 
     // Upload a file by 'Remote' source.
-    $input = $this->fieldName . '[' . $uploaded_files . '][filefield_remote][url]';
-    $edit = array($input => $GLOBALS['base_url'] . '/README.txt');
-    $this->drupalPostForm(NULL, $edit, t('Transfer'));
-    $this->assertLink('README.txt');
+    $this->uploadFileByRemoteSource($GLOBALS['base_url'] . '/core/INSTALL.txt', 'INSTALL.txt', $uploaded_files);
     $uploaded_files++;
 
     // Upload a file by 'Reference' source.
