@@ -30,7 +30,7 @@ Installation
    under a "File sources" details. You can enable the desired sources for that
    particular field.
 
-4) Create a piece of content that uses your file file and try it out.
+4) Create a piece of content that uses your file and try it out.
 
 Support
 -------
