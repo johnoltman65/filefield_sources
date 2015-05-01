@@ -98,7 +98,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
     foreach ($sources as $source => $enabled) {
       $edit[$prefix . '[' . $source . ']'] = $enabled ? TRUE : FALSE;
     }
-    $this->drupalPostAjaxForm(NULL, $edit, $this->fieldName . '_plugin_settings_update');
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_plugin_settings_update' => t('Update')));
     $this->assertText("File field sources: " . implode(', ', array_keys($sources)), 'The expected summary is displayed.');
 
     // Save the form to save the third party settings.
@@ -207,7 +207,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
     // Update settings.
     $name = 'fields[' . $this->fieldName . '][settings_edit_form][third_party_settings][filefield_sources][filefield_sources]' . "[$source_key][$key]";
     $edit = array($name => $value);
-    $this->drupalPostAjaxForm(NULL, $edit, $this->fieldName . '_plugin_settings_update');
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_plugin_settings_update' => t('Update')));
 
     // Save the form to save the third party settings.
     $this->drupalPostForm(NULL, array(), t('Save'));
@@ -224,7 +224,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
     $edit = array(
       $this->fieldName . '[' . $index . '][filefield_attach][filename]' => $uri,
     );
-    $this->drupalPostAjaxForm(NULL, $edit, $this->fieldName . '_' . $index . '_attach');
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $index . '_attach' => t('Attach')));
 
     // Ensure file is uploaded.
     $this->assertFileUploaded($filename, $index);
@@ -240,7 +240,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
   public function uploadFileByReferenceSource($fid, $filename, $index = 0) {
     $name = $this->fieldName . '[' . $index . '][filefield_reference][autocomplete]';
     $edit = array($name => $filename . ' [fid:' . $fid . ']');
-    $this->drupalPostAjaxForm(NULL, $edit, $this->fieldName . '_' . $index . '_autocomplete_select');
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $index . '_autocomplete_select' => t('Select')));
 
     // Ensure file is uploaded.
     $this->assertFileUploaded($filename, $index);
@@ -275,7 +275,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
   public function uploadFileByRemoteSource($url, $filename, $index = 0) {
     $name = $this->fieldName . '[' . $index . '][filefield_remote][url]';
     $edit = array($name => $url);
-    $this->drupalPostAjaxForm(NULL, $edit, $this->fieldName . '_' . $index . '_transfer');
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $index . '_transfer' => t('Transfer')));
 
     // Ensure file is uploaded.
     $this->assertFileUploaded($filename, $index);
@@ -315,7 +315,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * @param int $index
    */
   public function removeFile($filename, $index = 0) {
-    $this->drupalPostAjaxForm(NULL, array(), $this->fieldName . '_' . $index . '_remove_button');
+    $this->drupalPostAjaxForm(NULL, array(), array($this->fieldName . '_' . $index . '_remove_button' => t('Remove')));
 
     // Ensure file is removed.
     $this->assertFileRemoved($filename, $index);
