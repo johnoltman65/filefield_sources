@@ -99,10 +99,7 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $uploaded_files++;
 
     // Upload a file by 'Reference' source.
-    $input = $this->fieldName . '[' . $uploaded_files . '][filefield_reference][autocomplete]';
-    $edit = array($input => $this->permanent_file_entity->getFilename() . ' [fid:' . $this->permanent_file_entity->id() . ']');
-    $this->drupalPostForm(NULL, $edit, t('Select'));
-    $this->assertLink($this->permanent_file_entity->getFilename());
+    $this->uploadFileByReferenceSource($this->permanent_file_entity->id(), $this->permanent_file_entity->getFilename(), $uploaded_files);
     $uploaded_files++;
 
     // Upload a file by 'Clipboard' source.

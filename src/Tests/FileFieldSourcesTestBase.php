@@ -231,6 +231,22 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
   }
 
   /**
+   * Upload file by 'Reference' source.
+   *
+   * @param int $fid
+   * @param string $filename
+   * @param int $index
+   */
+  public function uploadFileByReferenceSource($fid, $filename, $index = 0) {
+    $name = $this->fieldName . '[' . $index . '][filefield_reference][autocomplete]';
+    $edit = array($name => $filename . ' [fid:' . $fid . ']');
+    $this->drupalPostAjaxForm(NULL, $edit, $this->fieldName . '_' . $index . '_autocomplete_select');
+
+    // Ensure file is uploaded.
+    $this->assertFileUploaded($filename, $index);
+  }
+
+  /**
    * Upload file by 'Clipboard' source.
    *
    * @param string $uri
