@@ -136,7 +136,7 @@ class Reference implements FilefieldSourceInterface {
     $string = Unicode::strtolower($request->query->get('q'));
 
     $field_definition = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name);
-    $handler = \Drupal::getContainer()->get('plugin.manager.entity_reference.selection')->getSelectionHandler($field_definition);
+    $handler = \Drupal::getContainer()->get('plugin.manager.entity_reference_selection')->getSelectionHandler($field_definition);
 
     if (isset($string)) {
       // Get an array of matching entities.
