@@ -14,7 +14,7 @@ use Drupal\Core\Field\WidgetInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Drupal\Component\Utility\Unicode;
-use Drupal\Component\Utility\String;
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Url;
 
 /**
@@ -151,7 +151,7 @@ class Reference implements FilefieldSourceInterface {
           $key = "$label [fid:$entity_id]";
           // Strip things like starting/trailing white spaces, line breaks and
           // tags.
-          $key = preg_replace('/\s\s+/', ' ', str_replace("\n", '', trim(String::decodeEntities(strip_tags($key)))));
+          $key = preg_replace('/\s\s+/', ' ', str_replace("\n", '', trim(Html::decodeEntities(strip_tags($key)))));
           // Names containing commas or quotes must be wrapped in quotes.
           $matches[] = array('value' => $key, 'label' => $label);
         }
