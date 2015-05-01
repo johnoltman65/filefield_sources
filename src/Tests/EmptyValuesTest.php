@@ -32,65 +32,38 @@ class EmptyValuesTest extends FileFieldSourcesTestBase {
     ));
 
     // Upload a file by 'Remote' source.
-    $input = $this->fieldName . '[0][filefield_remote][url]';
-    $button_name = $this->fieldName . '_0_transfer';
-    $button_label = t('Transfer');
-    $this->drupalPostForm(NULL, array($input => ''), $button_label);
-
-    $this->assertNoFilesUploaded($button_name, $button_label);
+    $this->uploadFileByRemoteSource();
 
     // Upload a file by 'Reference' source.
-    $input = $this->fieldName . '[0][filefield_reference][autocomplete]';
-    $button_name = $this->fieldName . '_0_autocomplete_select';
-    $button_label = t('Select');
-    $this->drupalPostForm(NULL, array($input => ''), $button_label);
-
-    $this->assertNoFilesUploaded($button_name, $button_label);
+    $this->uploadFileByReferenceSource();
 
     // Upload a file by 'Clipboard' source.
-    $prefix = $this->fieldName . '[0][filefield_clipboard]';
-    $edit = array(
-      $prefix . '[filename]' => '',
-      $prefix . '[contents]' => '',
-    );
-    $button_name = $this->fieldName . '_0_clipboard_upload_button';
-    $button_label = t('Upload');
-    $this->drupalPostAjaxForm(NULL, $edit, array($button_name => $button_label));
-
-    $this->assertNoFilesUploaded($button_name, $button_label);
+    $this->uploadFileByClipboardSource();
 
     // Upload a file by 'Attach' source.
-    $button_name = $this->fieldName . '_0_attach';
-    $button_label = t('Attach');
-    $this->drupalPostForm(NULL, array(), $button_label);
-
-    $this->assertNoFilesUploaded($button_name, $button_label);
+    $this->uploadFileByAttachSource();
 
     // Upload a file by 'Upload' source.
-    $input = 'files[' . $this->fieldName . '_0][]';
-    $button_name = $this->fieldName . '_0_upload_button';
-    $button_label = t('Upload');
-    $this->drupalPostAjaxForm(NULL, array($input => ''), array($button_name => $button_label));
+    $this->uploadFileByUploadSource('', '', 0, TRUE);
 
-    $this->assertNoFilesUploaded($button_name, $button_label);
+    $this->assertUniqueSubmitButtons();
   }
 
   /**
-   * Assert that no files have been uploaded.
-   *
-   * Also check that submit button of a source is unique.
-   *
-   * @param string $button_name
-   *   Submit button's name.
-   * @param string $button_label
-   *   Submit button's label.
+   * Check that there is only one submit button of a source.
    */
-  protected function assertNoFilesUploaded($button_name, $button_label) {
-    // Ensure that there are no remove buttons.
-    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'There are no remove buttons.');
-
-    // Ensure that there is only one button with name.
-    $buttons = $this->xpath('//input[@name="' . $button_name . '" and @value="' . $button_label . '"]');
-    $this->assertEqual(count($buttons), 1, format_string('There is only one button with name %name and label %label', array('%name' => $button_name, '%label' => $button_label)));
+  protected function assertUniqueSubmitButtons() {
+    $buttons = array(
+      $this->fieldName . '_0_attach' => t('Attach'),
+      $this->fieldName . '_0_clipboard_upload_button' => t('Upload'),
+      $this->fieldName . '_0_autocomplete_select' => t('Select'),
+      $this->fieldName . '_0_transfer' => t('Transfer'),
+      $this->fieldName . '_0_upload_button' => t('Upload'),
+    );
+    foreach ($buttons as $button_name => $button_label) {
+      // Ensure that there is only one button with name.
+      $buttons = $this->xpath('//input[@name="' . $button_name . '" and @value="' . $button_label . '"]');
+      $this->assertEqual(count($buttons), 1, format_string('There is only one button with name %name and label %label', array('%name' => $button_name, '%label' => $button_label)));
+    }
   }
 }
