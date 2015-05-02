@@ -11,7 +11,7 @@ use Drupal\Core\Routing\Access\AccessInterface as RoutingAccessInterface;
 use Drupal\Core\Session\AccountInterface;
 
 /**
- * Allows access to routes to be controlled by a '_filefield_sources_field_access' parameter.
+ * Access check for file field source routes.
  */
 class FieldAccessCheck implements RoutingAccessInterface {
 

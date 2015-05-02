@@ -66,4 +66,5 @@ class EmptyValuesTest extends FileFieldSourcesTestBase {
       $this->assertEqual(count($buttons), 1, format_string('There is only one button with name %name and label %label', array('%name' => $button_name, '%label' => $button_label)));
     }
   }
+
 }

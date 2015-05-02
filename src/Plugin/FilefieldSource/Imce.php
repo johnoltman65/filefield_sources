@@ -93,9 +93,10 @@ class Imce implements FilefieldSourceInterface {
     );
 
     $imce_function = 'window.open(\'' . \Drupal::url('filefield_sources.imce', array(
-      'entity_type' => $element['#entity_type'],
-      'bundle' => $element['#bundle'],
-      'field_name' => $element['#field_name']),
+        'entity_type' => $element['#entity_type'],
+        'bundle' => $element['#bundle'],
+        'field_name' => $element['#field_name'],
+      ),
       array(
         'query' => array(
           'app' => $instance->getLabel() . '|url@' . $filepath_id,

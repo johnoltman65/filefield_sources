@@ -34,4 +34,5 @@ class RemoteSourceTest extends FileFieldSourcesTestBase {
     // Can transfer file again.
     $this->assertFieldByXpath('//input[@type="submit"]', t('Transfer'), 'After clicking the "Remove" button, the "Transfer" button is displayed.');
   }
+
 }

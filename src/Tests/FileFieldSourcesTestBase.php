@@ -164,7 +164,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
   public function createTemporaryFile($path = '') {
     $filename = $this->randomMachineName() . '.txt';
     if (empty($path)) {
-      $path = file_default_scheme()  . '://';
+      $path = file_default_scheme() . '://';
     }
     $uri = $path . '/' . $filename;
     $contents = $this->randomString();
@@ -217,25 +217,28 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * Upload file by 'Attach' source.
    *
    * @param string $uri
+   *   File uri.
    * @param string $filename
-   * @param int $index
+   *   File name.
+   * @param int $delta
+   *   Delta in multiple values field.
    */
-  public function uploadFileByAttachSource($uri = '', $filename = '', $index = 0) {
+  public function uploadFileByAttachSource($uri = '', $filename = '', $delta = 0) {
     if ($uri) {
       $edit = array(
-        $this->fieldName . '[' . $index . '][filefield_attach][filename]' => $uri,
+        $this->fieldName . '[' . $delta . '][filefield_attach][filename]' => $uri,
       );
     }
     else {
       $edit = array();
     }
-    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $index . '_attach' => t('Attach')));
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $delta . '_attach' => t('Attach')));
 
     if ($filename) {
-      $this->assertFileUploaded($filename, $index);
+      $this->assertFileUploaded($filename, $delta);
     }
     else {
-      $this->assertFileNotUploaded($index);
+      $this->assertFileNotUploaded($delta);
     }
   }
 
@@ -243,20 +246,23 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * Upload file by 'Reference' source.
    *
    * @param int $fid
+   *   File id.
    * @param string $filename
-   * @param int $index
+   *   File name.
+   * @param int $delta
+   *   Delta in multiple values field.
    */
-  public function uploadFileByReferenceSource($fid = 0, $filename = '', $index = 0) {
-    $name = $this->fieldName . '[' . $index . '][filefield_reference][autocomplete]';
+  public function uploadFileByReferenceSource($fid = 0, $filename = '', $delta = 0) {
+    $name = $this->fieldName . '[' . $delta . '][filefield_reference][autocomplete]';
     $value = $fid ? $filename . ' [fid:' . $fid . ']' : '';
     $edit = array($name => $value);
-    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $index . '_autocomplete_select' => t('Select')));
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $delta . '_autocomplete_select' => t('Select')));
 
     if ($filename) {
-      $this->assertFileUploaded($filename, $index);
+      $this->assertFileUploaded($filename, $delta);
     }
     else {
-      $this->assertFileNotUploaded($index);
+      $this->assertFileNotUploaded($delta);
     }
   }
 
@@ -264,23 +270,26 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * Upload file by 'Clipboard' source.
    *
    * @param string $uri
+   *   File uri.
    * @param string $filename
-   * @param int $index
+   *   File name.
+   * @param int $delta
+   *   Delta in multiple values field.
    */
-  public function uploadFileByClipboardSource($uri = '', $filename = '', $index = 0) {
-    $prefix = $this->fieldName . '[' . $index . '][filefield_clipboard]';
+  public function uploadFileByClipboardSource($uri = '', $filename = '', $delta = 0) {
+    $prefix = $this->fieldName . '[' . $delta . '][filefield_clipboard]';
     $file_content = $uri ? 'data:text/plain;base64,' . base64_encode(file_get_contents($uri)) : '';
     $edit = array(
       $prefix . '[filename]' => $filename,
       $prefix . '[contents]' => $file_content,
     );
-    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $index . '_clipboard_upload_button' => t('Upload')));
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $delta . '_clipboard_upload_button' => t('Upload')));
 
     if ($filename) {
-      $this->assertFileUploaded($filename, $index);
+      $this->assertFileUploaded($filename, $delta);
     }
     else {
-      $this->assertFileNotUploaded($index);
+      $this->assertFileNotUploaded($delta);
     }
   }
 
@@ -288,19 +297,22 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * Upload file by 'Remote' source.
    *
    * @param string $url
+   *   File url.
    * @param string $filename
-   * @param int $index
+   *   File name.
+   * @param int $delta
+   *   Delta in multiple values field.
    */
-  public function uploadFileByRemoteSource($url = '', $filename = '', $index = 0) {
-    $name = $this->fieldName . '[' . $index . '][filefield_remote][url]';
+  public function uploadFileByRemoteSource($url = '', $filename = '', $delta = 0) {
+    $name = $this->fieldName . '[' . $delta . '][filefield_remote][url]';
     $edit = array($name => $url);
-    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $index . '_transfer' => t('Transfer')));
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $delta . '_transfer' => t('Transfer')));
 
     if ($filename) {
-      $this->assertFileUploaded($filename, $index);
+      $this->assertFileUploaded($filename, $delta);
     }
     else {
-      $this->assertFileNotUploaded($index);
+      $this->assertFileNotUploaded($delta);
     }
   }
 
@@ -308,24 +320,27 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * Upload file by 'Upload' source.
    *
    * @param string $uri
+   *   File uri.
    * @param string $filename
-   * @param int $index
+   *   File name.
+   * @param int $delta
+   *   Delta in multiple values field.
    */
-  public function uploadFileByUploadSource($uri = '', $filename = '', $index = 0, $multiple = FALSE) {
-    $name = 'files[' . $this->fieldName . '_' . $index . ']';
+  public function uploadFileByUploadSource($uri = '', $filename = '', $delta = 0, $multiple = FALSE) {
+    $name = 'files[' . $this->fieldName . '_' . $delta . ']';
     if ($multiple) {
       $name .= '[]';
     }
     $edit = array(
       $name => $uri ? drupal_realpath($uri) : '',
     );
-    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $index . '_upload_button' => t('Upload')));
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $delta . '_upload_button' => t('Upload')));
 
     if ($filename) {
-      $this->assertFileUploaded($filename, $index);
+      $this->assertFileUploaded($filename, $delta);
     }
     else {
-      $this->assertFileNotUploaded($index);
+      $this->assertFileNotUploaded($delta);
     }
   }
 
@@ -333,30 +348,35 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * Check to see if file is uploaded.
    *
    * @param string $filename
-   * @param int $index
+   *   File name.
+   * @param int $delta
+   *   Delta in multiple values field.
    */
-  public function assertFileUploaded($filename, $index = 0) {
+  public function assertFileUploaded($filename, $delta = 0) {
     $this->assertLink($filename);
-    $this->assertFieldByXPath('//input[@name="' . $this->fieldName . '_' . $index . '_remove_button"]', t('Remove'), 'After uploading a file, "Remove" button is displayed.');
+    $this->assertFieldByXPath('//input[@name="' . $this->fieldName . '_' . $delta . '_remove_button"]', t('Remove'), 'After uploading a file, "Remove" button is displayed.');
   }
 
   /**
    * Check to see if file is not uploaded.
    *
-   * @param int $index
+   * @param int $delta
+   *   Delta in multiple values field.
    */
-  public function assertFileNotUploaded($index = 0) {
-    $this->assertNoFieldByXPath('//input[@name="' . $this->fieldName . '_' . $index . '_remove_button"]', t('Remove'), '"Remove" button is not displayed.');
+  public function assertFileNotUploaded($delta = 0) {
+    $this->assertNoFieldByXPath('//input[@name="' . $this->fieldName . '_' . $delta . '_remove_button"]', t('Remove'), '"Remove" button is not displayed.');
   }
 
   /**
    * Remove uploaded file.
    *
    * @param string $filename
-   * @param int $index
+   *   File name.
+   * @param int $delta
+   *   Delta in multiple values field.
    */
-  public function removeFile($filename, $index = 0) {
-    $this->drupalPostAjaxForm(NULL, array(), array($this->fieldName . '_' . $index . '_remove_button' => t('Remove')));
+  public function removeFile($filename, $delta = 0) {
+    $this->drupalPostAjaxForm(NULL, array(), array($this->fieldName . '_' . $delta . '_remove_button' => t('Remove')));
 
     // Ensure file is removed.
     $this->assertFileRemoved($filename);
@@ -366,6 +386,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * Check to see if file is removed.
    *
    * @param string $filename
+   *   File name.
    */
   public function assertFileRemoved($filename) {
     $this->assertNoLink($filename);

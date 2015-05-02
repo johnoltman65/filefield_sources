@@ -45,11 +45,6 @@ class ReferenceSourceTest extends FileFieldSourcesTestBase {
    * Test autocompletion.
    */
   public function testAutocompletion() {
-    // No need to enable 'Reference' source to use autocompletion feature.
-    /*$this->enableSources(array(
-      'reference' => TRUE,
-    ));*/
-
     // Create test file.
     $file = $this->createPermanentFileEntity();
     $filename = $file->getFileName();
@@ -110,4 +105,5 @@ class ReferenceSourceTest extends FileFieldSourcesTestBase {
       }
     }
   }
+
 }

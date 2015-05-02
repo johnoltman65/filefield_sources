@@ -72,7 +72,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
    */
   public function testMoveFileFromRelativePath() {
     // Create test file.
-    $path = file_default_scheme()  . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH;
+    $path = file_default_scheme() . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH;
     $file = $this->createTemporaryFile($path);
     $dest_uri = file_default_scheme() . '://' . $file->filename;
 
@@ -145,4 +145,5 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
 
     $this->assertCanAttachFile($file);
   }
+
 }

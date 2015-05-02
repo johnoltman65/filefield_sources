@@ -27,7 +27,7 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $this->temporary_file_entity_1 = $this->createTemporaryFileEntity();
     $this->temporary_file_entity_2 = $this->createTemporaryFileEntity();
 
-    $path = file_default_scheme()  . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH;
+    $path = file_default_scheme() . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH;
     $this->temporary_file = $this->createTemporaryFile($path);
 
     // Change allowed number of values.
@@ -113,4 +113,5 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
 
     return $uploaded_files;
   }
+
 }

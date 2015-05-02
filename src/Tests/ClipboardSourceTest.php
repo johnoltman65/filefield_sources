@@ -33,4 +33,5 @@ class ClipboardSourceTest extends FileFieldSourcesTestBase {
     // Can upload file again.
     $this->assertFieldByXpath('//input[@type="submit"]', t('Upload'), 'After clicking the "Remove" button, the "Upload" button is displayed.');
   }
+
 }
