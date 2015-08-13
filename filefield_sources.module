@@ -139,6 +139,17 @@ function filefield_sources_field_process($element, &$form_state, $form) {
   // Do all processing as needed by each source.
   $sources = filefield_sources_info();
   $enabled_sources = _filefield_sources_enabled($instance['widget']['settings']['filefield_sources']);
+
+
+  $context = array(
+    'enabled_sources' => &$enabled_sources,
+    'element'         => $element,
+    'form_state'      => $form_state,
+  );
+
+  // Allow other modules to alter the sources.
+  drupal_alter('filefield_sources_sources', $sources, $context);
+
   foreach ($sources as $source_name => $source) {
     if (empty($enabled_sources[$source_name])) {
       unset($sources[$source_name]);
