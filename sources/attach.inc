@@ -251,7 +251,7 @@ function filefield_source_attach_value($element, &$item) {
       $item = array_merge($item, (array) $file);
 
       // Delete the original file if "moving" the file instead of copying.
-      if ($instance['widget']['settings']['filefield_sources']['source_attach']['attach_mode'] !== 'copy') {
+      if ($filepath != $original_filepath && $instance['widget']['settings']['filefield_sources']['source_attach']['attach_mode'] !== 'copy') {
         @unlink($filepath);
       }
     }
