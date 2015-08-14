@@ -112,7 +112,7 @@ function _filefield_source_attach_file_path_validate($element, &$form_state) {
 
   // Check that the directory exists and is writable.
   if (!file_prepare_directory($filepath, FILE_CREATE_DIRECTORY)) {
-    form_error($element['path'], t('Specified file attach path must exist or be writable.'));
+    form_error($element['path'], t('Specified file attach path %path must exist or be writable.', array('%path' => $filepath)));
   }
 }
 
@@ -195,7 +195,7 @@ function filefield_source_attach_process($element, &$form_state, $form) {
 
 function _filefield_source_attach_options($path, $extensions = FALSE) {
   if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
-    drupal_set_message(t('Specified file attach path must exist or be writable.'), 'error');
+    drupal_set_message(t('Specified file attach path %path must exist or be writable.', array('%path' => $path)), 'error');
     return FALSE;
   }
 
