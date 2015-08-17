@@ -23,7 +23,7 @@ function filefield_source_reference_info() {
     'process' => 'filefield_source_reference_process',
     'value' => 'filefield_source_reference_value',
     'weight' => 1,
-    'file' => 'includes/reference.inc',
+    'file' => 'sources/reference.inc',
   );
   return $source;
 }
