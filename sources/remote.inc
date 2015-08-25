@@ -15,16 +15,18 @@ define('FILEFIELD_SOURCE_REMOTE_HINT_TEXT', 'http://example.com/files/file.png')
  * Implements hook_filefield_source_info().
  */
 function filefield_source_remote_info() {
-  $source = array();
-  $source['remote'] = array(
-    'name' => t('Remote URL textfield'),
-    'label' => t('Remote URL'),
-    'description' => t('Download a file from a remote server.'),
-    'process' => 'filefield_source_remote_process',
-    'value' => 'filefield_source_remote_value',
-    'file' => 'sources/remote.inc',
-  );
-  return $source;
+  if (filefield_sources_curl_enabled()) {
+    $source = array();
+    $source['remote'] = array(
+      'name'        => t('Remote URL textfield'),
+      'label'       => t('Remote URL'),
+      'description' => t('Download a file from a remote server.'),
+      'process'     => 'filefield_source_remote_process',
+      'value'       => 'filefield_source_remote_value',
+      'file'        => 'sources/remote.inc',
+    );
+    return $source;
+  }
 }
 
 /**
@@ -62,6 +64,9 @@ function filefield_source_remote_settings($op, $instance) {
   $return = array();
 
   // Add settings to the FileField widget form.
+  if (!filefield_sources_curl_enabled()) {
+    drupal_set_message(t('<strong>Filefield sources:</strong> remote plugin will be disabled without php-curl extension.'), 'warning');
+  }
 
   return $return;
 
@@ -394,3 +399,9 @@ function theme_filefield_source_remote_element($variables) {
   return '<div class="filefield-source filefield-source-remote clear-block">' . drupal_render($element['url']) . '</div>';
 }
 
+/**
+ * Check for CURL extension enabled.
+ */
+function filefield_sources_curl_enabled() {
+  return function_exists('curl_version');
+}
