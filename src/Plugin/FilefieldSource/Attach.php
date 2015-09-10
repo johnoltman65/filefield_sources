@@ -219,7 +219,8 @@ class Attach implements FilefieldSourceInterface {
     // Node level tokens require a lot of complexity like temporary storage
     // locations when values don't exist. See the filefield_paths module.
     if (\Drupal::moduleHandler()->moduleExists('token')) {
-      $path = token_replace($path, array('user' => $account));
+       $token=\Drupal::token();
+      $path = $token->replace($path, array('user' => $account));
     }
 
     return $absolute ? $path : file_default_scheme() . '://' . $path;
