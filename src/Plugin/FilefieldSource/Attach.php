@@ -14,6 +14,10 @@ use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Template\Attribute;
 use Drupal\Core\Url;
+use Drupal\Component\Utility\Html;
+use Symfony\Component\HttpFoundation\Request;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\ReplaceCommand;
 
 /**
  * A FileField source plugin to allow use of files within a server directory.
@@ -53,7 +57,9 @@ class Attach implements FilefieldSourceInterface {
 
       // Clean up the file name extensions and transliterate.
       $original_filepath = $filepath;
-      $new_filepath = filefield_sources_clean_filename($filepath, $instance->settings['file_extensions']);
+      //debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+      $new_filepath = filefield_sources_clean_filename($filepath, $instance->getSetting['file_extensions']);
+      //var_dump($filepath,$new_filepath);die("HELLO");
       rename($filepath, $new_filepath);
       $filepath = $new_filepath;
 
@@ -153,16 +159,21 @@ class Attach implements FilefieldSourceInterface {
       $element['filefield_attach']['#description'] = $description;
     }
 
+    $ajax_wrapper_id = Html::getUniqueId('ajax-wrapper');
+
     $ajax_settings = [
-      'url' => Url::fromRoute('file.ajax_upload'),
+      'callback' => [get_called_class(), 'uploadAjaxCallbacknew'],
       'options' => [
         'query' => [
           'element_parents' => implode('/', $element['#array_parents']),
-          'form_build_id' => $complete_form['form_build_id']['#value'],
         ],
       ],
-      'wrapper' => $element['#id'] . '-ajax-wrapper',
+      'wrapper' => $ajax_wrapper_id,
       'effect' => 'fade',
+      'progress' => [
+        'type' => $element['#progress_indicator'],
+        'message' => $element['#progress_message'],
+      ],
     ];
 
     $element['filefield_attach']['attach'] = [
@@ -183,7 +194,13 @@ class Attach implements FilefieldSourceInterface {
    */
   public static function element($variables) {
     $element = $variables['element'];
-
+    $options = form_select_options($element['filename']);
+    //var_dump($options);die();
+    $option_output='';
+    foreach($options as $key => $value){
+		
+    	$option_output.='<option value='.$value["value"].'>'.$value["label"].'</option>';
+    }
     if (isset($element['attach_message'])) {
       $output = $element['attach_message']['#markup'];
     }
@@ -191,8 +208,9 @@ class Attach implements FilefieldSourceInterface {
       $size = !empty($element['filename']['#size']) ? ' size="' . $element['filename']['#size'] . '"' : '';
       $element['filename']['#attributes']['class'][] = 'form-select';
       $multiple = !empty($element['#multiple']);
-      $output = '<select name="' . $element['filename']['#name'] . '' . ($multiple ? '[]' : '') . '"' . ($multiple ? ' multiple="multiple" ' : '') . new Attribute($element['filename']['#attributes']) . ' id="' . $element['filename']['#id'] . '" ' . $size . '>' . form_select_options($element['filename']) . '</select>';
+      $output = '<select name="' . $element['filename']['#name'] . '' . ($multiple ? '[]' : '') . '"' . ($multiple ? ' multiple="multiple" ' : '') . new Attribute($element['filename']['#attributes']) . ' id="' . $element['filename']['#id'] . '" ' . $size . '>' . $option_output . '</select>';
     }
+    
     $output .= drupal_render($element['attach']);
     $element['#children'] = $output;
     $element['#theme_wrappers'] = array('form_element');
@@ -345,6 +363,35 @@ class Attach implements FilefieldSourceInterface {
         $form_state->setError($element['path'], t('Specified file attach path must exist or be writable.'));
       }
     }
+  }
+
+  public static function uploadAjaxCallbacknew(&$form, FormStateInterface &$form_state, Request $request) {
+    /** @var \Drupal\Core\Render\RendererInterface $renderer */
+    $renderer = \Drupal::service('renderer');
+
+    $form_parents = explode('/', $request->query->get('element_parents'));
+
+    // Retrieve the element to be rendered.
+    $form = NestedArray::getValue($form, $form_parents);
+
+    // Add the special AJAX class if a new file was added.
+    $current_file_count = $form_state->get('file_upload_delta_initial');
+    if (isset($form['#file_upload_delta']) && $current_file_count < $form['#file_upload_delta']) {
+      $form[$current_file_count]['#attributes']['class'][] = 'ajax-new-content';
+    }
+    // Otherwise just add the new content class on a placeholder.
+    else {
+      $form['#suffix'] .= '<span class="ajax-new-content"></span>';
+    }
+
+    $status_messages = ['#type' => 'status_messages'];
+    $form['#prefix'] .= $renderer->renderRoot($status_messages);
+    $output = $renderer->renderRoot($form);
+
+    $response = new AjaxResponse();
+    $response->setAttachments($form['#attached']);
+
+    return $response->addCommand(new ReplaceCommand(NULL, $output));
   }
 
 }
