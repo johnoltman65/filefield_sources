@@ -57,9 +57,7 @@ class Attach implements FilefieldSourceInterface {
 
       // Clean up the file name extensions and transliterate.
       $original_filepath = $filepath;
-      //debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
       $new_filepath = filefield_sources_clean_filename($filepath, $instance->getSetting['file_extensions']);
-      //var_dump($filepath,$new_filepath);die("HELLO");
       rename($filepath, $new_filepath);
       $filepath = $new_filepath;
 
@@ -159,8 +157,6 @@ class Attach implements FilefieldSourceInterface {
       $element['filefield_attach']['#description'] = $description;
     }
 
-    $ajax_wrapper_id = Html::getUniqueId('ajax-wrapper');
-
     $ajax_settings = [
       'callback' => [get_called_class(), 'uploadAjaxCallbacknew'],
       'options' => [
@@ -168,20 +164,19 @@ class Attach implements FilefieldSourceInterface {
           'element_parents' => implode('/', $element['#array_parents']),
         ],
       ],
-      'wrapper' => $ajax_wrapper_id,
+      'wrapper' => $element['upload_button']['#ajax']['wrapper'],
       'effect' => 'fade',
       'progress' => [
         'type' => $element['#progress_indicator'],
         'message' => $element['#progress_message'],
       ],
     ];
-
     $element['filefield_attach']['attach'] = [
       '#name' => implode('_', $element['#parents']) . '_attach',
       '#type' => 'submit',
       '#value' => t('Attach'),
       '#validate' => [],
-      '#submit' => ['filefield_sources_field_submit'],
+      '#submit' => ['file_managed_file_submit'],
       '#limit_validation_errors' => [$element['#parents']],
       '#ajax' => $ajax_settings,
     ];
@@ -195,7 +190,6 @@ class Attach implements FilefieldSourceInterface {
   public static function element($variables) {
     $element = $variables['element'];
     $options = form_select_options($element['filename']);
-    //var_dump($options);die();
     $option_output='';
     foreach($options as $key => $value){
 		
