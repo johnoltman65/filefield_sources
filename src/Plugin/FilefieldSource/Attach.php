@@ -190,10 +190,9 @@ class Attach implements FilefieldSourceInterface {
   public static function element($variables) {
     $element = $variables['element'];
     $options = form_select_options($element['filename']);
-    $option_output='';
-    foreach($options as $key => $value){
-		
-    	$option_output.='<option value='.$value["value"].'>'.$value["label"].'</option>';
+    $option_output = '';
+    foreach ($options as $key => $value) {
+      $option_output .= '<option value=' . $value["value"] . '>' . $value["label"] . '</option>';
     }
     if (isset($element['attach_message'])) {
       $output = $element['attach_message']['#markup'];
@@ -204,7 +203,7 @@ class Attach implements FilefieldSourceInterface {
       $multiple = !empty($element['#multiple']);
       $output = '<select name="' . $element['filename']['#name'] . '' . ($multiple ? '[]' : '') . '"' . ($multiple ? ' multiple="multiple" ' : '') . new Attribute($element['filename']['#attributes']) . ' id="' . $element['filename']['#id'] . '" ' . $size . '>' . $option_output . '</select>';
     }
-    
+
     $output .= drupal_render($element['attach']);
     $element['#children'] = $output;
     $element['#theme_wrappers'] = array('form_element');
@@ -231,7 +230,7 @@ class Attach implements FilefieldSourceInterface {
     // Node level tokens require a lot of complexity like temporary storage
     // locations when values don't exist. See the filefield_paths module.
     if (\Drupal::moduleHandler()->moduleExists('token')) {
-       $token=\Drupal::token();
+      $token = \Drupal::token();
       $path = $token->replace($path, array('user' => $account));
     }
 
@@ -359,15 +358,30 @@ class Attach implements FilefieldSourceInterface {
     }
   }
 
-  public static function uploadAjaxCallbacknew(&$form, FormStateInterface &$form_state, Request $request) {
+  /**
+   * Ajax callback for managed_file upload forms.
+   *
+   * This ajax callback takes care of the following things:
+   *   - Ensures that broken requests due to too big files are caught.
+   *   - Adds a class to the response to be able to highlight in the UI, that a
+   *     new file got uploaded.
+   *
+   * @param array $form
+   *   The build form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   *   The ajax response of the ajax upload.
+   */
+  public static function uploadAjaxCallbacknew(array &$form, FormStateInterface &$form_state, Request $request) {
     /** @var \Drupal\Core\Render\RendererInterface $renderer */
     $renderer = \Drupal::service('renderer');
-
     $form_parents = explode('/', $request->query->get('element_parents'));
-
     // Retrieve the element to be rendered.
     $form = NestedArray::getValue($form, $form_parents);
-
     // Add the special AJAX class if a new file was added.
     $current_file_count = $form_state->get('file_upload_delta_initial');
     if (isset($form['#file_upload_delta']) && $current_file_count < $form['#file_upload_delta']) {
@@ -377,7 +391,6 @@ class Attach implements FilefieldSourceInterface {
     else {
       $form['#suffix'] .= '<span class="ajax-new-content"></span>';
     }
-
     $status_messages = ['#type' => 'status_messages'];
     $form['#prefix'] .= $renderer->renderRoot($status_messages);
     $output = $renderer->renderRoot($form);
