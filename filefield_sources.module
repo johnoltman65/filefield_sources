@@ -169,13 +169,11 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
     elseif (isset($source['class'])) {
       $callback = array($source['class'], 'process');
       if (is_callable($callback)) {
-        $element = call_user_func_array(
-          $callback, array(
-            $element,
-            $form_state,
-            $complete_form,
-          )
-        );
+        $element = call_user_func_array($callback, array(
+          $element,
+          $form_state,
+          $complete_form,
+        ));
       }
     }
   }
@@ -302,9 +300,9 @@ function filefield_sources_field_validate(&$element, FormStateInterface $form_st
  * Duplicate of \Drupal\file\Plugin\Field\FieldWidget\FileWidget::submit(), with
  * a few changes:
  *   - Submit button is one level down compare to 'Upload' source's submit
- *   button.
+ *     button.
  *   - Replace static in static::getWidgetState and static::setWidgetState by
- *   WidgetBase.
+ *     WidgetBase.
  *   - Rebuild the form after all.
  */
 function filefield_sources_field_submit(&$form, FormStateInterface $form_state) {
@@ -445,13 +443,11 @@ function filefield_sources_save_file($filepath, $validators = array(), $destinat
   $user = \Drupal::currentUser();
 
   // Begin building file object.
-  $file = entity_create(
-    'file', array(
-      'uri' => $filepath,
-      'uid' => $user->id(),
-      'status' => FILE_EXISTS_RENAME,
-    )
-  );
+  $file = entity_create('file', array(
+    'uri' => $filepath,
+    'uid' => $user->id(),
+    'status' => FILE_EXISTS_RENAME,
+  ));
   $file->setFilename(trim(basename($filepath), '.'));
   $file->setMimeType(\Drupal::service('file.mime_type.guesser')->guess($file->getFilename()));
   $file->setSize(filesize($filepath));

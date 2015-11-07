@@ -57,7 +57,7 @@ class Attach implements FilefieldSourceInterface {
 
       // Clean up the file name extensions and transliterate.
       $original_filepath = $filepath;
-      $new_filepath = filefield_sources_clean_filename($filepath, $instance->getSetting['file_extensions']);
+      $new_filepath = filefield_sources_clean_filename($filepath, $instance->getSetting('file_extensions'));
       rename($filepath, $new_filepath);
       $filepath = $new_filepath;
 
@@ -156,15 +156,15 @@ class Attach implements FilefieldSourceInterface {
       );
       $element['filefield_attach']['#description'] = $description;
     }
-
+    $class = '\Drupal\file\Element\ManagedFile';
     $ajax_settings = [
-      'callback' => [get_called_class(), 'uploadAjaxCallbacknew'],
+      'callback' => [$class, 'uploadAjaxCallback'],
       'options' => [
         'query' => [
           'element_parents' => implode('/', $element['#array_parents']),
         ],
       ],
-      'wrapper' => $element['upload_button']['#ajax']['wrapper'],
+      'wrapper' => $element['#id'] . '-ajax-wrapper',
       'effect' => 'fade',
       'progress' => [
         'type' => $element['#progress_indicator'],
@@ -176,7 +176,7 @@ class Attach implements FilefieldSourceInterface {
       '#type' => 'submit',
       '#value' => t('Attach'),
       '#validate' => [],
-      '#submit' => ['file_managed_file_submit'],
+      '#submit' => ['filefield_sources_field_submit'],
       '#limit_validation_errors' => [$element['#parents']],
       '#ajax' => $ajax_settings,
     ];
@@ -254,7 +254,6 @@ class Attach implements FilefieldSourceInterface {
 
     $options = array();
     $file_attach = file_scan_directory($path, '/.*/', array('key' => 'filename'), 0);
-
     if (count($file_attach)) {
       $options = array('' => t('-- Select file --'));
       foreach ($file_attach as $filename => $fileinfo) {
@@ -357,48 +356,4 @@ class Attach implements FilefieldSourceInterface {
       }
     }
   }
-
-  /**
-   * Ajax callback for managed_file upload forms.
-   *
-   * This ajax callback takes care of the following things:
-   *   - Ensures that broken requests due to too big files are caught.
-   *   - Adds a class to the response to be able to highlight in the UI, that a
-   *     new file got uploaded.
-   *
-   * @param array $form
-   *   The build form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state.
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The current request.
-   *
-   * @return \Drupal\Core\Ajax\AjaxResponse
-   *   The ajax response of the ajax upload.
-   */
-  public static function uploadAjaxCallbacknew(array &$form, FormStateInterface &$form_state, Request $request) {
-    /** @var \Drupal\Core\Render\RendererInterface $renderer */
-    $renderer = \Drupal::service('renderer');
-    $form_parents = explode('/', $request->query->get('element_parents'));
-    // Retrieve the element to be rendered.
-    $form = NestedArray::getValue($form, $form_parents);
-    // Add the special AJAX class if a new file was added.
-    $current_file_count = $form_state->get('file_upload_delta_initial');
-    if (isset($form['#file_upload_delta']) && $current_file_count < $form['#file_upload_delta']) {
-      $form[$current_file_count]['#attributes']['class'][] = 'ajax-new-content';
-    }
-    // Otherwise just add the new content class on a placeholder.
-    else {
-      $form['#suffix'] .= '<span class="ajax-new-content"></span>';
-    }
-    $status_messages = ['#type' => 'status_messages'];
-    $form['#prefix'] .= $renderer->renderRoot($status_messages);
-    $output = $renderer->renderRoot($form);
-
-    $response = new AjaxResponse();
-    $response->setAttachments($form['#attached']);
-
-    return $response->addCommand(new ReplaceCommand(NULL, $output));
-  }
-
 }
