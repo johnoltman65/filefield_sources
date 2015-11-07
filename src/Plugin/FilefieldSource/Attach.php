@@ -14,10 +14,6 @@ use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Template\Attribute;
 use Drupal\Core\Url;
-use Drupal\Component\Utility\Html;
-use Symfony\Component\HttpFoundation\Request;
-use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\ReplaceCommand;
 
 /**
  * A FileField source plugin to allow use of files within a server directory.
