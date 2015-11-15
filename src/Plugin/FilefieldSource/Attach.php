@@ -53,7 +53,7 @@ class Attach implements FilefieldSourceInterface {
 
       // Clean up the file name extensions and transliterate.
       $original_filepath = $filepath;
-      $new_filepath = filefield_sources_clean_filename($filepath, $instance->settings['file_extensions']);
+      $new_filepath = filefield_sources_clean_filename($filepath, $instance->getSetting('file_extensions'));
       rename($filepath, $new_filepath);
       $filepath = $new_filepath;
 
@@ -152,19 +152,21 @@ class Attach implements FilefieldSourceInterface {
       );
       $element['filefield_attach']['#description'] = $description;
     }
-
+    $class = '\Drupal\file\Element\ManagedFile';
     $ajax_settings = [
-      'url' => Url::fromRoute('file.ajax_upload'),
+      'callback' => [$class, 'uploadAjaxCallback'],
       'options' => [
         'query' => [
           'element_parents' => implode('/', $element['#array_parents']),
-          'form_build_id' => $complete_form['form_build_id']['#value'],
         ],
       ],
       'wrapper' => $element['#id'] . '-ajax-wrapper',
       'effect' => 'fade',
+      'progress' => [
+        'type' => $element['#progress_indicator'],
+        'message' => $element['#progress_message'],
+      ],
     ];
-
     $element['filefield_attach']['attach'] = [
       '#name' => implode('_', $element['#parents']) . '_attach',
       '#type' => 'submit',
@@ -183,7 +185,11 @@ class Attach implements FilefieldSourceInterface {
    */
   public static function element($variables) {
     $element = $variables['element'];
-
+    $options = form_select_options($element['filename']);
+    $option_output = '';
+    foreach ($options as $key => $value) {
+      $option_output .= '<option value=' . $value["value"] . '>' . $value["label"] . '</option>';
+    }
     if (isset($element['attach_message'])) {
       $output = $element['attach_message']['#markup'];
     }
@@ -191,8 +197,9 @@ class Attach implements FilefieldSourceInterface {
       $size = !empty($element['filename']['#size']) ? ' size="' . $element['filename']['#size'] . '"' : '';
       $element['filename']['#attributes']['class'][] = 'form-select';
       $multiple = !empty($element['#multiple']);
-      $output = '<select name="' . $element['filename']['#name'] . '' . ($multiple ? '[]' : '') . '"' . ($multiple ? ' multiple="multiple" ' : '') . new Attribute($element['filename']['#attributes']) . ' id="' . $element['filename']['#id'] . '" ' . $size . '>' . form_select_options($element['filename']) . '</select>';
+      $output = '<select name="' . $element['filename']['#name'] . '' . ($multiple ? '[]' : '') . '"' . ($multiple ? ' multiple="multiple" ' : '') . new Attribute($element['filename']['#attributes']) . ' id="' . $element['filename']['#id'] . '" ' . $size . '>' . $option_output . '</select>';
     }
+
     $output .= drupal_render($element['attach']);
     $element['#children'] = $output;
     $element['#theme_wrappers'] = array('form_element');
@@ -219,7 +226,8 @@ class Attach implements FilefieldSourceInterface {
     // Node level tokens require a lot of complexity like temporary storage
     // locations when values don't exist. See the filefield_paths module.
     if (\Drupal::moduleHandler()->moduleExists('token')) {
-      $path = token_replace($path, array('user' => $account));
+      $token = \Drupal::token();
+      $path = $token->replace($path, array('user' => $account));
     }
 
     return $absolute ? $path : file_default_scheme() . '://' . $path;
@@ -242,7 +250,6 @@ class Attach implements FilefieldSourceInterface {
 
     $options = array();
     $file_attach = file_scan_directory($path, '/.*/', array('key' => 'filename'), 0);
-
     if (count($file_attach)) {
       $options = array('' => t('-- Select file --'));
       foreach ($file_attach as $filename => $fileinfo) {
@@ -345,5 +352,4 @@ class Attach implements FilefieldSourceInterface {
       }
     }
   }
-
 }
