@@ -15,7 +15,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Component\Utility\Html;
-use Drupal\Core\Url;
 
 /**
  * A FileField source plugin to allow referencing of existing files.
@@ -93,15 +92,16 @@ class Reference implements FilefieldSourceInterface {
       '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
     );
 
+    $class = '\Drupal\file\Element\ManagedFile';
     $ajax_settings = [
-      'url' => Url::fromRoute('file.ajax_upload'),
+      'callback' => [$class, 'uploadAjaxCallback'],
       'options' => [
         'query' => [
           'element_parents' => implode('/', $element['#array_parents']),
           'form_build_id' => $complete_form['form_build_id']['#value'],
         ],
       ],
-      'wrapper' => $element['#id'] . '-ajax-wrapper',
+      'wrapper' => $element['upload_button']['#ajax']['wrapper'],
       'effect' => 'fade',
     ];
 

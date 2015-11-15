@@ -213,10 +213,9 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
 
   // Adjust the Ajax settings so that on upload and remove of any individual
   // file, the entire group of file fields is updated together.
-  // Duplicate of Drupal\file\Plugin\Field\FieldWidget\FileWidget::process().
+  // Clone of Drupal\file\Plugin\Field\FieldWidget\FileWidget::process().
   if ($element['#cardinality'] != 1) {
     $parents = array_slice($element['#array_parents'], 0, -1);
-    $new_path = 'file/ajax';
     $new_options = array(
       'query' => array(
         'element_parents' => implode('/', $parents),
@@ -228,7 +227,6 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
     foreach (Element::children($element) as $key) {
       foreach (Element::children($element[$key]) as $subkey) {
         if (isset($element[$key][$subkey]['#ajax'])) {
-          $element[$key][$subkey]['#ajax']['path'] = $new_path;
           $element[$key][$subkey]['#ajax']['options'] = $new_options;
           $element[$key][$subkey]['#ajax']['wrapper'] = $new_wrapper;
           $element[$key][$subkey]['#limit_validation_errors'] = array(
@@ -295,9 +293,9 @@ function filefield_sources_field_validate(&$element, FormStateInterface $form_st
 }
 
 /**
- * A #submit handler added to all FileField Source buttons.
+ * Form submission handler for all FileField Source buttons.
  *
- * Duplicate of \Drupal\file\Plugin\Field\FieldWidget\FileWidget::submit(), with
+ * Clone of \Drupal\file\Plugin\Field\FieldWidget\FileWidget::submit(), with
  * a few changes:
  *   - Submit button is one level down compare to 'Upload' source's submit
  *     button.

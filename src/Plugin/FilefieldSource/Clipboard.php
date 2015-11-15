@@ -10,7 +10,6 @@ namespace Drupal\filefield_sources\Plugin\FilefieldSource;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\filefield_sources\FilefieldSourceInterface;
 use Drupal\Core\Site\Settings;
-use Drupal\Core\Url;
 
 /**
  * A FileField source plugin to allow transfer of files through the clipboard.
@@ -111,15 +110,16 @@ class Clipboard implements FilefieldSourceInterface {
       '#attributes' => array('class' => array('filefield-source-clipboard-contents')),
     );
 
+    $class = '\Drupal\file\Element\ManagedFile';
     $ajax_settings = [
-      'url' => Url::fromRoute('file.ajax_upload'),
+      'callback' => [$class, 'uploadAjaxCallback'],
       'options' => [
         'query' => [
           'element_parents' => implode('/', $element['#array_parents']),
           'form_build_id' => $complete_form['form_build_id']['#value'],
         ],
       ],
-      'wrapper' => $element['#id'] . '-ajax-wrapper',
+      'wrapper' => $element['upload_button']['#ajax']['wrapper'],
       'effect' => 'fade',
       'progress' => [
         'type' => 'throbber',

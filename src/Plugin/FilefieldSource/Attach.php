@@ -13,7 +13,6 @@ use Drupal\Core\Field\WidgetInterface;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Template\Attribute;
-use Drupal\Core\Url;
 
 /**
  * A FileField source plugin to allow use of files within a server directory.
@@ -158,14 +157,11 @@ class Attach implements FilefieldSourceInterface {
       'options' => [
         'query' => [
           'element_parents' => implode('/', $element['#array_parents']),
+          'form_build_id' => $complete_form['form_build_id']['#value'],
         ],
       ],
-      'wrapper' => $element['#id'] . '-ajax-wrapper',
+      'wrapper' => $element['upload_button']['#ajax']['wrapper'],
       'effect' => 'fade',
-      'progress' => [
-        'type' => $element['#progress_indicator'],
-        'message' => $element['#progress_message'],
-      ],
     ];
     $element['filefield_attach']['attach'] = [
       '#name' => implode('_', $element['#parents']) . '_attach',
@@ -252,6 +248,7 @@ class Attach implements FilefieldSourceInterface {
 
     $options = array();
     $file_attach = file_scan_directory($path, '/.*/', array('key' => 'filename'), 0);
+
     if (count($file_attach)) {
       $options = array('' => t('-- Select file --'));
       foreach ($file_attach as $filename => $fileinfo) {
@@ -354,4 +351,5 @@ class Attach implements FilefieldSourceInterface {
       }
     }
   }
+
 }

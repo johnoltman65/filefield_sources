@@ -15,7 +15,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Site\Settings;
 use Drupal\Component\Utility\Unicode;
-use Drupal\Core\Url;
 
 /**
  * A FileField source plugin to allow downloading a file from a remote server.
@@ -301,15 +300,16 @@ class Remote implements FilefieldSourceInterface {
       '#maxlength' => NULL,
     );
 
+    $class = '\Drupal\file\Element\ManagedFile';
     $ajax_settings = [
-      'url' => Url::fromRoute('file.ajax_upload'),
+      'callback' => [$class, 'uploadAjaxCallback'],
       'options' => [
         'query' => [
           'element_parents' => implode('/', $element['#array_parents']),
           'form_build_id' => $complete_form['form_build_id']['#value'],
         ],
       ],
-      'wrapper' => $element['#id'] . '-ajax-wrapper',
+      'wrapper' => $element['upload_button']['#ajax']['wrapper'],
       'effect' => 'fade',
       'progress' => [
         'type' => 'bar',
