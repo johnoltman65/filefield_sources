@@ -281,13 +281,11 @@ function filefield_sources_field_validate(&$element, FormStateInterface $form_st
 
     $callback = array($source['class'], 'validate');
     if (is_callable($callback)) {
-      call_user_func_array(
-        $callback, array(
-          $element,
-          $form_state,
-          $complete_form,
-        )
-      );
+      call_user_func_array($callback, array(
+        $element,
+        $form_state,
+        $complete_form,
+      ));
     }
   }
 }
