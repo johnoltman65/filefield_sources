@@ -185,15 +185,17 @@ class Attach implements FilefieldSourceInterface {
    */
   public static function element($variables) {
     $element = $variables['element'];
-    $options = form_select_options($element['filename']);
-    $option_output = '';
-    foreach ($options as $key => $value) {
-      $option_output .= '<option value=' . $value["value"] . '>' . $value["label"] . '</option>';
-    }
     if (isset($element['attach_message'])) {
       $output = $element['attach_message']['#markup'];
     }
-    else {
+    elseif (isset($element['filename'])) {
+      // Get rendered options.
+      $options = form_select_options($element['filename']);
+      $option_output = '';
+      foreach ($options as $key => $value) {
+        $option_output .= '<option value=' . $value["value"] . '>' . $value["label"] . '</option>';
+      }
+      // Get rendered select.
       $size = !empty($element['filename']['#size']) ? ' size="' . $element['filename']['#size'] . '"' : '';
       $element['filename']['#attributes']['class'][] = 'form-select';
       $multiple = !empty($element['#multiple']);
