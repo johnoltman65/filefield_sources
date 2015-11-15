@@ -9,6 +9,7 @@ namespace Drupal\filefield_sources\Tests;
 
 use Drupal\file\Tests\FileFieldTestBase;
 use Drupal\simpletest\WebTestBase;
+use Drupal\field\Entity\FieldConfig;
 
 /**
  * Base class for File Field Sources test cases.
@@ -390,6 +391,17 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    */
   public function assertFileRemoved($filename) {
     $this->assertNoLink($filename);
+  }
+
+  /**
+   * Get field setting.
+   *
+   * @param string $setting_name
+   *   Setting name.
+   */
+  public function getFieldSetting($setting_name) {
+    $field_definition = FieldConfig::load("node.{$this->typeName}.{$this->fieldName}");
+    return $field_definition->getSetting($setting_name);
   }
 
 }

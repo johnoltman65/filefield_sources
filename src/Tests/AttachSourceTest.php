@@ -7,6 +7,8 @@
 
 namespace Drupal\filefield_sources\Tests;
 
+use Drupal\Component\Render\PlainTextOutput;
+
 /**
  * Tests the attach source.
  *
@@ -71,10 +73,12 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
    * Default settings: Move file from 'public://file_attach' to 'public://'.
    */
   public function testMoveFileFromRelativePath() {
+    $uri_scheme = $this->getFieldSetting('uri_scheme');
+    $path = $uri_scheme . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH;
+
     // Create test file.
-    $path = file_default_scheme() . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH;
     $file = $this->createTemporaryFile($path);
-    $dest_uri = file_default_scheme() . '://' . $file->filename;
+    $dest_uri = $this->getDestinationUri($file, $uri_scheme);
 
     $this->enableSources(array(
       'attach' => TRUE,
@@ -101,7 +105,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
    * Calculate custom absolute path.
    */
   public function getCustomAttachPath() {
-    $path = drupal_realpath(file_default_scheme() . '://');
+    $path = drupal_realpath($this->getFieldSetting('uri_scheme') . '://');
     $path = str_replace(realpath('./'), '', $path);
     $path = ltrim($path, '/');
     $path = $path . '/custom_file_attach';
@@ -114,11 +118,12 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
    * Copy file from 'sites/default/files/custom_file_attach' to 'public://'.
    */
   public function testCopyFileFromAbsolutePath() {
+    $uri_scheme = $this->getFieldSetting('uri_scheme');
     $path = $this->getCustomAttachPath();
 
     // Create test file.
     $file = $this->createTemporaryFile($path);
-    $dest_uri = file_default_scheme() . '://' . $file->filename;
+    $dest_uri = $this->getDestinationUri($file, $uri_scheme);
 
     // Change settings.
     $this->updateFilefieldSourcesSettings('source_attach', 'path', $path);
@@ -144,6 +149,20 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     $this->removeFile($file->filename, 0);
 
     $this->assertCanAttachFile($file);
+  }
+
+  /**
+   * Get destination uri of a .
+   *
+   * @param object $file
+   *   File.
+   * @param string $uri_scheme
+   *   Uri scheme.
+   */
+  public function getDestinationUri($file, $uri_scheme) {
+    $destination = trim($this->getFieldSetting('file_directory'), '/');
+    $destination = PlainTextOutput::renderFromHtml(\Drupal::token()->replace($destination));
+    return $uri_scheme . '://' . $destination . '/' . $file->filename;
   }
 
 }
