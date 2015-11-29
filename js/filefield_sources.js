@@ -41,6 +41,10 @@ Drupal.behaviors.fileFieldSources.attach = function(context, settings) {
       .bind('paste', Drupal.fileFieldSources.pasteEvent)
       .bind('focus', Drupal.fileFieldSources.pasteFocus)
       .bind('blur', Drupal.fileFieldSources.pasteBlur);
+
+    // Imce support.
+    $fileFieldElement.find('.filefield-sources-imce-browse')
+      .bind('click', Drupal.fileFieldSources.imceBrowse);
   });
 
   if (context === document) {
@@ -239,6 +243,14 @@ Drupal.fileFieldSources = {
     $wrapper.find('.filefield-source-clipboard-filename').val(filename);
     $wrapper.find('.filefield-source-clipboard-contents').val(contents);
     $wrapper.find('input.form-submit').trigger('mousedown');
+  },
+
+  /**
+   * Click event for the imce browse link.
+   */
+  imceBrowse: function (e) {
+    window.open(this.href, '', 'width=760,height=560,resizable=1');
+    e.preventDefault();
   }
 };
 

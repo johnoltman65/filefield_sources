@@ -12,6 +12,8 @@ use Drupal\filefield_sources\FilefieldSourceInterface;
 use Symfony\Component\Routing\Route;
 use Drupal\Core\Field\WidgetInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Drupal\imce\Imce as ImceHelper;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * A FileField source plugin to allow referencing of files from IMCE.
@@ -91,19 +93,19 @@ class Imce implements FilefieldSourceInterface {
       ),
     );
 
-    $imce_function = 'window.open(\'' . \Drupal::url('filefield_sources.imce', array(
-        'entity_type' => $element['#entity_type'],
-        'bundle' => $element['#bundle'],
-        'field_name' => $element['#field_name'],
+    $imce_url = \Drupal::url('filefield_sources.imce', array(
+      'entity_type' => $element['#entity_type'],
+      'bundle_name' => $element['#bundle'],
+      'field_name' => $element['#field_name'],
+    ),
+    array(
+      'query' => array(
+        'app' => $instance->getLabel() . '|url@' . $filepath_id,
       ),
-      array(
-        'query' => array(
-          'app' => $instance->getLabel() . '|url@' . $filepath_id,
-        ),
-      )) . '\', \'\', \'width=760,height=560,resizable=1\'); return false;';
+    ));
     $element['filefield_imce']['display_path'] = array(
       '#type' => 'markup',
-      '#markup' => '<span id="' . $display_id . '" class="filefield-sources-imce-display">' . t('No file selected') . '</span> (<a class="filefield-sources-imce-browse" href="#" onclick="' . $imce_function . '">' . t('browse') . '</a>)',
+      '#markup' => '<span id="' . $display_id . '" class="filefield-sources-imce-display">' . t('No file selected') . '</span> (<a class="filefield-sources-imce-browse" href="' . $imce_url . '">' . t('browse') . '</a>)',
     );
 
     $class = '\Drupal\file\Element\ManagedFile';
@@ -147,11 +149,11 @@ class Imce implements FilefieldSourceInterface {
   /**
    * Outputs the IMCE browser for FileField.
    */
-  public static function page($entity_type, $bundle_name, $field_name) {
+  public static function page($entity_type, $bundle_name, $field_name, Request $request) {
     global $conf;
 
     // Check access.
-    if (!\Drupal::moduleHandler()->moduleExists('imce') || !imce_access() || !$instance = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name)) {
+    if (!\Drupal::moduleHandler()->moduleExists('imce') || !ImceHelper::access() || !$instance = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name)) {
       throw new AccessDeniedHttpException();
     }
     $settings = $instance->getSettings();
@@ -173,8 +175,7 @@ class Imce implements FilefieldSourceInterface {
     // Disable absolute URLs.
     $conf['imce_settings_absurls'] = 0;
 
-    module_load_include('inc', 'imce', 'inc/imce.page');
-    return imce($settings['uri_scheme']);
+    return ImceHelper::response($request, \Drupal::currentUser(), $settings['uri_scheme']);
   }
 
   /**
