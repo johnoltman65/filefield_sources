@@ -306,7 +306,6 @@ class Remote implements FilefieldSourceInterface {
       'options' => [
         'query' => [
           'element_parents' => implode('/', $element['#array_parents']),
-          'form_build_id' => $complete_form['form_build_id']['#value'],
         ],
       ],
       'wrapper' => $element['upload_button']['#ajax']['wrapper'],

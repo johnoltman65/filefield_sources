@@ -219,7 +219,6 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
     $new_options = array(
       'query' => array(
         'element_parents' => implode('/', $parents),
-        'form_build_id' => $complete_form['form_build_id']['#value'],
       ),
     );
     $field_element = NestedArray::getValue($complete_form, $parents);
