@@ -11,9 +11,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\filefield_sources\FilefieldSourceInterface;
 use Symfony\Component\Routing\Route;
 use Drupal\Core\Field\WidgetInterface;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Drupal\imce\Imce as ImceHelper;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * A FileField source plugin to allow referencing of files from IMCE.
@@ -147,164 +144,6 @@ class Imce implements FilefieldSourceInterface {
   }
 
   /**
-   * Outputs the IMCE browser for FileField.
-   */
-  public static function page($entity_type, $bundle_name, $field_name, Request $request) {
-    global $conf;
-
-    // Check access.
-    if (!\Drupal::moduleHandler()->moduleExists('imce') || !ImceHelper::access() || !$instance = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name)) {
-      throw new AccessDeniedHttpException();
-    }
-    $settings = $instance->getSettings();
-
-    $widget = entity_get_form_display($entity_type, $bundle_name, 'default')->getComponent($field_name);
-    // Full mode.
-    if (!empty($widget['third_party_settings']['filefield_sources']['filefield_sources']['source_imce']['imce_mode'])) {
-      $conf['imce_custom_scan'] = array(get_called_class(), 'customScanFull');
-    }
-    // Restricted mode.
-    else {
-      $conf['imce_custom_scan'] = array(get_called_class(), 'customScanRestricted');
-      $conf['imce_custom_context'] = array(
-        'field_storage' => entity_load('field_storage_config', $entity_type . '.' . $field_name),
-        'uri' => static::getUploadLocation($settings),
-      );
-    }
-
-    // Disable absolute URLs.
-    $conf['imce_settings_absurls'] = 0;
-
-    return ImceHelper::response($request, \Drupal::currentUser(), $settings['uri_scheme']);
-  }
-
-  /**
-   * Determines the URI for a file field.
-   *
-   * @param array $data
-   *   An array of token objects to pass to token_replace().
-   *
-   * @return string
-   *   A file directory URI with tokens replaced.
-   *
-   * @see token_replace()
-   */
-  public static function getUploadLocation($settings, $data = array()) {
-    $destination = trim($settings['file_directory'], '/');
-
-    // Replace tokens.
-    $destination = \Drupal::token()->replace($destination, $data);
-
-    return $settings['uri_scheme'] . '://' . $destination;
-  }
-
-  /**
-   * Scan and return files, subdirectories, and total size for "full" mode.
-   */
-  protected static function customScanFull($dirname, &$imce) {
-    // Get a list of files in the database for this directory.
-    $scheme = $imce['scheme'];
-    $sql_uri_name = $dirname == '.' ? $scheme . '://' : $scheme . '://' . $dirname . '/';
-
-    $result = db_select('file_managed', 'f')
-      ->fields('f', array('uri'))
-      ->condition('f.uri', $sql_uri_name . '%', 'LIKE')
-      ->condition('f.uri', $sql_uri_name . '_%/%', 'NOT LIKE')
-      ->execute();
-
-    $db_files = array();
-    foreach ($result as $row) {
-      $db_files[basename($row->uri)] = 1;
-    }
-
-    // Get the default IMCE directory scan, then filter down to database files.
-    $directory = imce_scan_directory($dirname, $imce);
-    foreach ($directory['files'] as $filename => $file) {
-      if (!isset($db_files[$filename])) {
-        unset($directory['files'][$filename]);
-        $directory['dirsize'] -= $file['size'];
-      }
-    }
-
-    return $directory;
-  }
-
-  /**
-   * Scan directory and return file list, subdirectories, and total size.
-   *
-   * This only work on Restricted Mode.
-   */
-  protected static function customScanRestricted($dirname, &$imce) {
-    $context = $GLOBALS['conf']['imce_custom_context'];
-    $field_storage = $context['field_storage'];
-    $root = $imce['scheme'] . '://';
-    $field_uri = $context['uri'];
-    $is_root = $field_uri == $root;
-
-    // Process IMCE. Make field directory the only accessible one.
-    $imce['dir'] = $is_root ? '.' : substr($field_uri, strlen($root));
-    $imce['directories'] = array();
-    if (!empty($imce['perm'])) {
-      static::disablePerms($imce, array('browse'));
-    }
-
-    // Create directory info.
-    $directory = array(
-      'dirsize' => 0,
-      'files' => array(),
-      'subdirectories' => array(),
-      'error' => FALSE,
-    );
-
-    if (isset($field_storage['storage']['details']['sql']['FIELD_LOAD_CURRENT'])) {
-      $storage = $field_storage['storage']['details']['sql']['FIELD_LOAD_CURRENT'];
-      $table_info = reset($storage);
-      $table = key($storage);
-      $sql_uri = $field_uri . ($is_root ? '' : '/');
-      $query = db_select($table, 'cf');
-      $query->innerJoin('file_managed', 'f', 'f.fid = cf.' . $table_info['fid']);
-      $result = $query->fields('f')
-        ->condition('f.status', 1)
-        ->condition('f.uri', $sql_uri . '%', 'LIKE')
-        ->condition('f.uri', $sql_uri . '%/%', 'NOT LIKE')
-        ->execute();
-      foreach ($result as $file) {
-        // Get real name.
-        $name = basename($file->uri);
-        // Get dimensions.
-        $width = $height = 0;
-        if ($img = imce_image_info($file->uri)) {
-          $width = $img['width'];
-          $height = $img['height'];
-        }
-        $directory['files'][$name] = array(
-          'name' => $name,
-          'size' => $file->filesize,
-          'width' => $width,
-          'height' => $height,
-          'date' => $file->timestamp,
-        );
-        $directory['dirsize'] += $file->filesize;
-      }
-    }
-
-    return $directory;
-  }
-
-  /**
-   * Disable IMCE profile permissions.
-   */
-  protected static function disablePerms(&$imce, $exceptions = array()) {
-    $disable_all = empty($exceptions);
-    foreach ($imce['perm'] as $name => $val) {
-      if ($disable_all || !in_array($name, $exceptions)) {
-        $imce['perm'][$name] = 0;
-      }
-    }
-    $imce['directories'][$imce['dir']] = array('name' => $imce['dir']) + $imce['perm'];
-  }
-
-  /**
    * Define routes for Imce source.
    *
    * @return array
@@ -316,7 +155,8 @@ class Imce implements FilefieldSourceInterface {
     $routes['filefield_sources.imce'] = new Route(
       '/file/imce/{entity_type}/{bundle_name}/{field_name}',
       array(
-        '_controller' => get_called_class() . '::page',
+        '_controller' => '\Drupal\filefield_sources\Controller\ImceController::page',
+        '_title' => 'File Manager',
       ),
       array(
         '_access_filefield_sources_field' => 'TRUE',

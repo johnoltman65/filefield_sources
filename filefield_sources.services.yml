@@ -8,3 +8,5 @@ services:
     class: Drupal\filefield_sources\Access\FieldAccessCheck
     tags:
       - { name: access_check, applies_to: _access_filefield_sources_field }
+  filefield_sources.imce_scanner:
+    class: Drupal\filefield_sources\ImceScanner
