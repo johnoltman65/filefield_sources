@@ -29,14 +29,15 @@ class Imce implements FilefieldSourceInterface {
    * {@inheritdoc}
    */
   public static function value(array &$element, &$input, FormStateInterface $form_state) {
-    if (isset($input['filefield_imce']['file_path']) && $input['filefield_imce']['file_path'] != '') {
+    if (isset($input['filefield_imce']['imce_paths']) && $input['filefield_imce']['imce_paths'] != '') {
       $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
       $field_settings = $instance->getSettings();
       $scheme = $field_settings['uri_scheme'];
 
-      $wrapper = \Drupal::service('stream_wrapper_manager')->getViaScheme($scheme);
-      $file_directory_prefix = $scheme == 'private' ? 'system/files' : $wrapper->getDirectoryPath();
-      $uri = preg_replace('/^' . preg_quote(base_path() . $file_directory_prefix . '/', '/') . '/', $scheme . '://', $input['filefield_imce']['file_path']);
+      //$wrapper = \Drupal::service('stream_wrapper_manager')->getViaScheme($scheme);
+      //$file_directory_prefix = $scheme == 'private' ? 'system/files' : $wrapper->getDirectoryPath();
+      //$uri = preg_replace('/^' . preg_quote(base_path() . $file_directory_prefix . '/', '/') . '/', $scheme . '://', $input['filefield_imce']['imce_paths']);
+      $uri = $scheme . '://' . $input['filefield_imce']['imce_paths'];
 
       // Resolve the file path to an FID.
       $fid = db_select('file_managed', 'f')
@@ -46,7 +47,7 @@ class Imce implements FilefieldSourceInterface {
         ->fetchField();
       if ($fid) {
         $file = file_load($fid);
-        if (filefield_sources_element_validate($element, $file)) {
+        if (filefield_sources_element_validate($element, $file, $form_state)) {
           if (!in_array($file->id(), $input['fids'])) {
             $input['fids'][] = $file->id();
           }
@@ -56,7 +57,7 @@ class Imce implements FilefieldSourceInterface {
         $form_state->setError($element, t('The selected file could not be used because the file does not exist in the database.'));
       }
       // No matter what happens, clear the value from the file path field.
-      $input['filefield_imce']['file_path'] = '';
+      $input['filefield_imce']['imce_paths'] = '';
     }
   }
 
@@ -75,21 +76,6 @@ class Imce implements FilefieldSourceInterface {
       '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
     );
 
-    $filepath_id = $element['#id'] . '-imce-path';
-    $display_id = $element['#id'] . '-imce-display';
-    $select_id = $element['#id'] . '-imce-select';
-    $element['filefield_imce']['file_path'] = array(
-      // IE doesn't support onchange events for hidden fields, so we use a
-      // textfield and hide it from display.
-      '#type' => 'textfield',
-      '#value' => '',
-      '#attributes' => array(
-        'id' => $filepath_id,
-        'onblur' => "if (this.value.length > 0) { jQuery('#$select_id').triggerHandler('mousedown'); }",
-        'style' => 'position:absolute; left: -9999em',
-      ),
-    );
-
     $imce_url = \Drupal::url('filefield_sources.imce', array(
       'entity_type' => $element['#entity_type'],
       'bundle_name' => $element['#bundle'],
@@ -97,12 +83,24 @@ class Imce implements FilefieldSourceInterface {
     ),
     array(
       'query' => array(
-        'app' => $instance->getLabel() . '|url@' . $filepath_id,
+        'sendto' => 'imceFileField.sendto',
+        'fieldId' => $element['#attributes']['data-drupal-selector'] . '-filefield-imce',
       ),
     ));
-    $element['filefield_imce']['display_path'] = array(
+    $element['filefield_imce']['browse'] = array(
       '#type' => 'markup',
-      '#markup' => '<span id="' . $display_id . '" class="filefield-sources-imce-display">' . t('No file selected') . '</span> (<a class="filefield-sources-imce-browse" href="' . $imce_url . '">' . t('browse') . '</a>)',
+      '#markup' => '<span>' . t('No file selected') . '</span> (<a class="filefield-sources-imce-browse" href="' . $imce_url . '">' . t('browse') . '</a>)',
+    );
+
+    $element['#attached']['library'][] = 'imce/drupal.imce.filefield';
+    // Set the pre-renderer to conditionally disable the elements.
+    $element['#pre_render'][] = array(get_called_class(), 'preRenderWidget');
+
+    // Path input
+    $element['filefield_imce']['imce_paths'] = array(
+      '#type' => 'hidden',
+      // Reset value to prevent consistent errors
+      '#value' => '',
     );
 
     $class = '\Drupal\file\Element\ManagedFile';
@@ -117,16 +115,14 @@ class Imce implements FilefieldSourceInterface {
       'effect' => 'fade',
     ];
 
-    $element['filefield_imce']['select'] = array(
+    $element['filefield_imce']['imce_button'] = array(
       '#name' => implode('_', $element['#parents']) . '_imce_select',
       '#type' => 'submit',
       '#value' => t('Select'),
-      '#validate' => [],
-      '#submit' => array('filefield_sources_field_submit'),
-      '#limit_validation_errors' => [$element['#parents']],
-      '#name' => $element['#name'] . '[filefield_imce][button]',
-      '#id' => $select_id,
       '#attributes' => ['class' => ['js-hide']],
+      '#validate' => [],
+      '#submit' => ['filefield_sources_field_submit'],
+      '#limit_validation_errors' => [$element['#parents']],
       '#ajax' => $ajax_settings,
     );
 
@@ -196,6 +192,18 @@ class Imce implements FilefieldSourceInterface {
 
     return $return;
 
+  }
+
+  /**
+   * Pre-renders widget form.
+   */
+  public static function preRenderWidget($element) {
+    // Hide elements if there is already an uploaded file.
+    if (!empty($element['#value']['fids'])) {
+      $element['filefield_imce']['imce_paths']['#access'] = FALSE;
+      $element['filefield_imce']['imce_button']['#access'] = FALSE;
+    }
+    return $element;
   }
 
 }

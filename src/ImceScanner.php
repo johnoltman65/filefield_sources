@@ -68,8 +68,9 @@ class ImceScanner {
     $field_uri = $this->context['uri'];
     $is_root = $this->context['is_root'];
 
-    // Process IMCE. Make field directory the only accessible one.
-    static::disablePerms(array('browse'));
+    if ($dirname !== $field_uri) {
+      return $content;
+    }
 
     $entity_type = $this->context['entity_type'];
     $field_name = $this->context['field_name'];
@@ -97,13 +98,5 @@ class ImceScanner {
     }
 
     return $content;
-  }
-
-  /**
-   * Disable IMCE profile permissions.
-   */
-  protected static function disablePerms($exceptions = array()) {
-    // @todo Disable all permissions excluding exceptions on all directories
-    // except the current one.
   }
 }

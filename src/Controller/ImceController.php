@@ -45,13 +45,11 @@ class ImceController extends ControllerBase {
       // Restricted mode.
       else {
         $imceFM->setConf('scanner', array($scanner, 'customScanRestricted'));
-        // Set active folder.
-        $scheme = $imceFM->getConf('scheme');
-        $root = $scheme . '://';
+
+        // Make field directory the only accessible one.
         $field_uri = static::getUploadLocation($settings);
-        $is_root = $field_uri == $root;
-        $path = $is_root ? '.' : substr($field_uri, strlen($root));
-        $imceFM->activeFolder = $imceFM->checkFolder($path);
+        static::disablePerms($imceFM, $field_uri, array('browse_files'));
+
         // Set context.
         $scanner->setContext(array(
           'entity_type' => $entity_type,
@@ -79,7 +77,7 @@ class ImceController extends ControllerBase {
    *
    * @see token_replace()
    */
-  public static function getUploadLocation($settings, $data = array()) {
+  protected static function getUploadLocation($settings, $data = array()) {
     $destination = trim($settings['file_directory'], '/');
 
     // Replace tokens. To ensure that render context is empty, pass a bubbleable
@@ -88,6 +86,26 @@ class ImceController extends ControllerBase {
     $destination = \Drupal::token()->replace($destination, $data, [], $bubbleable_metadata);
 
     return $settings['uri_scheme'] . '://' . $destination;
+  }
+
+  /**
+   * Disable IMCE profile permissions.
+   */
+  protected static function disablePerms($imceFM, $field_uri, $exceptions = array()) {
+    $scheme = $imceFM->getConf('scheme');
+    $root = $scheme . '://';
+    $is_root = $field_uri == $root;
+    $path = $is_root ? '.' : substr($field_uri, strlen($root));
+
+    $folders = $imceFM->getConf('folders');
+    $perms = \Drupal::service('plugin.manager.imce.plugin')->permissionInfo();
+    $folders['.']['permissions']['all'] = FALSE;
+    $folders[$path]['permissions']['all'] = FALSE;
+    foreach ($perms as $perm => $title) {
+      $folders['.']['permissions'][$perm] = FALSE;
+      $folders[$path]['permissions'][$perm] = in_array($perm, array('browse_files')) ? TRUE : FALSE;
+    }
+    $imceFM->setConf('folders', $folders);
   }
 
 }
