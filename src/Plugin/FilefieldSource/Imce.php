@@ -192,7 +192,7 @@ class Imce implements FilefieldSourceInterface {
       '#title' => t('File browser mode'),
       '#options' => array(
         0 => t('Restricted: Users can only browse the field directory. No file operations are allowed.'),
-        1 => t('Full: Browsable directories are defined by <a href="!imce-admin-url">IMCE configuration profiles</a>. File operations are allowed.', array('!imce-admin-url' => $imce_admin_url)),
+        1 => t('Full: Browsable directories are defined by <a href=":imce-admin-url">IMCE configuration profiles</a>. File operations are allowed.', array(':imce-admin-url' => $imce_admin_url)),
       ),
       '#default_value' => isset($settings['source_imce']['imce_mode']) ? $settings['source_imce']['imce_mode'] : 0,
     );
