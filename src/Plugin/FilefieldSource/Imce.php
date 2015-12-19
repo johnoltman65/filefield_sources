@@ -33,23 +33,30 @@ class Imce implements FilefieldSourceInterface {
       $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
       $field_settings = $instance->getSettings();
       $scheme = $field_settings['uri_scheme'];
+      $imce_paths = explode(':', $input['filefield_imce']['imce_paths']);
+      $uris = [];
 
-      //$wrapper = \Drupal::service('stream_wrapper_manager')->getViaScheme($scheme);
-      //$file_directory_prefix = $scheme == 'private' ? 'system/files' : $wrapper->getDirectoryPath();
-      //$uri = preg_replace('/^' . preg_quote(base_path() . $file_directory_prefix . '/', '/') . '/', $scheme . '://', $input['filefield_imce']['imce_paths']);
-      $uri = $scheme . '://' . $input['filefield_imce']['imce_paths'];
+      foreach ($imce_paths as $imce_path) {
+        //$wrapper = \Drupal::service('stream_wrapper_manager')->getViaScheme($scheme);
+        //$file_directory_prefix = $scheme == 'private' ? 'system/files' : $wrapper->getDirectoryPath();
+        //$uri = preg_replace('/^' . preg_quote(base_path() . $file_directory_prefix . '/', '/') . '/', $scheme . '://', $imce_path);
+        $uri = rawurldecode($scheme . '://' . $imce_path);
+        $uris[] = $uri;
+      }
 
       // Resolve the file path to an FID.
-      $fid = db_select('file_managed', 'f')
-        ->condition('uri', rawurldecode($uri))
+      $fids = db_select('file_managed', 'f')
+        ->condition('uri', $uris, 'IN')
         ->fields('f', array('fid'))
         ->execute()
-        ->fetchField();
-      if ($fid) {
-        $file = file_load($fid);
-        if (filefield_sources_element_validate($element, $file, $form_state)) {
-          if (!in_array($file->id(), $input['fids'])) {
-            $input['fids'][] = $file->id();
+        ->fetchCol();
+      if ($fids) {
+        $files = file_load_multiple($fids);
+        foreach ($files as $file) {
+          if (filefield_sources_element_validate($element, $file, $form_state)) {
+            if (!in_array($file->id(), $input['fids'])) {
+              $input['fids'][] = $file->id();
+            }
           }
         }
       }
