@@ -10,6 +10,7 @@ namespace Drupal\filefield_sources\Tests;
 use Drupal\file\Tests\FileFieldTestBase;
 use Drupal\simpletest\WebTestBase;
 use Drupal\field\Entity\FieldConfig;
+use Drupal\user\Entity\Role;
 
 /**
  * Base class for File Field Sources test cases.
@@ -64,6 +65,20 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
   }
 
   /**
+   * Sets up for imce test cases.
+   */
+  protected function setUpImce() {
+    foreach ($this->adminUser->getRoles(TRUE) as $rid) {
+      // Grant permission.
+      $role = Role::load($rid);
+      $this->grantPermissions($role, ['administer imce']);
+      // Assign member profile to user's role.
+      $edit["roles_profiles[$rid][public]"] = 'member';
+      $this->drupalPostForm('admin/config/media/imce', $edit, t('Save configuration'));
+    }
+  }
+
+  /**
    * Enable file field sources.
    *
    * @param array $sources
@@ -81,6 +96,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
       'clipboard' => 'Clipboard',
       'reference' => 'Reference existing',
       'attach' => 'File attach',
+      'imce' => 'File browser',
     );
     $sources = array_intersect_key($sources, $map);
     ksort($sources);
@@ -167,7 +183,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
     if (empty($path)) {
       $path = file_default_scheme() . '://';
     }
-    $uri = $path . '/' . $filename;
+    $uri = $path . $filename;
     $contents = $this->randomString();
 
     // Change mode so that we can create files.
@@ -285,6 +301,33 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
       $prefix . '[contents]' => $file_content,
     );
     $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $delta . '_clipboard_upload_button' => t('Upload')));
+
+    if ($filename) {
+      $this->assertFileUploaded($filename, $delta);
+    }
+    else {
+      $this->assertFileNotUploaded($delta);
+    }
+  }
+
+  /**
+   * Upload file by 'Imce' source.
+   *
+   * @param string $uri
+   *   File uri.
+   * @param string $filename
+   *   File name.
+   * @param int $delta
+   *   Delta in multiple values field.
+   */
+  public function uploadFileByImceSource($uri = '', $filename = '', $delta = 0) {
+    $scheme = parse_url($uri, PHP_URL_SCHEME);
+    $imce_path = str_replace("$scheme://", '', $uri);
+    $edit = array(
+      $this->fieldName . '[' . $delta . '][filefield_imce][imce_paths]' => $imce_path,
+    );
+    $this->drupalPostAjaxForm(NULL, $edit, array($this->fieldName . '_' . $delta . '_imce_select' => t('Select')));
+
 
     if ($filename) {
       $this->assertFileUploaded($filename, $delta);

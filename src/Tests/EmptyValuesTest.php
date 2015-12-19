@@ -17,6 +17,21 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
 class EmptyValuesTest extends FileFieldSourcesTestBase {
 
   /**
+   * Modules to enable.
+   *
+   * @var array
+   */
+  public static $modules = array('imce');
+
+  /**
+   * Sets up for empty values test case.
+   */
+  protected function setUp() {
+    parent::setUp();
+    $this->setUpImce();
+  }
+
+  /**
    * Tests all sources enabled.
    */
   public function testAllSourcesEnabled() {
@@ -29,6 +44,7 @@ class EmptyValuesTest extends FileFieldSourcesTestBase {
       'clipboard' => TRUE,
       'reference' => TRUE,
       'attach' => TRUE,
+      'imce' => TRUE,
     ));
 
     // Upload a file by 'Remote' source.
@@ -46,6 +62,9 @@ class EmptyValuesTest extends FileFieldSourcesTestBase {
     // Upload a file by 'Upload' source.
     $this->uploadFileByUploadSource('', '', 0, TRUE);
 
+    // Upload a file by 'Imce' source.
+    $this->uploadFileByImceSource();
+
     $this->assertUniqueSubmitButtons();
   }
 
@@ -59,6 +78,7 @@ class EmptyValuesTest extends FileFieldSourcesTestBase {
       $this->fieldName . '_0_autocomplete_select' => t('Select'),
       $this->fieldName . '_0_transfer' => t('Transfer'),
       $this->fieldName . '_0_upload_button' => t('Upload'),
+      $this->fieldName . '_0_imce_select' => t('Select'),
     );
     foreach ($buttons as $button_name => $button_label) {
       // Ensure that there is only one button with name.

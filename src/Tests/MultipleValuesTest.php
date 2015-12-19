@@ -17,13 +17,22 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
 class MultipleValuesTest extends FileFieldSourcesTestBase {
 
   /**
+   * Modules to enable.
+   *
+   * @var array
+   */
+  public static $modules = array('imce');
+
+  /**
    * Sets up for multiple values test case.
    */
   protected function setUp() {
     parent::setUp();
+    $this->setUpImce();
 
     // Create test files.
-    $this->permanent_file_entity = $this->createPermanentFileEntity();
+    $this->permanent_file_entity_1 = $this->createPermanentFileEntity();
+    $this->permanent_file_entity_2 = $this->createPermanentFileEntity();
     $this->temporary_file_entity_1 = $this->createTemporaryFileEntity();
     $this->temporary_file_entity_2 = $this->createTemporaryFileEntity();
 
@@ -39,6 +48,7 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
       'clipboard' => TRUE,
       'reference' => TRUE,
       'attach' => TRUE,
+      'imce' => TRUE,
     ));
   }
 
@@ -53,7 +63,8 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $this->removeFile('INSTALL.txt', 0);
     $this->removeFile($this->temporary_file_entity_1->getFilename(), 1);
     $this->removeFile($this->temporary_file->filename, 1);
-    $this->removeFile($this->permanent_file_entity->getFilename(), 0);
+    $this->removeFile($this->permanent_file_entity_1->getFilename(), 0);
+    $this->removeFile($this->permanent_file_entity_2->getFilename(), 0);
 
     // Ensure all files have been removed.
     $this->assertNoFieldByXPath('//input[@type="submit"]', t('Remove'), 'All files have been removed.');
@@ -69,7 +80,8 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
 
     // Ensure all files are saved to node.
     $this->assertLink('INSTALL.txt');
-    $this->assertLink($this->permanent_file_entity->getFilename());
+    $this->assertLink($this->permanent_file_entity_1->getFilename());
+    $this->assertLink($this->permanent_file_entity_2->getFilename());
     $this->assertLink($this->temporary_file_entity_1->getFilename());
     $this->assertLink($this->temporary_file_entity_2->getFilename());
     $this->assertLink($this->temporary_file->filename);
@@ -92,7 +104,7 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $uploaded_files++;
 
     // Upload a file by 'Reference' source.
-    $this->uploadFileByReferenceSource($this->permanent_file_entity->id(), $this->permanent_file_entity->getFilename(), $uploaded_files);
+    $this->uploadFileByReferenceSource($this->permanent_file_entity_1->id(), $this->permanent_file_entity_1->getFilename(), $uploaded_files);
     $uploaded_files++;
 
     // Upload a file by 'Clipboard' source.
@@ -105,6 +117,10 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
 
     // Upload a file by 'Upload' source.
     $this->uploadFileByUploadSource($this->temporary_file_entity_2->getFileUri(), $this->temporary_file_entity_2->getFilename(), $uploaded_files, TRUE);
+    $uploaded_files++;
+
+    // Upload a file by 'Imce' source.
+    $this->uploadFileByImceSource($this->permanent_file_entity_2->getFileUri(), $this->permanent_file_entity_2->getFileName(), $uploaded_files);
     $uploaded_files++;
 
     // Ensure files have been uploaded.
