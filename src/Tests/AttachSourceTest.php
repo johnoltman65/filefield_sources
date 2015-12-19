@@ -74,7 +74,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
    */
   public function testMoveFileFromRelativePath() {
     $uri_scheme = $this->getFieldSetting('uri_scheme');
-    $path = $uri_scheme . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH;
+    $path = $uri_scheme . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH . '/';
 
     // Create test file.
     $file = $this->createTemporaryFile($path);
@@ -108,7 +108,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     $path = drupal_realpath($this->getFieldSetting('uri_scheme') . '://');
     $path = str_replace(realpath('./'), '', $path);
     $path = ltrim($path, '/');
-    $path = $path . '/custom_file_attach';
+    $path = $path . '/custom_file_attach/';
     return $path;
   }
 
