@@ -11,6 +11,7 @@ use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Field\WidgetInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Render\Element;
+use Drupal\imce\Imce;
 
 const FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH = 'file_attach';
 const FILEFIELD_SOURCE_ATTACH_RELATIVE = 0;
@@ -398,6 +399,9 @@ function filefield_sources_invoke_all($method, &$params) {
  */
 function filefield_sources_info($include_default = TRUE) {
   $info = \Drupal::service('filefield_sources')->getDefinitions();
+  if (isset($info['imce']) && !Imce::access()) {
+    unset($info['imce']);
+  }
   if ($include_default) {
     $info['upload'] = array(
       'name' => t('Upload (default)'),

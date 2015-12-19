@@ -10,7 +10,6 @@ namespace Drupal\filefield_sources;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
-use Drupal\imce\Imce;
 
 /**
  * Provides a plugin manager for file field source.
@@ -43,7 +42,7 @@ class FilefieldSourceManager extends DefaultPluginManager {
    */
   public function getDefinitions() {
     $definitions = parent::getDefinitions();
-    if (!\Drupal::moduleHandler()->moduleExists('imce') || !Imce::access()) {
+    if (!\Drupal::moduleHandler()->moduleExists('imce')) {
       unset($definitions['imce']);
     }
     return $definitions;
