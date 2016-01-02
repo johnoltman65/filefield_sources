@@ -100,7 +100,7 @@ class Attach implements FilefieldSourceInterface {
     );
 
     $path = static::getDirectory($settings);
-    $options = static::getAttachOptions($path);
+    $options = static::getAttachOptions($path, $instance->getSetting('file_extensions'));
 
     // If we have built this element before, append the list of options that we
     // had previously. This allows files to be deleted after copying them and
@@ -235,28 +235,30 @@ class Attach implements FilefieldSourceInterface {
    *
    * @param string $path
    *   Path to scan files.
+   * @param string $extensions
+   *   Path to scan files.
    *
    * @return array
    *   List of options.
    */
-  protected static function getAttachOptions($path) {
+  protected static function getAttachOptions($path, $extensions = FALSE) {
     if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
-      drupal_set_message(t('Specified file attach path must exist or be writable.'), 'error');
+      drupal_set_message(t('Specified file attach path %path must exist or be writable.', array('%path' => $path)), 'error');
       return FALSE;
     }
 
     $options = array();
-    $file_attach = file_scan_directory($path, '/.*/', array('key' => 'filename'), 0);
+    $pattern = !empty($extensions) ? '/\.(' . strtr($extensions, ' ', '|') . ')$/' : '/.*/';
+    $files = file_scan_directory($path, $pattern);
 
-    if (count($file_attach)) {
+    if (count($files)) {
       $options = array('' => t('-- Select file --'));
-      foreach ($file_attach as $filename => $fileinfo) {
-        $filename = basename($filename);
-        $options[$fileinfo->uri] = str_replace($path . '/', '', $fileinfo->uri);
+      foreach ($files as $file) {
+        $options[$file->uri] = str_replace($path . '/', '', $file->uri);
       }
+      natcasesort($options);
     }
 
-    natcasesort($options);
     return $options;
   }
 
@@ -346,7 +348,7 @@ class Attach implements FilefieldSourceInterface {
 
       // Check that the directory exists and is writable.
       if (!file_prepare_directory($filepath, FILE_CREATE_DIRECTORY)) {
-        $form_state->setError($element['path'], t('Specified file attach path must exist or be writable.'));
+        $form_state->setError($element['path'], t('Specified file attach path %path must exist or be writable.', array('%path' => $filepath)));
       }
     }
   }

@@ -45,6 +45,9 @@ class FilefieldSourceManager extends DefaultPluginManager {
     if (!\Drupal::moduleHandler()->moduleExists('imce')) {
       unset($definitions['imce']);
     }
+    if (!filefield_sources_curl_enabled()) {
+      unset($definitions['remote']);
+    }
     return $definitions;
   }
 

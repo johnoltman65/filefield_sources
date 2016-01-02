@@ -22,8 +22,10 @@ const FILEFIELD_SOURCE_ATTACH_MODE_COPY = 'copy';
 const FILEFIELD_SOURCE_REFERENCE_HINT_TEXT = 'example.png [fid:123]';
 const FILEFIELD_SOURCE_REMOTE_HINT_TEXT = 'http://example.com/files/file.png';
 
-const FILEFIELD_SOURCE_REFERENCE_STARTS_WITH_AUTOCOMPLETE_TYPE = 'STARTS_WITH';
-const FILEFIELD_SOURCE_REFERENCE_CONTAINS_AUTOCOMPLETE_TYPE = 'CONTAINS';
+const FILEFIELD_SOURCE_REFERENCE_MATCH_STARTS_WITH = '0';
+const FILEFIELD_SOURCE_REFERENCE_MATCH_CONTAINS = '1';
+const FILEFIELD_SOURCE_REFERENCE_SEARCH_ALL_NO = '0';
+const FILEFIELD_SOURCE_REFERENCE_SEARCH_ALL_YES = '1';
 
 /**
  * Implements hook_element_info_alter().
@@ -157,11 +159,20 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
     return $element;
   }
 
+  // Do all processing as needed by each source.
+  $sources = filefield_sources_info();
   $settings = $element['#filefield_sources_settings'];
   $enabled_sources = _filefield_sources_enabled($settings);
 
-  // Do all processing as needed by each source.
-  $sources = filefield_sources_info();
+  $context = array(
+    'enabled_sources' => &$enabled_sources,
+    'element'         => $element,
+    'form_state'      => $form_state,
+  );
+
+  // Allow other modules to alter the sources.
+  \Drupal::moduleHandler()->alter('filefield_sources_sources', $sources, $context);
+
   foreach ($sources as $source_name => $source) {
     if (empty($enabled_sources[$source_name])) {
       unset($sources[$source_name]);
@@ -514,6 +525,13 @@ function filefield_sources_save_file($filepath, $validators = array(), $destinat
   // Ensure the destination is writable.
   file_prepare_directory($destination, FILE_CREATE_DIRECTORY);
 
+  // Check if this is actually the same file being "attached" to a file record.
+  // If so, it acts as a file replace, except no file is actually moved.
+  $reuse_file = ($destination . $file->getFilename() === $file->getFileUri());
+  if ($reuse_file) {
+    $replace = FILE_EXISTS_REPLACE;
+  }
+
   $file->destination = file_destination($destination . $file->getFilename(), $replace);
   // If file_destination() returns FALSE then $replace == FILE_EXISTS_ERROR and
   // there's an existing file so we need to bail.
@@ -545,7 +563,7 @@ function filefield_sources_save_file($filepath, $validators = array(), $destinat
   // directory. This overcomes open_basedir restrictions for future file
   // operations.
   $file->setFileUri($file->destination);
-  if (!file_unmanaged_copy($filepath, $file->getFileUri(), $replace)) {
+  if (!$reuse_file && !file_unmanaged_copy($filepath, $file->getFileUri(), $replace)) {
     drupal_set_message(t('File upload error. Could not move uploaded file.'), 'error');
     \Drupal::logger('filefield_sources')->log(E_NOTICE, 'Upload error. Could not move uploaded file %file to destination %destination.', array('%file' => $file->getFilename(), '%destination' => $file->getFileUri()));
     return FALSE;
@@ -743,4 +761,11 @@ if (!function_exists('module_get_weight')) {
     }
     throw new InvalidArgumentException(format_string('The module %module is not installed.', array('%module' => $module)));
   }
+}
+
+/**
+ * Check for CURL extension enabled.
+ */
+function filefield_sources_curl_enabled() {
+  return function_exists('curl_version');
 }

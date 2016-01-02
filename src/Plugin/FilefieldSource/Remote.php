@@ -388,6 +388,11 @@ class Remote implements FilefieldSourceInterface {
   public static function settings(WidgetInterface $plugin) {
     $return = array();
 
+    // Add settings to the FileField widget form.
+    if (!filefield_sources_curl_enabled()) {
+      drupal_set_message(t('<strong>Filefield sources:</strong> remote plugin will be disabled without php-curl extension.'), 'warning');
+    }
+
     return $return;
 
   }

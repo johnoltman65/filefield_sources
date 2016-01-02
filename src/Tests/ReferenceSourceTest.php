@@ -52,7 +52,7 @@ class ReferenceSourceTest extends FileFieldSourcesTestBase {
     $second_character = substr($filename, 1, 1);
 
     // Switch to 'Starts with' match type.
-    $this->updateFilefieldSourcesSettings('source_reference', 'autocomplete', 'STARTS_WITH');
+    $this->updateFilefieldSourcesSettings('source_reference', 'autocomplete', '0');
 
     // STARTS_WITH: empty results.
     $query = $this->findCharacterNotInString($first_character);
@@ -66,7 +66,7 @@ class ReferenceSourceTest extends FileFieldSourcesTestBase {
     $this->assertEqual($autocomplete_result[0]['value'], $filename . ' [fid:' . $file->id() . ']', 'Autocompletion return correct value.');
 
     // Switch to 'Contains' match type.
-    $this->updateFilefieldSourcesSettings('source_reference', 'autocomplete', 'CONTAINS');
+    $this->updateFilefieldSourcesSettings('source_reference', 'autocomplete', '1');
 
     // CONTAINS: empty results.
     $query = $this->findCharacterNotInString($filename);

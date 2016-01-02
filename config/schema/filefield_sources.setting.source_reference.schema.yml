@@ -5,3 +5,6 @@ filefield_sources.setting.source_reference:
     autocomplete:
       type: string
       label: 'Match file name'
+    search_all_fields:
+      type: string
+      label: 'Search all file fields'

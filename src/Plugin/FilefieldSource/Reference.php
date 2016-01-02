@@ -134,25 +134,40 @@ class Reference implements FilefieldSourceInterface {
     $matches = array();
     $string = Unicode::strtolower($request->query->get('q'));
 
-    $field_definition = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name);
-    $handler = \Drupal::getContainer()->get('plugin.manager.entity_reference_selection')->getSelectionHandler($field_definition);
-
     if (isset($string)) {
-      // Get an array of matching entities.
       $widget = entity_get_form_display($entity_type, $bundle_name, 'default')->getComponent($field_name);
-      $autocomplete_type = $widget['third_party_settings']['filefield_sources']['filefield_sources']['source_reference']['autocomplete'];
-      $match_operator = !empty($autocomplete_type) ? $autocomplete_type : FILEFIELD_SOURCE_REFERENCE_CONTAINS_AUTOCOMPLETE_TYPE;
-      $entity_labels = $handler->getReferenceableEntities($string, $match_operator, 10);
+      if ($widget) {
+        // // If we are looking at a single field, cache its settings, in case we want to search all fields.
+        $setting_autocomplete = $widget['third_party_settings']['filefield_sources']['filefield_sources']['source_reference']['autocomplete'];
+        $setting_search_all_fields = $widget['third_party_settings']['filefield_sources']['filefield_sources']['source_reference']['search_all_fields'];
+      }
 
-      // Loop through the entities and convert them into autocomplete output.
-      foreach ($entity_labels as $values) {
-        foreach ($values as $entity_id => $label) {
-          $key = "$label [fid:$entity_id]";
-          // Strip things like starting/trailing white spaces, line breaks and
-          // tags.
-          $key = preg_replace('/\s\s+/', ' ', str_replace("\n", '', trim(Html::decodeEntities(strip_tags($key)))));
-          // Names containing commas or quotes must be wrapped in quotes.
-          $matches[] = array('value' => $key, 'label' => $label);
+      $field_definition = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name);
+      if (!isset($field_definition) || $setting_search_all_fields) {
+        $field_definitions = \Drupal::entityManager()->getStorage('field_config')->loadByProperties(array('type' => array('file', 'image')));
+      }
+      else {
+        $field_definitions = array($field_definition);
+      }
+
+      foreach ($field_definitions as $field_definition) {
+        $handler = \Drupal::getContainer()->get('plugin.manager.entity_reference_selection')->getSelectionHandler($field_definition);
+
+        // If we are searching all fields, use the autocomplete settings from the source field.
+        $match_operator = empty($setting_autocomplete) ? 'STARTS_WITH' : 'CONTAINS';
+        // Get an array of matching entities.
+        $entity_labels = $handler->getReferenceableEntities($string, $match_operator, 10);
+
+        // Loop through the entities and convert them into autocomplete output.
+        foreach ($entity_labels as $values) {
+          foreach ($values as $entity_id => $label) {
+            $key = "$label [fid:$entity_id]";
+            // Strip things like starting/trailing white spaces, line breaks and
+            // tags.
+            $key = preg_replace('/\s\s+/', ' ', str_replace("\n", '', trim(Html::decodeEntities(strip_tags($key)))));
+            // Names containing commas or quotes must be wrapped in quotes.
+            $matches[] = array('value' => $key, 'label' => $label);
+          }
         }
       }
     }
@@ -188,7 +203,8 @@ class Reference implements FilefieldSourceInterface {
   public static function settings(WidgetInterface $plugin) {
     $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', array(
       'source_reference' => array(
-        'autocomplete' => FILEFIELD_SOURCE_REFERENCE_STARTS_WITH_AUTOCOMPLETE_TYPE,
+        'autocomplete' => FILEFIELD_SOURCE_REFERENCE_MATCH_STARTS_WITH,
+        'search_all_fields' => FILEFIELD_SOURCE_REFERENCE_SEARCH_ALL_NO,
       ),
     ));
 
@@ -200,12 +216,22 @@ class Reference implements FilefieldSourceInterface {
     $return['source_reference']['autocomplete'] = array(
       '#title' => t('Match file name'),
       '#options' => array(
-        FILEFIELD_SOURCE_REFERENCE_STARTS_WITH_AUTOCOMPLETE_TYPE => t('Starts with'),
-        FILEFIELD_SOURCE_REFERENCE_CONTAINS_AUTOCOMPLETE_TYPE => t('Contains'),
+        FILEFIELD_SOURCE_REFERENCE_MATCH_STARTS_WITH => t('Starts with'),
+        FILEFIELD_SOURCE_REFERENCE_MATCH_CONTAINS => t('Contains'),
       ),
       '#type' => 'radios',
-      '#default_value' => isset($settings['source_reference']['autocomplete']) ? $settings['source_reference']['autocomplete'] : FILEFIELD_SOURCE_REFERENCE_STARTS_WITH_AUTOCOMPLETE_TYPE,
+      '#default_value' => isset($settings['source_reference']['autocomplete']) ? $settings['source_reference']['autocomplete'] : FILEFIELD_SOURCE_REFERENCE_MATCH_STARTS_WITH,
     );
+
+    $return['source_reference']['search_all_fields'] = array(
+      '#title' => t('Search all file fields'),
+      '#options' => array(
+        FILEFIELD_SOURCE_REFERENCE_SEARCH_ALL_NO => t('No (only fields with the same field base will be searched)'),
+        FILEFIELD_SOURCE_REFERENCE_SEARCH_ALL_YES => t('Yes (all file fields will be searched, regardless of type)'),
+      ),
+      '#type' => 'radios',
+      '#default_value' => isset($settings['source_reference']['search_all_fields']) ? $settings['source_reference']['search_all_fields'] : FILEFIELD_SOURCE_REFERENCE_SEARCH_ALL_NO,
+     );
 
     return $return;
   }
