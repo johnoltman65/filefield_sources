@@ -182,9 +182,9 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
       $callback = array($source['class'], 'process');
       if (is_callable($callback)) {
         $element = call_user_func_array($callback, array(
-          $element,
+          &$element,
           $form_state,
-          $complete_form,
+          &$complete_form,
         ));
       }
     }
