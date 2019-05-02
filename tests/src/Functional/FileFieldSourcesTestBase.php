@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\filefield_sources\Functional;
 
+use Drupal\Core\File\FileSystem;
 use Drupal\Tests\file\Functional\FileFieldTestBase;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\user\Entity\Role;
@@ -175,13 +176,13 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
 
     // Change mode so that we can create files.
     file_prepare_directory($path, FILE_CREATE_DIRECTORY);
-    drupal_chmod($path, FILE_CHMOD_DIRECTORY);
+    \Drupal::getContainer()->get('file_system')->chmod($path, FileSystem::CHMOD_DIRECTORY);
 
     file_put_contents($uri, $contents);
     $this->assertTrue(is_file($uri), 'The temporary file has been created.');
 
     // Change mode so that we can delete created file.
-    drupal_chmod($uri, FILE_CHMOD_FILE);
+    \Drupal::getContainer()->get('file_system')->chmod($uri, FileSystem::CHMOD_FILE);
 
     // Return object similar to file_scan_directory().
     $file = new \stdClass();
@@ -206,12 +207,12 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
     $this->drupalGet($manage_display);
 
     // Click on the widget settings button to open the widget settings form.
-    $this->drupalPostAjaxForm(NULL, [], $this->fieldName . "_settings_edit");
+    $this->drupalPostForm(NULL, [], $this->fieldName . "_settings_edit");
 
     // Update settings.
     $name = 'fields[' . $this->fieldName . '][settings_edit_form][third_party_settings][filefield_sources][filefield_sources]' . "[$source_key][$key]";
     $edit = [$name => $value];
-    $this->drupalPostAjaxForm(NULL, $edit, [$this->fieldName . '_plugin_settings_update' => t('Update')]);
+    $this->drupalPostForm(NULL, $edit, $this->fieldName . '_plugin_settings_update');
 
     // Save the form to save the third party settings.
     $this->drupalPostForm(NULL, [], t('Save'));
@@ -396,7 +397,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
       $name .= '[]';
     }
     $edit = [
-      $name => $uri ? $this->container('file_system')->realPath($uri) : '',
+      $name => $uri ? \Drupal::getContainer()->get('file_system')->realPath($uri) : '',
     ];
     $this->drupalPostForm(NULL, $edit, $this->fieldName . '_' . $delta . '_upload_button');
 
@@ -417,7 +418,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    *   Delta in multiple values field.
    */
   public function removeFile($filename, $delta = 0) {
-    $this->drupalPostAjaxForm(NULL, [], [$this->fieldName . '_' . $delta . '_remove_button' => t('Remove')]);
+    $this->drupalPostForm(NULL, [], $this->fieldName . '_' . $delta . '_remove_button');
 
     // Ensure file is removed.
     $this->assertFileRemoved($filename);
@@ -430,7 +431,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    *   File name.
    */
   public function assertFileRemoved($filename) {
-    $this->assertNoLink($filename);
+    $this->assertSession()->linkNotExists($filename);
   }
 
   /**

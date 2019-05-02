@@ -1,11 +1,6 @@
 <?php
 
-/**
- * @file
- * Definition of Drupal\filefield_sources\Tests\AttachSourceTest.
- */
-
-namespace Drupal\filefield_sources\Tests;
+namespace Drupal\Tests\filefield_sources\Functional;
 
 use Drupal\Component\Render\PlainTextOutput;
 
@@ -17,20 +12,52 @@ use Drupal\Component\Render\PlainTextOutput;
 class AttachSourceTest extends FileFieldSourcesTestBase {
 
   /**
-   * Check to see if a option is present.
+   * Tests move file from relative path.
    *
-   * @param string $uri
-   *   The option to check.
-   *
-   * @return bool
-   *   TRUE if the option is present, FALSE otherwise.
+   * Default settings: Move file from 'public://file_attach' to 'public://'.
    */
-  public function isOptionPresent($uri) {
-    $options = $this->xpath('//select[@name=:name]/option[@value=:option]', array(
-      ':name' => $this->fieldName . '[0][filefield_attach][filename]',
-      ':option' => $uri,
-    ));
-    return isset($options[0]);
+  public function testMoveFileFromRelativePath() {
+    $uri_scheme = $this->getFieldSetting('uri_scheme');
+    $path = $uri_scheme . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH . '/';
+
+    // Create test file.
+    $file = $this->createTemporaryFile($path);
+    $dest_uri = $this->getDestinationUri($file, $uri_scheme);
+
+    $this->enableSources([
+      'attach' => TRUE,
+    ]);
+
+    $this->assertCanAttachFile($file);
+
+    // Upload a file.
+    $this->uploadFileByAttachSource($file->uri, $file->filename, 0);
+
+    // We can only attach one file on single value field.
+    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Attach'), 'After uploading a file, "Attach" button is no longer displayed.');
+
+    // Ensure file is moved.
+    $this->assertFalse(is_file($file->uri), 'Source file has been removed.');
+    $this->assertTrue(is_file($dest_uri), 'Destination file has been created.');
+
+    $this->removeFile($file->filename, 0);
+
+    $this->assertCanNotAttachFile($file);
+  }
+
+  /**
+   * Get destination uri of a .
+   *
+   * @param object $file
+   *   File.
+   * @param string $uri_scheme
+   *   Uri scheme.
+   */
+  public function getDestinationUri($file, $uri_scheme) {
+    $destination = trim($this->getFieldSetting('file_directory'), '/');
+    $destination = PlainTextOutput::renderFromHtml(\Drupal::token()
+      ->replace($destination));
+    return $uri_scheme . '://' . $destination . '/' . $file->filename;
   }
 
   /**
@@ -51,6 +78,23 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
   }
 
   /**
+   * Check to see if a option is present.
+   *
+   * @param string $uri
+   *   The option to check.
+   *
+   * @return bool
+   *   TRUE if the option is present, FALSE otherwise.
+   */
+  public function isOptionPresent($uri) {
+    $options = $this->xpath('//select[@name=:name]/option[@value=:option]', [
+      ':name' => $this->fieldName . '[0][filefield_attach][filename]',
+      ':option' => $uri,
+    ]);
+    return isset($options[0]);
+  }
+
+  /**
    * Check to see if can attach file.
    *
    * @param object $file
@@ -65,51 +109,6 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
 
     // Attach button is always present.
     $this->assertFieldByXpath('//input[@type="submit"]', t('Attach'), 'Attach button is present.');
-  }
-
-  /**
-   * Tests move file from relative path.
-   *
-   * Default settings: Move file from 'public://file_attach' to 'public://'.
-   */
-  public function testMoveFileFromRelativePath() {
-    $uri_scheme = $this->getFieldSetting('uri_scheme');
-    $path = $uri_scheme . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH . '/';
-
-    // Create test file.
-    $file = $this->createTemporaryFile($path);
-    $dest_uri = $this->getDestinationUri($file, $uri_scheme);
-
-    $this->enableSources(array(
-      'attach' => TRUE,
-    ));
-
-    $this->assertCanAttachFile($file);
-
-    // Upload a file.
-    $this->uploadFileByAttachSource($file->uri, $file->filename, 0);
-
-    // We can only attach one file on single value field.
-    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Attach'), 'After uploading a file, "Attach" button is no longer displayed.');
-
-    // Ensure file is moved.
-    $this->assertFalse(is_file($file->uri), 'Source file has been removed.');
-    $this->assertTrue(is_file($dest_uri), 'Destination file has been created.');
-
-    $this->removeFile($file->filename, 0);
-
-    $this->assertCanNotAttachFile($file);
-  }
-
-  /**
-   * Calculate custom absolute path.
-   */
-  public function getCustomAttachPath() {
-    $path = drupal_realpath($this->getFieldSetting('uri_scheme') . '://');
-    $path = str_replace(realpath('./'), '', $path);
-    $path = ltrim($path, '/');
-    $path = $path . '/custom_file_attach/';
-    return $path;
   }
 
   /**
@@ -130,9 +129,9 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
     $this->updateFilefieldSourcesSettings('source_attach', 'absolute', FILEFIELD_SOURCE_ATTACH_ABSOLUTE);
     $this->updateFilefieldSourcesSettings('source_attach', 'attach_mode', FILEFIELD_SOURCE_ATTACH_MODE_COPY);
 
-    $this->enableSources(array(
+    $this->enableSources([
       'attach' => TRUE,
-    ));
+    ]);
 
     $this->assertCanAttachFile($file);
 
@@ -152,17 +151,14 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
   }
 
   /**
-   * Get destination uri of a .
-   *
-   * @param object $file
-   *   File.
-   * @param string $uri_scheme
-   *   Uri scheme.
+   * Calculate custom absolute path.
    */
-  public function getDestinationUri($file, $uri_scheme) {
-    $destination = trim($this->getFieldSetting('file_directory'), '/');
-    $destination = PlainTextOutput::renderFromHtml(\Drupal::token()->replace($destination));
-    return $uri_scheme . '://' . $destination . '/' . $file->filename;
+  public function getCustomAttachPath() {
+    $path = drupal_realpath($this->getFieldSetting('uri_scheme') . '://');
+    $path = str_replace(realpath('./'), '', $path);
+    $path = ltrim($path, '/');
+    $path = $path . '/custom_file_attach/';
+    return $path;
   }
 
 }
