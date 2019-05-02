@@ -1,12 +1,8 @@
 <?php
 
-/**
- * @file
- * Definition of Drupal\filefield_sources\Tests\EmptyValuesTest.
- */
+namespace Drupal\Tests\filefield_sources\Functional;
 
-namespace Drupal\filefield_sources\Tests;
-
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 
 /**
@@ -21,7 +17,7 @@ class EmptyValuesTest extends FileFieldSourcesTestBase {
    *
    * @var array
    */
-  public static $modules = array('imce');
+  public static $modules = ['imce'];
 
   /**
    * Sets up for empty values test case.
@@ -36,16 +32,16 @@ class EmptyValuesTest extends FileFieldSourcesTestBase {
    */
   public function testAllSourcesEnabled() {
     // Change allowed number of values.
-    $this->drupalPostForm('admin/structure/types/manage/' . $this->typeName . '/fields/node.' . $this->typeName . '.' . $this->fieldName . '/storage', array('cardinality' => FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED), t('Save field settings'));
+    $this->drupalPostForm('admin/structure/types/manage/' . $this->typeName . '/fields/node.' . $this->typeName . '.' . $this->fieldName . '/storage', ['cardinality' => FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED], t('Save field settings'));
 
-    $this->enableSources(array(
+    $this->enableSources([
       'upload' => TRUE,
       'remote' => TRUE,
       'clipboard' => TRUE,
       'reference' => TRUE,
       'attach' => TRUE,
       'imce' => TRUE,
-    ));
+    ]);
 
     // Upload a file by 'Remote' source.
     $this->uploadFileByRemoteSource();
@@ -72,18 +68,21 @@ class EmptyValuesTest extends FileFieldSourcesTestBase {
    * Check that there is only one submit button of a source.
    */
   protected function assertUniqueSubmitButtons() {
-    $buttons = array(
+    $buttons = [
       $this->fieldName . '_0_attach' => t('Attach'),
       $this->fieldName . '_0_clipboard_upload_button' => t('Upload'),
       $this->fieldName . '_0_autocomplete_select' => t('Select'),
       $this->fieldName . '_0_transfer' => t('Transfer'),
       $this->fieldName . '_0_upload_button' => t('Upload'),
       $this->fieldName . '_0_imce_select' => t('Select'),
-    );
+    ];
     foreach ($buttons as $button_name => $button_label) {
       // Ensure that there is only one button with name.
       $buttons = $this->xpath('//input[@name="' . $button_name . '" and @value="' . $button_label . '"]');
-      $this->assertEqual(count($buttons), 1, format_string('There is only one button with name %name and label %label', array('%name' => $button_name, '%label' => $button_label)));
+      $this->assertEquals(count($buttons), 1, new FormattableMarkup('There is only one button with name %name and label %label', [
+        '%name' => $button_name,
+        '%label' => $button_label,
+      ]));
     }
   }
 
