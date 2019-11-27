@@ -1,11 +1,6 @@
 <?php
 
-/**
- * @file
- * Definition of Drupal\filefield_sources\Tests\UploadSourceTest.
- */
-
-namespace Drupal\filefield_sources\Tests;
+namespace Drupal\Tests\filefield_sources\Functional;
 
 /**
  * Tests the upload source.
@@ -18,9 +13,9 @@ class UploadSourceTest extends FileFieldSourcesTestBase {
    * Tests upload source enabled.
    */
   public function testUploadSourceEnabled() {
-    $this->enableSources(array(
+    $this->enableSources([
       'upload' => TRUE,
-    ));
+    ]);
 
     $this->assertUploadSourceWorkProperly();
   }
@@ -29,13 +24,13 @@ class UploadSourceTest extends FileFieldSourcesTestBase {
    * Tests all sources enabled.
    */
   public function testAllSourcesEnabled() {
-    $this->enableSources(array(
+    $this->enableSources([
       'upload' => TRUE,
       'remote' => TRUE,
       'clipboard' => TRUE,
       'reference' => TRUE,
       'attach' => TRUE,
-    ));
+    ]);
 
     $this->assertUploadSourceWorkProperly();
   }
