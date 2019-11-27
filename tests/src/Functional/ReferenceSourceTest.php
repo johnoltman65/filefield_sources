@@ -1,12 +1,8 @@
 <?php
 
-/**
- * @file
- * Definition of Drupal\filefield_sources\Tests\ReferenceSourceTest.
- */
+namespace Drupal\Tests\filefield_sources\Functional;
 
-namespace Drupal\filefield_sources\Tests;
-
+use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\Unicode;
 
 /**
@@ -24,9 +20,9 @@ class ReferenceSourceTest extends FileFieldSourcesTestBase {
     // Create test file.
     $file = $this->createPermanentFileEntity();
 
-    $this->enableSources(array(
+    $this->enableSources([
       'reference' => TRUE,
-    ));
+    ]);
 
     // Upload a file by 'Reference' source.
     $this->uploadFileByReferenceSource($file->id(), $file->getFilename(), 0);
@@ -50,18 +46,26 @@ class ReferenceSourceTest extends FileFieldSourcesTestBase {
     $filename = $file->getFileName();
     $first_character = substr($filename, 0, 1);
     $second_character = substr($filename, 1, 1);
+    $default_options = [
+      'query' => [
+        '_format' => 'json',
+      ],
+    ];
 
+    $options = $default_options;
     // Switch to 'Starts with' match type.
     $this->updateFilefieldSourcesSettings('source_reference', 'autocomplete', '0');
 
     // STARTS_WITH: empty results.
     $query = $this->findCharacterNotInString($first_character);
-    $autocomplete_result = $this->drupalGetJSON('file/reference/node/' . $this->typeName . '/' . $this->fieldName, array('query' => array('q' => $query)));
-    $this->assertEqual($autocomplete_result, array(), "No files that have name starts with '$query'");
+    $options['query']['q'] = $query;
+    $autocomplete_result = Json::decode($this->drupalGet('file/reference/node/' . $this->typeName . '/' . $this->fieldName, $options));
+    $this->assertEqual($autocomplete_result, [], "No files that have name starts with '$query'");
 
     // STARTS_WITH: not empty results.
     $query = $first_character;
-    $autocomplete_result = $this->drupalGetJSON('file/reference/node/' . $this->typeName . '/' . $this->fieldName, array('query' => array('q' => $query)));
+    $options['query']['q'] = $query;
+    $autocomplete_result = Json::decode($this->drupalGet('file/reference/node/' . $this->typeName . '/' . $this->fieldName, $options + ['query' => ['q' => $query]]));
     $this->assertEqual($autocomplete_result[0]['label'], $filename, 'Autocompletion return correct label.');
     $this->assertEqual($autocomplete_result[0]['value'], $filename . ' [fid:' . $file->id() . ']', 'Autocompletion return correct value.');
 
@@ -70,12 +74,14 @@ class ReferenceSourceTest extends FileFieldSourcesTestBase {
 
     // CONTAINS: empty results.
     $query = $this->findCharacterNotInString($filename);
-    $autocomplete_result = $this->drupalGetJSON('file/reference/node/' . $this->typeName . '/' . $this->fieldName, array('query' => array('q' => $query)));
-    $this->assertEqual($autocomplete_result, array(), "No files that have name contains '$query'");
+    $options['query']['q'] = $query;
+    $autocomplete_result = Json::decode($this->drupalGet('file/reference/node/' . $this->typeName . '/' . $this->fieldName, $options + ['query' => ['q' => $query]]));
+    $this->assertEqual($autocomplete_result, [], "No files that have name contains '$query'");
 
     // CONTAINS: not empty results.
     $query = $second_character;
-    $autocomplete_result = $this->drupalGetJSON('file/reference/node/' . $this->typeName . '/' . $this->fieldName, array('query' => array('q' => $query)));
+    $options['query']['q'] = $query;
+    $autocomplete_result = Json::decode($this->drupalGet('file/reference/node/' . $this->typeName . '/' . $this->fieldName, $options + ['query' => ['q' => $query]]));
     $this->assertEqual($autocomplete_result[0]['label'], $filename, 'Autocompletion return correct label.');
     $this->assertEqual($autocomplete_result[0]['value'], $filename . ' [fid:' . $file->id() . ']', 'Autocompletion return correct value.');
   }
