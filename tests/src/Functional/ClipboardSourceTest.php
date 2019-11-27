@@ -1,11 +1,6 @@
 <?php
 
-/**
- * @file
- * Definition of Drupal\filefield_sources\Tests\ClipboardSourceTest.
- */
-
-namespace Drupal\filefield_sources\Tests;
+namespace Drupal\Tests\filefield_sources\Functional;
 
 /**
  * Tests the clipboard source.
@@ -18,9 +13,9 @@ class ClipboardSourceTest extends FileFieldSourcesTestBase {
    * Tests clipboard source enabled.
    */
   public function testClipboardSourceEnabled() {
-    $this->enableSources(array(
+    $this->enableSources([
       'clipboard' => TRUE,
-    ));
+    ]);
     $file = $this->createTemporaryFileEntity();
 
     $this->uploadFileByClipboardSource($file->getFileUri(), $file->getFilename(), 0);
