@@ -1,11 +1,6 @@
 <?php
 
-/**
- * @file
- * Definition of Drupal\filefield_sources\Tests\ClipboardSourceTest.
- */
-
-namespace Drupal\filefield_sources\Tests;
+namespace Drupal\Tests\filefield_sources\Functional;
 
 /**
  * Tests the imce source.
@@ -19,7 +14,7 @@ class ImceSourceTest extends FileFieldSourcesTestBase {
    *
    * @var array
    */
-  public static $modules = array('imce');
+  public static $modules = ['imce'];
 
   /**
    * Sets up for imce source test case.
@@ -33,9 +28,9 @@ class ImceSourceTest extends FileFieldSourcesTestBase {
    * Tests imce source enabled.
    */
   public function testImceSourceEnabled() {
-    $this->enableSources(array(
+    $this->enableSources([
       'imce' => TRUE,
-    ));
+    ]);
     $file = $this->createPermanentFileEntity();
 
     $this->uploadFileByImceSource($file->getFileUri(), $file->getFilename(), 0);
