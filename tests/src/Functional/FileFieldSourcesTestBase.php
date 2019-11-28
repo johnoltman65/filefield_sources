@@ -38,6 +38,7 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
   protected function setUp() {
     parent::setUp();
 
+
     // Grant "administer node form display" permission.
     $roles = $this->adminUser->getRoles(TRUE);
     $rid = array_pop($roles);
@@ -316,7 +317,6 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
 
     // Can't be used drupalPostForm here because the fields are of type hidden
     // and drupalPostForm don't see those, let's set the values manually.
-    $this->drupalGet('node/add/article');
     $this->getSession()->getPage()->find('css', 'input[name="' . $prefix . '[filename]"]')->setValue($filename);
     $this->getSession()->getPage()->find('css', 'input[name="' . $prefix . '[contents]"]')->setValue($file_content);
     $this->getSession()->getPage()->pressButton($this->fieldName . '_' . $delta . '_clipboard_upload_button');
@@ -345,7 +345,6 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
 
     // Can't be used drupalPostForm here because the field type is hidden
     // and drupalPostForm don't see those, let's set the values manually.
-    $this->drupalGet('node/add/article');
     $field_name = $this->fieldName . '[' . $delta . '][filefield_imce][imce_paths]';
     $this->getSession()->getPage()->find('css', 'input[name="' . $field_name . '"]')->setValue($imce_path);
     $this->getSession()->getPage()->pressButton($this->fieldName . '_' . $delta . '_imce_select');
