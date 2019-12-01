@@ -102,11 +102,14 @@ class Remote implements FilefieldSourceInterface {
       // We prefer to use the Content-Disposition header, because we can then
       // use URLs like http://example.com/get_file/23 which would otherwise be
       // rejected because the URL basename lacks an extension.
+      /** @var \Drupal\Core\File\FileSystem $filesystem */
+      $filesystem = \Drupal::service('file_system');
       $filename = static::filename();
       if (empty($filename)) {
-        $filename = rawurldecode(basename($url_info['path']));
+        $filename = rawurldecode($filesystem->basename($url_info['path']));
       }
 
+      $filename = \Drupal::transliteration()->transliterate($filename);
       $pathinfo = pathinfo($filename);
 
       // Create the file extension from the MIME header if all else has failed.
