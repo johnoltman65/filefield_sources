@@ -167,8 +167,10 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
    * @return object
    *   Permanent file object.
    */
-  public function createTemporaryFile($path = '') {
-    $filename = $this->randomMachineName() . '.txt';
+  public function createTemporaryFile($path = '', $filename = NULL) {
+    if (is_null($filename)) {
+      $filename = $this->randomMachineName() . '.txt';
+    }
     if (empty($path)) {
       $path = file_default_scheme() . '://';
     }

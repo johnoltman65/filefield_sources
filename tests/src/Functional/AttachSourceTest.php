@@ -46,6 +46,40 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
   }
 
   /**
+   * Tests move a file with an space in the name.
+   *
+   * Default settings: Move file from 'public://file_attach' to 'public://'.
+   */
+  public function testMoveFileWithSpaceInName() {
+    $uri_scheme = $this->getFieldSetting('uri_scheme');
+    $path = $uri_scheme . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH . '/';
+
+    // Create test file.
+    $file = $this->createTemporaryFile($path, 'test file.txt');
+    $dest_uri = $this->getDestinationUri($file, $uri_scheme);
+
+    $this->enableSources([
+      'attach' => TRUE,
+    ]);
+
+    $this->assertCanAttachFile($file);
+
+    // Upload a file.
+    $this->uploadFileByAttachSource($file->uri, $file->filename, 0);
+
+    // We can only attach one file on single value field.
+    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Attach'), 'After uploading a file, "Attach" button is no longer displayed.');
+
+    // Ensure file is moved.
+    $this->assertFalse(is_file($file->uri), 'Source file has been removed.');
+    $this->assertTrue(is_file($dest_uri), 'Destination file has been created.');
+
+    $this->removeFile($file->filename, 0);
+
+    $this->assertCanNotAttachFile($file);
+  }
+
+  /**
    * Get destination uri of a .
    *
    * @param object $file

@@ -188,7 +188,7 @@ class Attach implements FilefieldSourceInterface {
       $options = form_select_options($element['filename']);
       $option_output = '';
       foreach ($options as $key => $value) {
-        $option_output .= '<option value=' . $value["value"] . '>' . $value["label"] . '</option>';
+        $option_output .= '<option value="' . $value["value"] . '">' . $value["label"] . '</option>';
       }
       // Get rendered select.
       $size = !empty($element['filename']['#size']) ? ' size="' . $element['filename']['#size'] . '"' : '';
