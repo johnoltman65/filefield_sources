@@ -38,7 +38,6 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
   protected function setUp() {
     parent::setUp();
 
-
     // Grant "administer node form display" permission.
     $roles = $this->adminUser->getRoles(TRUE);
     $rid = array_pop($roles);

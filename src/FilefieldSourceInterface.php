@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\filefield_sources\FilefieldSourceInterface.
- */
-
 namespace Drupal\filefield_sources;
 
 use Drupal\Core\Form\FormStateInterface;

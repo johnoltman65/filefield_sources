@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\filefield_sources\FilefieldSourceManager.
- */
-
 namespace Drupal\filefield_sources;
 
 use Drupal\Core\Cache\CacheBackendInterface;

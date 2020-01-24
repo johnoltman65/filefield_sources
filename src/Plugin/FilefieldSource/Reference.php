@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\filefield_sources\Plugin\FilefieldSource\Reference.
- */
-
 namespace Drupal\filefield_sources\Plugin\FilefieldSource;
 
 use Drupal\Core\Form\FormStateInterface;
@@ -34,7 +29,7 @@ class Reference implements FilefieldSourceInterface {
    */
   public static function value(array &$element, &$input, FormStateInterface $form_state) {
     if (isset($input['filefield_reference']['autocomplete']) && strlen($input['filefield_reference']['autocomplete']) > 0 && $input['filefield_reference']['autocomplete'] != FILEFIELD_SOURCE_REFERENCE_HINT_TEXT) {
-      $matches = array();
+      $matches = [];
       if (preg_match('/\[fid:(\d+)\]/', $input['filefield_reference']['autocomplete'], $matches)) {
         $fid = $matches[1];
         if ($file = file_load($fid)) {
@@ -70,27 +65,27 @@ class Reference implements FilefieldSourceInterface {
    */
   public static function process(array &$element, FormStateInterface $form_state, array &$complete_form) {
 
-    $element['filefield_reference'] = array(
+    $element['filefield_reference'] = [
       '#weight' => 100.5,
       '#theme' => 'filefield_sources_element',
       '#source_id' => 'reference',
       // Required for proper theming.
       '#filefield_source' => TRUE,
       '#filefield_sources_hint_text' => FILEFIELD_SOURCE_REFERENCE_HINT_TEXT,
-    );
+    ];
 
-    $autocomplete_route_parameters = array(
+    $autocomplete_route_parameters = [
       'entity_type' => $element['#entity_type'],
       'bundle_name' => $element['#bundle'],
       'field_name' => $element['#field_name'],
-    );
+    ];
 
-    $element['filefield_reference']['autocomplete'] = array(
+    $element['filefield_reference']['autocomplete'] = [
       '#type' => 'textfield',
       '#autocomplete_route_name' => 'filefield_sources.autocomplete',
       '#autocomplete_route_parameters' => $autocomplete_route_parameters,
       '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
-    );
+    ];
 
     $class = '\Drupal\file\Element\ManagedFile';
     $ajax_settings = [
@@ -131,7 +126,7 @@ class Reference implements FilefieldSourceInterface {
    * Menu callback; autocomplete.js callback to return a list of files.
    */
   public static function autocomplete(Request $request, $entity_type, $bundle_name, $field_name) {
-    $matches = array();
+    $matches = [];
     $string = Unicode::strtolower($request->query->get('q'));
 
     if (isset($string)) {
@@ -144,10 +139,10 @@ class Reference implements FilefieldSourceInterface {
 
       $field_definition = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name);
       if (!isset($field_definition) || $setting_search_all_fields) {
-        $field_definitions = \Drupal::entityManager()->getStorage('field_config')->loadByProperties(array('type' => array('file', 'image')));
+        $field_definitions = \Drupal::entityManager()->getStorage('field_config')->loadByProperties(['type' => ['file', 'image']]);
       }
       else {
-        $field_definitions = array($field_definition);
+        $field_definitions = [$field_definition];
       }
 
       foreach ($field_definitions as $field_definition) {
@@ -166,7 +161,7 @@ class Reference implements FilefieldSourceInterface {
             // tags.
             $key = preg_replace('/\s\s+/', ' ', str_replace("\n", '', trim(Html::decodeEntities(strip_tags($key)))));
             // Names containing commas or quotes must be wrapped in quotes.
-            $matches[] = array('value' => $key, 'label' => $label);
+            $matches[] = ['value' => $key, 'label' => $label];
           }
         }
       }
@@ -182,16 +177,16 @@ class Reference implements FilefieldSourceInterface {
    *   Array of routes.
    */
   public static function routes() {
-    $routes = array();
+    $routes = [];
 
     $routes['filefield_sources.autocomplete'] = new Route(
       '/file/reference/{entity_type}/{bundle_name}/{field_name}',
-      array(
+      [
         '_controller' => get_called_class() . '::autocomplete',
-      ),
-      array(
+      ],
+      [
         '_access_filefield_sources_field' => 'TRUE',
-      )
+      ]
     );
 
     return $routes;
@@ -201,37 +196,37 @@ class Reference implements FilefieldSourceInterface {
    * Implements hook_filefield_source_settings().
    */
   public static function settings(WidgetInterface $plugin) {
-    $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', array(
-      'source_reference' => array(
+    $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', [
+      'source_reference' => [
         'autocomplete' => FILEFIELD_SOURCE_REFERENCE_MATCH_STARTS_WITH,
         'search_all_fields' => FILEFIELD_SOURCE_REFERENCE_SEARCH_ALL_NO,
-      ),
-    ));
+      ],
+    ]);
 
-    $return['source_reference'] = array(
+    $return['source_reference'] = [
       '#title' => t('Autocomplete reference options'),
       '#type' => 'details',
-    );
+    ];
 
-    $return['source_reference']['autocomplete'] = array(
+    $return['source_reference']['autocomplete'] = [
       '#title' => t('Match file name'),
-      '#options' => array(
+      '#options' => [
         FILEFIELD_SOURCE_REFERENCE_MATCH_STARTS_WITH => t('Starts with'),
         FILEFIELD_SOURCE_REFERENCE_MATCH_CONTAINS => t('Contains'),
-      ),
+      ],
       '#type' => 'radios',
       '#default_value' => isset($settings['source_reference']['autocomplete']) ? $settings['source_reference']['autocomplete'] : FILEFIELD_SOURCE_REFERENCE_MATCH_STARTS_WITH,
-    );
+    ];
 
-    $return['source_reference']['search_all_fields'] = array(
+    $return['source_reference']['search_all_fields'] = [
       '#title' => t('Search all file fields'),
-      '#options' => array(
+      '#options' => [
         FILEFIELD_SOURCE_REFERENCE_SEARCH_ALL_NO => t('No (only fields with the same field base will be searched)'),
         FILEFIELD_SOURCE_REFERENCE_SEARCH_ALL_YES => t('Yes (all file fields will be searched, regardless of type)'),
-      ),
+      ],
       '#type' => 'radios',
       '#default_value' => isset($settings['source_reference']['search_all_fields']) ? $settings['source_reference']['search_all_fields'] : FILEFIELD_SOURCE_REFERENCE_SEARCH_ALL_NO,
-     );
+    ];
 
     return $return;
   }

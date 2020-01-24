@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\filefield_sources\Plugin\FilefieldSource\Remote.
- */
-
 namespace Drupal\filefield_sources\Plugin\FilefieldSource;
 
 use Drupal\Core\Form\FormStateInterface;
@@ -39,7 +34,7 @@ class Remote implements FilefieldSourceInterface {
       // Check that the destination is writable.
       $temporary_directory = 'temporary://';
       if (!file_prepare_directory($temporary_directory, FILE_MODIFY_PERMISSIONS)) {
-        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'The directory %directory is not writable, because it does not have the correct permissions set.', array('%directory' => drupal_realpath($temporary_directory)));
+        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'The directory %directory is not writable, because it does not have the correct permissions set.', ['%directory' => drupal_realpath($temporary_directory)]);
         drupal_set_message(t('The file could not be transferred because the temporary directory is not writable.'), 'error');
         return;
       }
@@ -51,8 +46,8 @@ class Remote implements FilefieldSourceInterface {
       // This first chmod check is for other systems such as S3, which don't
       // work with file_prepare_directory().
       if (!drupal_chmod($directory, $mode) && !file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
-        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'File %file could not be copied, because the destination directory %destination is not configured correctly.', array('%file' => $url, '%destination' => drupal_realpath($directory)));
-        drupal_set_message(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', array('%file' => $url)), 'error');
+        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'File %file could not be copied, because the destination directory %destination is not configured correctly.', ['%file' => $url, '%destination' => drupal_realpath($directory)]);
+        drupal_set_message(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', ['%file' => $url]), 'error');
         return;
       }
 
@@ -63,7 +58,7 @@ class Remote implements FilefieldSourceInterface {
       curl_setopt($ch, CURLOPT_HEADER, TRUE);
       curl_setopt($ch, CURLOPT_NOBODY, TRUE);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-      curl_setopt($ch, CURLOPT_HEADERFUNCTION, array(get_called_class(), 'parseHeader'));
+      curl_setopt($ch, CURLOPT_HEADERFUNCTION, [get_called_class(), 'parseHeader']);
       // Causes a warning if PHP safe mode is on.
       @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
       curl_exec($ch);
@@ -86,7 +81,7 @@ class Remote implements FilefieldSourceInterface {
             break;
 
           default:
-            $form_state->setError($element, t('The remote file could not be transferred due to an HTTP error (@code).', array('@code' => $info['http_code'])));
+            $form_state->setError($element, t('The remote file could not be transferred due to an HTTP error (@code).', ['@code' => $info['http_code']]));
         }
         return;
       }
@@ -130,7 +125,7 @@ class Remote implements FilefieldSourceInterface {
       $extensions = $field->getSetting('file_extensions');
       $regex = '/\.(' . preg_replace('/[ +]/', '|', preg_quote($extensions)) . ')$/i';
       if (!empty($extensions) && !preg_match($regex, $filename)) {
-        $form_state->setError($element, t('Only files with the following extensions are allowed: %files-allowed.', array('%files-allowed' => $extensions)));
+        $form_state->setError($element, t('Only files with the following extensions are allowed: %files-allowed.', ['%files-allowed' => $extensions]));
         return;
       }
 
@@ -139,16 +134,16 @@ class Remote implements FilefieldSourceInterface {
         $max_size = $element['#upload_validators']['file_validate_size'][0];
         $file_size = $info['download_content_length'];
         if ($file_size > $max_size) {
-          $form_state->setError($element, t('The remote file is %filesize exceeding the maximum file size of %maxsize.', array('%filesize' => format_size($file_size), '%maxsize' => format_size($max_size))));
+          $form_state->setError($element, t('The remote file is %filesize exceeding the maximum file size of %maxsize.', ['%filesize' => format_size($file_size), '%maxsize' => format_size($max_size)]));
           return;
         }
       }
 
       // Set progress bar information.
-      $options = array(
+      $options = [
         'key' => $element['#entity_type'] . '_' . $element['#bundle'] . '_' . $element['#field_name'] . '_' . $element['#delta'],
         'filepath' => $filepath,
-      );
+      ];
       static::setTransferOptions($options);
 
       $transfer_success = FALSE;
@@ -166,7 +161,7 @@ class Remote implements FilefieldSourceInterface {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HEADER, FALSE);
-        curl_setopt($ch, CURLOPT_WRITEFUNCTION, array(get_called_class(), 'curlWrite'));
+        curl_setopt($ch, CURLOPT_WRITEFUNCTION, [get_called_class(), 'curlWrite']);
         // Causes a warning if PHP safe mode is on.
         @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
         $transfer_success = curl_exec($ch);
@@ -213,10 +208,10 @@ class Remote implements FilefieldSourceInterface {
     // cURL usually writes in 16KB chunks.
     if (curl_getinfo($ch, CURLINFO_SIZE_DOWNLOAD) / 65536 > $progress_update) {
       $progress_update++;
-      $progress = array(
+      $progress = [
         'current' => curl_getinfo($ch, CURLINFO_SIZE_DOWNLOAD),
         'total' => curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD),
-      );
+      ];
       // Set a cache so that we can retrieve this value from the progress bar.
       $cid = 'filefield_transfer:' . session_id() . ':' . $options['key'];
       if ($progress['current'] != $progress['total']) {
@@ -242,11 +237,11 @@ class Remote implements FilefieldSourceInterface {
    */
   protected static function parseHeader(&$ch, $header) {
     if (preg_match('/Content-Disposition:.*?filename="(.+?)"/', $header, $matches)) {
-      // Content-Disposition: attachment; filename="FILE NAME HERE"
+      // Content-Disposition: attachment; filename="FILE NAME HERE".
       static::filename($matches[1]);
     }
     elseif (preg_match('/Content-Disposition:.*?filename=([^; ]+)/', $header, $matches)) {
-      // Content-Disposition: attachment; filename=file.ext
+      // Content-Disposition: attachment; filename=file.ext.
       $uri = trim($matches[1]);
       static::filename($uri);
     }
@@ -288,20 +283,20 @@ class Remote implements FilefieldSourceInterface {
    */
   public static function process(array &$element, FormStateInterface $form_state, array &$complete_form) {
 
-    $element['filefield_remote'] = array(
+    $element['filefield_remote'] = [
       '#weight' => 100.5,
       '#theme' => 'filefield_sources_element',
       '#source_id' => 'remote',
        // Required for proper theming.
       '#filefield_source' => TRUE,
       '#filefield_sources_hint_text' => FILEFIELD_SOURCE_REMOTE_HINT_TEXT,
-    );
+    ];
 
-    $element['filefield_remote']['url'] = array(
+    $element['filefield_remote']['url'] = [
       '#type' => 'textfield',
       '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
       '#maxlength' => NULL,
-    );
+    ];
 
     $class = '\Drupal\file\Element\ManagedFile';
     $ajax_settings = [
@@ -324,7 +319,7 @@ class Remote implements FilefieldSourceInterface {
       '#name' => implode('_', $element['#parents']) . '_transfer',
       '#type' => 'submit',
       '#value' => t('Transfer'),
-      '#validate' => array(),
+      '#validate' => [],
       '#submit' => ['filefield_sources_field_submit'],
       '#limit_validation_errors' => [$element['#parents']],
       '#ajax' => $ajax_settings,
@@ -348,15 +343,15 @@ class Remote implements FilefieldSourceInterface {
    */
   public static function progress($entity_type, $bundle_name, $field_name, $delta) {
     $key = $entity_type . '_' . $bundle_name . '_' . $field_name . '_' . $delta;
-    $progress = array(
+    $progress = [
       'message' => t('Starting transfer...'),
       'percentage' => -1,
-    );
+    ];
 
     if ($cache = \Drupal::cache()->get('filefield_transfer:' . session_id() . ':' . $key)) {
       $current = $cache->data['current'];
       $total = $cache->data['total'];
-      $progress['message'] = t('Transferring... (@current of @total)', array('@current' => format_size($current), '@total' => format_size($total)));
+      $progress['message'] = t('Transferring... (@current of @total)', ['@current' => format_size($current), '@total' => format_size($total)]);
       $progress['percentage'] = round(100 * $current / $total);
     }
 
@@ -370,16 +365,16 @@ class Remote implements FilefieldSourceInterface {
    *   Array of routes.
    */
   public static function routes() {
-    $routes = array();
+    $routes = [];
 
     $routes['filefield_sources.remote'] = new Route(
       '/file/remote/progress/{entity_type}/{bundle_name}/{field_name}/{delta}',
-      array(
+      [
         '_controller' => get_called_class() . '::progress',
-      ),
-      array(
+      ],
+      [
         '_access' => 'TRUE',
-      )
+      ]
     );
 
     return $routes;
@@ -389,7 +384,7 @@ class Remote implements FilefieldSourceInterface {
    * Implements hook_filefield_source_settings().
    */
   public static function settings(WidgetInterface $plugin) {
-    $return = array();
+    $return = [];
 
     // Add settings to the FileField widget form.
     if (!filefield_sources_curl_enabled()) {

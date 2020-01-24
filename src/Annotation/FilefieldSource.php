@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\filefield_sources\Annotation\FilefieldSource.
- */
-
 namespace Drupal\filefield_sources\Annotation;
 
 use Drupal\Component\Annotation\Plugin;
@@ -55,7 +50,7 @@ class FilefieldSource extends Plugin {
   /**
    * The weight of file field source plugin.
    *
-   * @var integer
+   * @var int
    */
   public $weight;
 

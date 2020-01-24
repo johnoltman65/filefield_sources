@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\filefield_sources\Plugin\FilefieldSource\Imce.
- */
-
 namespace Drupal\filefield_sources\Plugin\FilefieldSource;
 
 use Drupal\Core\Form\FormStateInterface;
@@ -37,9 +32,9 @@ class Imce implements FilefieldSourceInterface {
       $uris = [];
 
       foreach ($imce_paths as $imce_path) {
-        //$wrapper = \Drupal::service('stream_wrapper_manager')->getViaScheme($scheme);
-        //$file_directory_prefix = $scheme == 'private' ? 'system/files' : $wrapper->getDirectoryPath();
-        //$uri = preg_replace('/^' . preg_quote(base_path() . $file_directory_prefix . '/', '/') . '/', $scheme . '://', $imce_path);
+        // $wrapper = \Drupal::service('stream_wrapper_manager')->getViaScheme($scheme);
+        // $file_directory_prefix = $scheme == 'private' ? 'system/files' : $wrapper->getDirectoryPath();
+        // $uri = preg_replace('/^' . preg_quote(base_path() . $file_directory_prefix . '/', '/') . '/', $scheme . '://', $imce_path);.
         $uri = rawurldecode($scheme . '://' . $imce_path);
         $uris[] = $uri;
       }
@@ -47,7 +42,7 @@ class Imce implements FilefieldSourceInterface {
       // Resolve the file path to an FID.
       $fids = db_select('file_managed', 'f')
         ->condition('uri', $uris, 'IN')
-        ->fields('f', array('fid'))
+        ->fields('f', ['fid'])
         ->execute()
         ->fetchCol();
       if ($fids) {
@@ -74,41 +69,41 @@ class Imce implements FilefieldSourceInterface {
   public static function process(array &$element, FormStateInterface $form_state, array &$complete_form) {
     $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
 
-    $element['filefield_imce'] = array(
+    $element['filefield_imce'] = [
       '#weight' => 100.5,
       '#theme' => 'filefield_sources_element',
       '#source_id' => 'imce',
       // Required for proper theming.
       '#filefield_source' => TRUE,
       '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
-    );
+    ];
 
-    $imce_url = \Drupal::url('filefield_sources.imce', array(
+    $imce_url = \Drupal::url('filefield_sources.imce', [
       'entity_type' => $element['#entity_type'],
       'bundle_name' => $element['#bundle'],
       'field_name' => $element['#field_name'],
-    ),
-    array(
-      'query' => array(
+    ],
+    [
+      'query' => [
         'sendto' => 'imceFileField.sendto',
         'fieldId' => $element['#attributes']['data-drupal-selector'] . '-filefield-imce',
-      ),
-    ));
-    $element['filefield_imce']['browse'] = array(
+      ],
+    ]);
+    $element['filefield_imce']['browse'] = [
       '#type' => 'markup',
       '#markup' => '<span>' . t('No file selected') . '</span> (<a class="filefield-sources-imce-browse" href="' . $imce_url . '">' . t('browse') . '</a>)',
-    );
+    ];
 
     $element['#attached']['library'][] = 'imce/drupal.imce.filefield';
     // Set the pre-renderer to conditionally disable the elements.
-    $element['#pre_render'][] = array(get_called_class(), 'preRenderWidget');
+    $element['#pre_render'][] = [get_called_class(), 'preRenderWidget'];
 
-    // Path input
-    $element['filefield_imce']['imce_paths'] = array(
+    // Path input.
+    $element['filefield_imce']['imce_paths'] = [
       '#type' => 'hidden',
-      // Reset value to prevent consistent errors
+      // Reset value to prevent consistent errors.
       '#value' => '',
-    );
+    ];
 
     $class = '\Drupal\file\Element\ManagedFile';
     $ajax_settings = [
@@ -122,7 +117,7 @@ class Imce implements FilefieldSourceInterface {
       'effect' => 'fade',
     ];
 
-    $element['filefield_imce']['imce_button'] = array(
+    $element['filefield_imce']['imce_button'] = [
       '#name' => implode('_', $element['#parents']) . '_imce_select',
       '#type' => 'submit',
       '#value' => t('Select'),
@@ -131,7 +126,7 @@ class Imce implements FilefieldSourceInterface {
       '#submit' => ['filefield_sources_field_submit'],
       '#limit_validation_errors' => [$element['#parents']],
       '#ajax' => $ajax_settings,
-    );
+    ];
 
     return $element;
   }
@@ -153,17 +148,17 @@ class Imce implements FilefieldSourceInterface {
    *   Array of routes.
    */
   public static function routes() {
-    $routes = array();
+    $routes = [];
 
     $routes['filefield_sources.imce'] = new Route(
       '/file/imce/{entity_type}/{bundle_name}/{field_name}',
-      array(
+      [
         '_controller' => '\Drupal\filefield_sources\Controller\ImceController::page',
         '_title' => 'File Manager',
-      ),
-      array(
+      ],
+      [
         '_access_filefield_sources_field' => 'TRUE',
-      )
+      ]
     );
 
     return $routes;
@@ -173,29 +168,29 @@ class Imce implements FilefieldSourceInterface {
    * Implements hook_filefield_source_settings().
    */
   public static function settings(WidgetInterface $plugin) {
-    $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', array(
-      'source_imce' => array(
+    $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', [
+      'source_imce' => [
         'imce_mode' => 0,
-      ),
-    ));
+      ],
+    ]);
 
-    $return['source_imce'] = array(
+    $return['source_imce'] = [
       '#title' => t('IMCE file browser settings'),
       '#type' => 'details',
       '#access' => \Drupal::moduleHandler()->moduleExists('imce'),
-    );
+    ];
 
-    // $imce_admin_url = \Drupal::url('imce.admin');
+    // $imce_admin_url = \Drupal::url('imce.admin');.
     $imce_admin_url = 'admin/config/media/imce';
-    $return['source_imce']['imce_mode'] = array(
+    $return['source_imce']['imce_mode'] = [
       '#type' => 'radios',
       '#title' => t('File browser mode'),
-      '#options' => array(
+      '#options' => [
         0 => t('Restricted: Users can only browse the field directory. No file operations are allowed.'),
-        1 => t('Full: Browsable directories are defined by <a href=":imce-admin-url">IMCE configuration profiles</a>. File operations are allowed.', array(':imce-admin-url' => $imce_admin_url)),
-      ),
+        1 => t('Full: Browsable directories are defined by <a href=":imce-admin-url">IMCE configuration profiles</a>. File operations are allowed.', [':imce-admin-url' => $imce_admin_url]),
+      ],
       '#default_value' => isset($settings['source_imce']['imce_mode']) ? $settings['source_imce']['imce_mode'] : 0,
-    );
+    ];
 
     return $return;
 

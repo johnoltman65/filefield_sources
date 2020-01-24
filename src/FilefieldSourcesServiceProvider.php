@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\filefield_sources\FilefieldSourcesServiceProvider.
- */
-
 namespace Drupal\filefield_sources;
 
 use Drupal\Core\DependencyInjection\ServiceModifierInterface;

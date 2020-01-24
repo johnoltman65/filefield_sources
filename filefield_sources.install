@@ -13,7 +13,7 @@ function filefield_sources_install() {
   try {
     $file_weight = module_get_weight('file');
     $image_weight = module_get_weight('image');
-    $weight = max(array($file_weight, $image_weight));
+    $weight = max([$file_weight, $image_weight]);
     $weight++;
   }
   catch (Exception $e) {

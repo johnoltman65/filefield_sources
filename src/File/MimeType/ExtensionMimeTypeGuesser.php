@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\filefield_sources\File\MimeType\ExtensionMimeTypeGuesser.
- */
-
 namespace Drupal\filefield_sources\File\MimeType;
 
 use Drupal\Core\File\MimeType\ExtensionMimeTypeGuesser as CoreExtensionMimeTypeGuesser;

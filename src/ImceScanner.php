@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\filefield_sources\ImceScanner.
- */
-
 namespace Drupal\filefield_sources;
 
 use Drupal\imce\Imce;
@@ -37,12 +32,12 @@ class ImceScanner {
     $sql_uri_name = $dirname == '.' ? $scheme . '://' : $dirname . '/';
 
     $result = db_select('file_managed', 'f')
-      ->fields('f', array('uri'))
+      ->fields('f', ['uri'])
       ->condition('f.uri', $sql_uri_name . '%', 'LIKE')
       ->condition('f.uri', $sql_uri_name . '_%/%', 'NOT LIKE')
       ->execute();
 
-    $db_files = array();
+    $db_files = [];
     foreach ($result as $row) {
       $db_files[basename($row->uri)] = 1;
     }
@@ -64,7 +59,7 @@ class ImceScanner {
    * This only work on Restricted Mode.
    */
   public function customScanRestricted($dirname, $options) {
-    $content = array('files' => array(), 'subfolders' => array());
+    $content = ['files' => [], 'subfolders' => []];
     $field_uri = $this->context['uri'];
     $is_root = $this->context['is_root'];
 
@@ -99,4 +94,5 @@ class ImceScanner {
 
     return $content;
   }
+
 }

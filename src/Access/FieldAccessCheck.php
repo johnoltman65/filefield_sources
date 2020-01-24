@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\filefield_sources\Access\FieldAccessCheck.
- */
-
 namespace Drupal\filefield_sources\Access;
 
 use Drupal\Core\Routing\Access\AccessInterface as RoutingAccessInterface;

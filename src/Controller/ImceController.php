@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\imce\Controller\ImceController.
- */
-
 namespace Drupal\filefield_sources\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
@@ -36,27 +31,27 @@ class ImceController extends ControllerBase {
       $widget = entity_get_form_display($entity_type, $bundle_name, 'default')->getComponent($field_name);
       // Full mode.
       if (!empty($widget['third_party_settings']['filefield_sources']['filefield_sources']['source_imce']['imce_mode'])) {
-        $imceFM->setConf('scanner', array($scanner, 'customScanFull'));
+        $imceFM->setConf('scanner', [$scanner, 'customScanFull']);
         // Set context.
-        $scanner->setContext(array(
+        $scanner->setContext([
           'scheme' => $imceFM->getConf('scheme'),
-        ));
+        ]);
       }
       // Restricted mode.
       else {
-        $imceFM->setConf('scanner', array($scanner, 'customScanRestricted'));
+        $imceFM->setConf('scanner', [$scanner, 'customScanRestricted']);
 
         // Make field directory the only accessible one.
         $field_uri = static::getUploadLocation($settings);
-        static::disablePerms($imceFM, $field_uri, array('browse_files'));
+        static::disablePerms($imceFM, $field_uri, ['browse_files']);
 
         // Set context.
-        $scanner->setContext(array(
+        $scanner->setContext([
           'entity_type' => $entity_type,
           'field_name' => $field_name,
           'uri' => $field_uri,
           'is_rool' => $is_root,
-        ));
+        ]);
       }
 
       // Disable absolute URLs.
@@ -77,7 +72,7 @@ class ImceController extends ControllerBase {
    *
    * @see token_replace()
    */
-  protected static function getUploadLocation($settings, $data = array()) {
+  protected static function getUploadLocation($settings, $data = []) {
     $destination = trim($settings['file_directory'], '/');
 
     // Replace tokens. To ensure that render context is empty, pass a bubbleable
@@ -91,7 +86,7 @@ class ImceController extends ControllerBase {
   /**
    * Disable IMCE profile permissions.
    */
-  protected static function disablePerms($imceFM, $field_uri, $exceptions = array()) {
+  protected static function disablePerms($imceFM, $field_uri, $exceptions = []) {
     $scheme = $imceFM->getConf('scheme');
     $root = $scheme . '://';
     $is_root = $field_uri == $root;
@@ -103,7 +98,7 @@ class ImceController extends ControllerBase {
     $folders[$path]['permissions']['all'] = FALSE;
     foreach ($perms as $perm => $title) {
       $folders['.']['permissions'][$perm] = FALSE;
-      $folders[$path]['permissions'][$perm] = in_array($perm, array('browse_files')) ? TRUE : FALSE;
+      $folders[$path]['permissions'][$perm] = in_array($perm, ['browse_files']) ? TRUE : FALSE;
     }
     $imceFM->setConf('folders', $folders);
   }

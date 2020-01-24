@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * This file documents hooks provided by the FileField Sources module.
@@ -18,7 +19,7 @@
  */
 function hook_filefield_sources_widgets() {
   // Add any widgets that your module supports here.
-  return array('mymodule_file_widgetname');
+  return ['mymodule_file_widgetname'];
 }
 
 /**

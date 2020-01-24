@@ -1,12 +1,8 @@
 <?php
+// @codingStandardsIgnoreFile
 
 /**
- * @file
- * Contains \Drupal\filefield_sources\ProxyClass\File\MimeType\ExtensionMimeTypeGuesser.
- */
-
-/**
- * This file was generated via php core/scripts/generate-proxy-class.php 'Drupal\filefield_sources\File\MimeType\ExtensionMimeTypeGuesser' "modules/filefield_sources/src".
+ * This file was generated via php core/scripts/generate-proxy-class.php 'Drupal\filefield_sources\File\MimeType\ExtensionMimeTypeGuesser' "modules/contrib/filefield_sources/src".
  */
 
 namespace Drupal\filefield_sources\ProxyClass\File\MimeType {

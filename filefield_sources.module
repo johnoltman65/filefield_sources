@@ -43,17 +43,17 @@ function filefield_sources_element_info_alter(&$type) {
  * Implements hook_theme().
  */
 function filefield_sources_theme() {
-  $theme = array();
+  $theme = [];
 
-  $theme['filefield_sources_element'] = array(
+  $theme['filefield_sources_element'] = [
     'render element' => 'element',
     'function' => 'theme_filefield_sources_element',
-  );
+  ];
 
-  $theme['filefield_sources_list'] = array(
-    'variables' => array('element' => NULL, 'sources' => NULL),
+  $theme['filefield_sources_list'] = [
+    'variables' => ['element' => NULL, 'sources' => NULL],
     'function' => 'theme_filefield_sources_list',
-  );
+  ];
 
   return $theme;
 }
@@ -66,7 +66,7 @@ function filefield_sources_theme() {
  * @see \Drupal\field_ui\FormDisplayOverview
  */
 function filefield_sources_field_widget_third_party_settings_form(WidgetInterface $plugin, FieldDefinitionInterface $field_definition, $form_mode, $form, FormStateInterface $form_state) {
-  $element = array();
+  $element = [];
   if (in_array($plugin->getPluginId(), \Drupal::moduleHandler()->invokeAll('filefield_sources_widgets'))) {
     $element = filefield_sources_form($plugin, $form_state);
   }
@@ -111,7 +111,7 @@ function filefield_sources_field_widget_form_alter(&$element, FormStateInterface
  * This returns a list of widgets that are compatible with FileField Sources.
  */
 function filefield_sources_filefield_sources_widgets() {
-  return array('file_generic', 'image_image');
+  return ['file_generic', 'image_image'];
 }
 
 /**
@@ -123,22 +123,22 @@ function filefield_sources_form($plugin, FormStateInterface $form_state) {
   // Backward compatibility: auto-enable 'upload'.
   $enabled = _filefield_sources_enabled($settings);
 
-  $form['filefield_sources'] = array(
+  $form['filefield_sources'] = [
     '#type' => 'details',
     '#title' => t('File sources'),
     '#weight' => 20,
-  );
+  ];
 
   $sources = filefield_sources_list();
-  $form['filefield_sources']['sources'] = array(
+  $form['filefield_sources']['sources'] = [
     '#type' => 'checkboxes',
     '#title' => t('Enabled sources'),
     '#options' => $sources,
     '#default_value' => $enabled,
     '#description' => t('Select the available locations from which this widget may select files.'),
-  );
+  ];
 
-  $params = array($plugin);
+  $params = [$plugin];
   $form['filefield_sources'] = array_merge($form['filefield_sources'], filefield_sources_invoke_all('settings', $params));
 
   return $form;
@@ -164,11 +164,11 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
   $settings = $element['#filefield_sources_settings'];
   $enabled_sources = _filefield_sources_enabled($settings);
 
-  $context = array(
+  $context = [
     'enabled_sources' => &$enabled_sources,
     'element'         => $element,
     'form_state'      => $form_state,
-  );
+  ];
 
   // Allow other modules to alter the sources.
   \Drupal::moduleHandler()->alter('filefield_sources_sources', $sources, $context);
@@ -179,13 +179,13 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
     }
     // Default upload plugin does not have class.
     elseif (isset($source['class'])) {
-      $callback = array($source['class'], 'process');
+      $callback = [$source['class'], 'process'];
       if (is_callable($callback)) {
-        $element = call_user_func_array($callback, array(
+        $element = call_user_func_array($callback, [
           &$element,
           $form_state,
           &$complete_form,
-        ));
+        ]);
       }
     }
   }
@@ -198,7 +198,7 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
 
   // Hide default 'upload' type?
   if (!isset($enabled_sources['upload'])) {
-    foreach (array('upload_button', 'upload') as $field) {
+    foreach (['upload_button', 'upload'] as $field) {
       if (isset($element[$field])) {
         $element[$field]['#access'] = FALSE;
       }
@@ -215,9 +215,9 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
     if (isset($element[$key]['#filefield_sources_hint_text']) && !isset($js_added[$key])) {
       $type = str_replace('filefield_', '', $key);
 
-      $element['#attached']['drupalSettings']['fileFieldSources'][$type] = array(
+      $element['#attached']['drupalSettings']['fileFieldSources'][$type] = [
         'hintText' => $element[$key]['#filefield_sources_hint_text'],
-      );
+      ];
 
       $js_added[$key] = TRUE;
     }
@@ -228,11 +228,11 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
   // Clone of Drupal\file\Plugin\Field\FieldWidget\FileWidget::process().
   if ($element['#cardinality'] != 1) {
     $parents = array_slice($element['#array_parents'], 0, -1);
-    $new_options = array(
-      'query' => array(
+    $new_options = [
+      'query' => [
         'element_parents' => implode('/', $parents),
-      ),
-    );
+      ],
+    ];
     $field_element = NestedArray::getValue($complete_form, $parents);
     $new_wrapper = $field_element['#id'] . '-ajax-wrapper';
     foreach (Element::children($element) as $key) {
@@ -240,9 +240,9 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
         if (isset($element[$key][$subkey]['#ajax'])) {
           $element[$key][$subkey]['#ajax']['options'] = $new_options;
           $element[$key][$subkey]['#ajax']['wrapper'] = $new_wrapper;
-          $element[$key][$subkey]['#limit_validation_errors'] = array(
+          $element[$key][$subkey]['#limit_validation_errors'] = [
             array_slice($element['#array_parents'], 0, -2),
-          );
+          ];
         }
       }
     }
@@ -252,12 +252,12 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
   // Add the list of sources to the element for toggling between sources.
   if (empty($element['fids']['#value'])) {
     if (count($enabled_sources) > 1) {
-      $element['filefield_sources_list'] = array(
+      $element['filefield_sources_list'] = [
         '#theme' => 'filefield_sources_list',
         '#element' => $element,
         '#sources' => $sources,
         '#weight' => -20,
-      );
+      ];
     }
   }
 
@@ -290,13 +290,13 @@ function filefield_sources_field_validate(&$element, FormStateInterface $form_st
       continue;
     }
 
-    $callback = array($source['class'], 'validate');
+    $callback = [$source['class'], 'validate'];
     if (is_callable($callback)) {
-      call_user_func_array($callback, array(
+      call_user_func_array($callback, [
         $element,
         $form_state,
         $complete_form,
-      ));
+      ]);
     }
   }
 }
@@ -336,12 +336,12 @@ function filefield_sources_field_submit(&$form, FormStateInterface $form_state) 
 
   // If there are more files uploaded via the same widget, we have to separate
   // them, as we display each file in it's own widget.
-  $new_values = array();
+  $new_values = [];
   foreach ($submitted_values as $delta => $submitted_value) {
     if (is_array($submitted_value['fids'])) {
       foreach ($submitted_value['fids'] as $fid) {
         $new_value = $submitted_value;
-        $new_value['fids'] = array($fid);
+        $new_value['fids'] = [$fid];
         $new_values[] = $new_value;
       }
     }
@@ -373,9 +373,9 @@ function filefield_sources_field_value(&$element, &$input, FormStateInterface $f
   $sources = filefield_sources_info();
   foreach ($sources as $source) {
     if (isset($source['class'])) {
-      $callback = array($source['class'], 'value');
+      $callback = [$source['class'], 'value'];
       if (is_callable($callback)) {
-        call_user_func_array($callback, array(&$element, &$input, $form_state));
+        call_user_func_array($callback, [&$element, &$input, $form_state]);
       }
     }
   }
@@ -385,13 +385,13 @@ function filefield_sources_field_value(&$element, &$input, FormStateInterface $f
  * Call all FileField Source hooks stored in the available include files.
  */
 function filefield_sources_invoke_all($method, &$params) {
-  $return = array();
+  $return = [];
   foreach (\Drupal::service('filefield_sources')->getDefinitions() as $definition) {
     if (!isset($definition['class'])) {
       continue;
     }
     // Get routes defined by each plugin.
-    $callback = array($definition['class'], $method);
+    $callback = [$definition['class'], $method];
     if (is_callable($callback)) {
       $result = call_user_func_array($callback, $params);
       if (isset($result) && is_array($result)) {
@@ -414,12 +414,12 @@ function filefield_sources_info($include_default = TRUE) {
     unset($info['imce']);
   }
   if ($include_default) {
-    $info['upload'] = array(
+    $info['upload'] = [
       'name' => t('Upload (default)'),
       'label' => t('Upload'),
       'description' => t('Upload a file from your computer.'),
       'weight' => -10,
-    );
+    ];
   }
 
   uasort($info, '_filefield_sources_sort');
@@ -432,7 +432,7 @@ function filefield_sources_info($include_default = TRUE) {
  */
 function filefield_sources_list($include_default = TRUE) {
   $info = filefield_sources_info($include_default);
-  $list = array();
+  $list = [];
 
   foreach ($info as $key => $source) {
     $list[$key] = $source['name'];
@@ -449,15 +449,15 @@ function filefield_sources_list($include_default = TRUE) {
  *
  * @see file_save_upload()
  */
-function filefield_sources_save_file($filepath, $validators = array(), $destination = FALSE, $replace = FILE_EXISTS_RENAME) {
+function filefield_sources_save_file($filepath, $validators = [], $destination = FALSE, $replace = FILE_EXISTS_RENAME) {
   $user = \Drupal::currentUser();
 
   // Begin building file object.
-  $file = entity_create('file', array(
+  $file = entity_create('file', [
     'uri' => $filepath,
     'uid' => $user->id(),
     'status' => FILE_EXISTS_RENAME,
-  ));
+  ]);
   $file->setFilename(trim(basename($filepath), '.'));
   $file->setMimeType(\Drupal::service('file.mime_type.guesser')->guess($file->getFilename()));
   $file->setSize(filesize($filepath));
@@ -479,7 +479,7 @@ function filefield_sources_save_file($filepath, $validators = array(), $destinat
     // No validator was provided, so add one using the default list.
     // Build a default non-munged safe list for file_munge_filename().
     $extensions = 'jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp';
-    $validators['file_validate_extensions'] = array();
+    $validators['file_validate_extensions'] = [];
     $validators['file_validate_extensions'][0] = $extensions;
   }
 
@@ -501,7 +501,7 @@ function filefield_sources_save_file($filepath, $validators = array(), $destinat
     // to add it here or else the file upload will fail.
     if (!empty($extensions)) {
       $validators['file_validate_extensions'][0] .= ' txt';
-      drupal_set_message(t('For security reasons, your upload has been renamed to %filename.', array('%filename' => $file->getFilename())));
+      drupal_set_message(t('For security reasons, your upload has been renamed to %filename.', ['%filename' => $file->getFilename()]));
     }
   }
 
@@ -513,7 +513,7 @@ function filefield_sources_save_file($filepath, $validators = array(), $destinat
   // Assert that the destination contains a valid stream.
   $destination_scheme = file_uri_scheme($destination);
   if (!$destination_scheme || !file_stream_wrapper_valid_scheme($destination_scheme)) {
-    drupal_set_message(t('The file could not be uploaded, because the destination %destination is invalid.', array('%destination' => $destination)), 'error');
+    drupal_set_message(t('The file could not be uploaded, because the destination %destination is invalid.', ['%destination' => $destination]), 'error');
     return FALSE;
   }
 
@@ -536,21 +536,21 @@ function filefield_sources_save_file($filepath, $validators = array(), $destinat
   // If file_destination() returns FALSE then $replace == FILE_EXISTS_ERROR and
   // there's an existing file so we need to bail.
   if ($file->destination === FALSE) {
-    drupal_set_message(t('The file %source could not be uploaded because a file by that name already exists in the destination %directory.', array('%source' => $file->getFilename(), '%directory' => $destination)), 'error');
+    drupal_set_message(t('The file %source could not be uploaded because a file by that name already exists in the destination %directory.', ['%source' => $file->getFilename(), '%directory' => $destination]), 'error');
     return FALSE;
   }
 
   // Add in our check of the the file name length.
-  $validators['file_validate_name_length'] = array();
+  $validators['file_validate_name_length'] = [];
 
   // Call the validation functions specified by this function's caller.
   $errors = file_validate($file, $validators);
 
   // Check for errors.
   if (!empty($errors)) {
-    $message = t('The specified file %name could not be uploaded.', array('%name' => $file->getFilename()));
+    $message = t('The specified file %name could not be uploaded.', ['%name' => $file->getFilename()]);
     if (count($errors) > 1) {
-      $message .= theme('item_list', array('items' => $errors));
+      $message .= theme('item_list', ['items' => $errors]);
     }
     else {
       $message .= ' ' . array_pop($errors);
@@ -565,7 +565,7 @@ function filefield_sources_save_file($filepath, $validators = array(), $destinat
   $file->setFileUri($file->destination);
   if (!$reuse_file && !file_unmanaged_copy($filepath, $file->getFileUri(), $replace)) {
     drupal_set_message(t('File upload error. Could not move uploaded file.'), 'error');
-    \Drupal::logger('filefield_sources')->log(E_NOTICE, 'Upload error. Could not move uploaded file %file to destination %destination.', array('%file' => $file->getFilename(), '%destination' => $file->getFileUri()));
+    \Drupal::logger('filefield_sources')->log(E_NOTICE, 'Upload error. Could not move uploaded file %file to destination %destination.', ['%file' => $file->getFilename(), '%destination' => $file->getFileUri()]);
     return FALSE;
   }
 
@@ -574,7 +574,7 @@ function filefield_sources_save_file($filepath, $validators = array(), $destinat
 
   // If we are replacing an existing file re-use its database record.
   if ($replace == FILE_EXISTS_REPLACE) {
-    $existing_files = file_load_multiple(array(), array('uri' => $file->getFileUri()));
+    $existing_files = file_load_multiple([], ['uri' => $file->getFileUri()]);
     if (count($existing_files)) {
       $existing = reset($existing_files);
       $file->setOriginalId($existing->id());
@@ -628,14 +628,14 @@ function theme_filefield_sources_element($variables) {
   $element = $variables['element'];
   $source_id = $element['#source_id'];
   $method = isset($element['#method']) ? $element['#method'] : 'element';
-  $extra_variables = isset($element['#variables']) ? $element['#variables'] : array();
+  $extra_variables = isset($element['#variables']) ? $element['#variables'] : [];
 
   $sources = filefield_sources_info();
   if (isset($sources[$source_id]['class'])) {
-    $callback = array($sources[$source_id]['class'], $method);
+    $callback = [$sources[$source_id]['class'], $method];
     if (is_callable($callback)) {
       $variables = array_merge($variables, $extra_variables);
-      return call_user_func_array($callback, array($variables));
+      return call_user_func_array($callback, [$variables]);
     }
   }
 
@@ -649,7 +649,7 @@ function theme_filefield_sources_list($variables) {
   $element = $variables['element'];
   $sources = $variables['sources'];
 
-  $links = array();
+  $links = [];
 
   foreach ($sources as $name => $source) {
     $links[] = '<a href="#" onclick="return false;" title="' . $source['description'] . '" id="' . $element['#id'] . '-' . $name . '-source" class="filefield-source filefield-source-' . $name . '">' . $source['label'] . '</a>';
@@ -662,7 +662,7 @@ function theme_filefield_sources_list($variables) {
  */
 function filefield_sources_element_validate($element, $file, FormStateInterface $form_state) {
   $validators = $element['#upload_validators'];
-  $errors = array();
+  $errors = [];
 
   // Since this frequently is used to reference existing files, check that
   // they exist first in addition to the normal validations.
@@ -682,7 +682,7 @@ function filefield_sources_element_validate($element, $file, FormStateInterface 
 
   // Check for validation errors.
   if (!empty($errors)) {
-    $message = t('The selected file %name could not be referenced.', array('%name' => $file->filename));
+    $message = t('The selected file %name could not be referenced.', ['%name' => $file->filename]);
     if (count($errors) > 1) {
       $message .= '<ul><li>' . implode('</li><li>', $errors) . '</li></ul>';
     }
@@ -700,7 +700,7 @@ function filefield_sources_element_validate($element, $file, FormStateInterface 
  * Generate help text based on the $element['#upload_validators'] property.
  */
 function filefield_sources_element_validation_help($validators) {
-  $desc = array();
+  $desc = [];
   foreach ($validators as $callback => $arguments) {
     $help_func = $callback . '_help';
     if (function_exists($help_func)) {
@@ -714,8 +714,8 @@ function filefield_sources_element_validation_help($validators) {
  * Custom sort function for ordering sources.
  */
 function _filefield_sources_sort($a, $b) {
-  $a = (array) $a + array('weight' => 0, 'label' => '');
-  $b = (array) $b + array('weight' => 0, 'label' => '');
+  $a = (array) $a + ['weight' => 0, 'label' => ''];
+  $b = (array) $b + ['weight' => 0, 'label' => ''];
   return $a['weight'] < $b['weight'] ? -1 : ($a['weight'] > $b['weight'] ? 1 : strnatcasecmp($a['label'], $b['label']));
 }
 
@@ -738,6 +738,7 @@ function _filefield_sources_enabled($settings) {
 
 // @todo Remove once https://www.drupal.org/node/1808132 is finished.
 if (!function_exists('module_get_weight')) {
+
   /**
    * Gets weight of a particular module.
    *
@@ -759,8 +760,9 @@ if (!function_exists('module_get_weight')) {
     if ($weight !== NULL) {
       return (int) $weight;
     }
-    throw new InvalidArgumentException(format_string('The module %module is not installed.', array('%module' => $module)));
+    throw new InvalidArgumentException(format_string('The module %module is not installed.', ['%module' => $module]));
   }
+
 }
 
 /**
