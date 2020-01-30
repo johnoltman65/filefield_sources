@@ -12,56 +12,47 @@ use Drupal\Component\Render\PlainTextOutput;
 class AttachSourceTest extends FileFieldSourcesTestBase {
 
   /**
-   * Tests move file from relative path.
+   * Tests move relative files with different names.
    *
    * Default settings: Move file from 'public://file_attach' to 'public://'.
    */
-  public function testMoveFileFromRelativePath() {
+  public function testMoveFilesFromRelativePath() {
     $uri_scheme = $this->getFieldSetting('uri_scheme');
     $path = $uri_scheme . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH . '/';
-
-    // Create test file.
-    $file = $this->createTemporaryFile($path);
-    $dest_uri = $this->getDestinationUri($file, $uri_scheme);
-
     $this->enableSources([
       'attach' => TRUE,
     ]);
 
-    $this->assertCanAttachFile($file);
+    // File with a random name.
+    $file = $this->createTemporaryFile($path);
+    $dest_uri = $this->getDestinationUri($file, $uri_scheme);
+    $this->drupalGet('node/add/' . $this->typeName);
+    $this->fileCanBeUploadAndDeleted($file, $dest_uri);
 
-    // Upload a file.
-    $this->uploadFileByAttachSource($file->uri, $file->filename, 0);
+    // File with an space in the name.
+    $file = $this->createTemporaryFile($path, 'test file.txt');
+    $dest_uri = $this->getDestinationUri($file, $uri_scheme);
+    $this->drupalGet('node/add/' . $this->typeName);
+    $this->fileCanBeUploadAndDeleted($file, $dest_uri);
 
-    // We can only attach one file on single value field.
-    $this->assertNoFieldByXPath('//input[@type="submit"]', t('Attach'), 'After uploading a file, "Attach" button is no longer displayed.');
-
-    // Ensure file is moved.
-    $this->assertFalse(is_file($file->uri), 'Source file has been removed.');
-    $this->assertTrue(is_file($dest_uri), 'Destination file has been created.');
-
-    $this->removeFile($file->filename, 0);
-
-    $this->assertCanNotAttachFile($file);
+    // File with special characters in the name that are going to be
+    // transliterated.
+    $original_filename = 'file_áéíóú_ññ.txt';
+    $transliterated_filename = 'file_aeiou_nn.txt';
+    $file = $this->createTemporaryFile($path, $original_filename);
+    $file->filename = $transliterated_filename;
+    $dest_uri = $this->getDestinationUri($file, $uri_scheme);
+    $this->drupalGet('node/add/' . $this->typeName);
+    $this->fileCanBeUploadAndDeleted($file, $dest_uri);
   }
 
   /**
-   * Tests move a file with an space in the name.
-   *
-   * Default settings: Move file from 'public://file_attach' to 'public://'.
+   * @param object $file
+   *   The file object.
+   * @param string $dest_uri
+   *   The dest Uri where the file was uploaded.
    */
-  public function testMoveFileWithSpaceInName() {
-    $uri_scheme = $this->getFieldSetting('uri_scheme');
-    $path = $uri_scheme . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH . '/';
-
-    // Create test file.
-    $file = $this->createTemporaryFile($path, 'test file.txt');
-    $dest_uri = $this->getDestinationUri($file, $uri_scheme);
-
-    $this->enableSources([
-      'attach' => TRUE,
-    ]);
-
+  public function fileCanBeUploadAndDeleted($file, $dest_uri) {
     $this->assertCanAttachFile($file);
 
     // Upload a file.

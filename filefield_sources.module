@@ -598,17 +598,8 @@ function filefield_sources_save_file($filepath, $validators = [], $destination =
  */
 function filefield_sources_clean_filename($filepath, $extensions) {
   $filename = basename($filepath);
-
-  if (\Drupal::moduleHandler()->moduleExists('transliteration')) {
-    module_load_include('inc', 'transliteration');
-
-    $langcode = NULL;
-    if (!empty($_POST['language'])) {
-      $languages = language_list();
-      $langcode = isset($languages[$_POST['language']]) ? $_POST['language'] : NULL;
-    }
-    $filename = transliteration_clean_filename($filename, $langcode);
-  }
+  $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+  $filename = \Drupal::transliteration()->transliterate($filename, $language);
 
   // Because this transfer mechanism does not use file_save_upload(), we need
   // to manually munge the filename to prevent dangerous extensions.
