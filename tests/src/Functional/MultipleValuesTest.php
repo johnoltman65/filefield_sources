@@ -66,7 +66,7 @@ class MultipleValuesTest extends FileFieldSourcesTestBase {
     $this->temporaryFileEntity1 = $this->createTemporaryFileEntity();
     $this->temporaryFileEntity2 = $this->createTemporaryFileEntity();
 
-    $path = file_default_scheme() . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH . '/';
+    $path = \Drupal::config('system.file')->get('default_scheme') . '://' . FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH . '/';
     $this->temporaryFile = $this->createTemporaryFile($path);
 
     // Change allowed number of values.

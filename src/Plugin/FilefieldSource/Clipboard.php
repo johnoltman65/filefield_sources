@@ -2,7 +2,10 @@
 
 namespace Drupal\filefield_sources\Plugin\FilefieldSource;
 
+use Drupal\Core\File\FileSystem;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Element;
 use Drupal\filefield_sources\FilefieldSourceInterface;
 use Drupal\Core\Site\Settings;
 
@@ -26,21 +29,21 @@ class Clipboard implements FilefieldSourceInterface {
     if (isset($input['filefield_clipboard']['contents']) && strlen($input['filefield_clipboard']['contents']) > 0) {
       // Check that the destination is writable.
       $temporary_directory = 'temporary://';
-      if (!file_prepare_directory($temporary_directory, FILE_MODIFY_PERMISSIONS)) {
-        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'The directory %directory is not writable, because it does not have the correct permissions set.', ['%directory' => drupal_realpath($temporary_directory)]);
-        drupal_set_message(t('The file could not be transferred because the temporary directory is not writable.'), 'error');
+      if (!\Drupal::service('file_system')->prepareDirectory($temporary_directory, FileSystemInterface::MODIFY_PERMISSIONS)) {
+        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'The directory %directory is not writable, because it does not have the correct permissions set.', ['%directory' => \Drupal::service('file_system')->realpath($temporary_directory)]);
+        \Drupal::messenger()->addError(t('The file could not be transferred because the temporary directory is not writable.'), 'error');
         return;
       }
       // Check that the destination is writable.
       $directory = $element['#upload_location'];
-      $mode = Settings::get('file_chmod_directory', FILE_CHMOD_DIRECTORY);
+      $mode = Settings::get('file_chmod_directory', FileSystem::CHMOD_DIRECTORY);
 
       // This first chmod check is for other systems such as S3, which don't
       // work with file_prepare_directory().
-      if (!drupal_chmod($directory, $mode) && !file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
+      if (!\Drupal::service('file_system')->chmod($directory, $mode) && !\Drupal::service('file_system')->prepareDirectory($directory, FileSystemInterface::CREATE_DIRECTORY)) {
         $url = $input['filefield_clipboard']['filename'];
-        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'File %file could not be copied, because the destination directory %destination is not configured correctly.', ['%file' => $url, '%destination' => drupal_realpath($directory)]);
-        drupal_set_message(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', ['%file' => $url]), 'error');
+        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'File %file could not be copied, because the destination directory %destination is not configured correctly.', ['%file' => $url, '%destination' => \Drupal::service('file_system')->realpath($directory)]);
+        \Drupal::messenger()->addError(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', ['%file' => $url]), 'error');
         return;
       }
 
@@ -56,7 +59,7 @@ class Clipboard implements FilefieldSourceInterface {
       $filename = trim($input['filefield_clipboard']['filename']);
       $filename = preg_replace('/\.[a-z0-9]{3,4}$/', '', $filename);
       $filename = (empty($filename) ? 'paste_' . REQUEST_TIME : $filename) . '.' . $extension;
-      $filepath = file_create_filename($filename, $temporary_directory);
+      $filepath = \Drupal::service('file_system')->createFilename($filename, $temporary_directory);
 
       $copy_success = FALSE;
       if ($fp = @fopen($filepath, 'w')) {
@@ -140,8 +143,13 @@ class Clipboard implements FilefieldSourceInterface {
    */
   public static function element($variables) {
     $element = $variables['element'];
-
-    return '<div class="filefield-source filefield-source-clipboard clear-block">' . drupal_render_children($element) . '</div>';
+	$output = '';
+    foreach (Element::children($element) as $key) {
+      if (!empty($element[$key])) {
+        $output .= \Drupal::service('renderer')->render($element[$key]);
+      }
+    }
+    return '<div class="filefield-source filefield-source-clipboard clear-block">' . $output . '</div>';
   }
 
 }

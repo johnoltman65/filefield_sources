@@ -12,6 +12,9 @@ use Drupal\Core\Field\WidgetInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Render\Element;
 use Drupal\imce\Imce;
+use Drupal\file\Entity\File;
+Use \Drupal\Component\Render\FormattableMarkup;
+use Drupal\Core\File\FileSystemInterface;
 
 const FILEFIELD_SOURCE_ATTACH_DEFAULT_PATH = 'file_attach';
 const FILEFIELD_SOURCE_ATTACH_RELATIVE = 0;
@@ -33,7 +36,7 @@ const FILEFIELD_SOURCE_REFERENCE_SEARCH_ALL_YES = '1';
 function filefield_sources_element_info_alter(&$type) {
   if (isset($type['managed_file'])) {
     $type['managed_file']['#process'][] = 'filefield_sources_field_process';
-    $type['managed_file']['#pre_render'][] = 'filefield_sources_field_pre_render';
+    $type['managed_file']['#pre_render'][] = '\Drupal\filefield_sources\FilefieldSourcesPreRenderCallback::preRender';
     $type['managed_file']['#element_validate'][] = 'filefield_sources_field_validate';
     $type['managed_file']['#file_value_callbacks'][] = 'filefield_sources_field_value';
   }
@@ -265,21 +268,6 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
 }
 
 /**
- * A #pre_render function to hide sources if a file is currently uploaded.
- */
-function filefield_sources_field_pre_render($element) {
-  // If we already have a file, we don't want to show the upload controls.
-  if (!empty($element['#value']['fids'])) {
-    foreach (Element::children($element) as $key) {
-      if (!empty($element[$key]['#filefield_source'])) {
-        $element[$key]['#access'] = FALSE;
-      }
-    }
-  }
-  return $element;
-}
-
-/**
  * An #element_validate function to run source validations.
  */
 function filefield_sources_field_validate(&$element, FormStateInterface $form_state, &$complete_form) {
@@ -449,14 +437,14 @@ function filefield_sources_list($include_default = TRUE) {
  *
  * @see file_save_upload()
  */
-function filefield_sources_save_file($filepath, $validators = [], $destination = FALSE, $replace = FILE_EXISTS_RENAME) {
+function filefield_sources_save_file($filepath, $validators = [], $destination = FALSE, $replace = FileSystemInterface::EXISTS_RENAME) {
   $user = \Drupal::currentUser();
 
   // Begin building file object.
-  $file = entity_create('file', [
+  $file = File::create([
     'uri' => $filepath,
     'uid' => $user->id(),
-    'status' => FILE_EXISTS_RENAME,
+    'status' => FileSystemInterface::EXISTS_RENAME,
   ]);
   $file->setFilename(trim(basename($filepath), '.'));
   $file->setMimeType(\Drupal::service('file.mime_type.guesser')->guess($file->getFilename()));
@@ -501,7 +489,7 @@ function filefield_sources_save_file($filepath, $validators = [], $destination =
     // to add it here or else the file upload will fail.
     if (!empty($extensions)) {
       $validators['file_validate_extensions'][0] .= ' txt';
-      drupal_set_message(t('For security reasons, your upload has been renamed to %filename.', ['%filename' => $file->getFilename()]));
+      \Drupal::messenger()->addStatus(t('For security reasons, your upload has been renamed to %filename.', ['%filename' => $file->getFilename()]));
     }
   }
 
@@ -511,9 +499,9 @@ function filefield_sources_save_file($filepath, $validators = [], $destination =
   }
 
   // Assert that the destination contains a valid stream.
-  $destination_scheme = file_uri_scheme($destination);
-  if (!$destination_scheme || !file_stream_wrapper_valid_scheme($destination_scheme)) {
-    drupal_set_message(t('The file could not be uploaded, because the destination %destination is invalid.', ['%destination' => $destination]), 'error');
+  $destination_scheme = \Drupal::service('stream_wrapper_manager')->getScheme($destination);
+  if (!$destination_scheme || !\Drupal::service('stream_wrapper_manager')->isValidScheme($destination_scheme)) {
+    \Drupal::messenger()->addError(t('The file could not be uploaded, because the destination %destination is invalid.', ['%destination' => $destination]), 'error');
     return FALSE;
   }
 
@@ -523,20 +511,20 @@ function filefield_sources_save_file($filepath, $validators = [], $destination =
   }
 
   // Ensure the destination is writable.
-  file_prepare_directory($destination, FILE_CREATE_DIRECTORY);
+  \Drupal::service('file_system')->prepareDirectory($destination, FileSystemInterface::CREATE_DIRECTORY);
 
   // Check if this is actually the same file being "attached" to a file record.
   // If so, it acts as a file replace, except no file is actually moved.
   $reuse_file = ($destination . $file->getFilename() === $file->getFileUri());
   if ($reuse_file) {
-    $replace = FILE_EXISTS_REPLACE;
+    $replace = FileSystemInterface::EXISTS_REPLACE;
   }
 
-  $file->destination = file_destination($destination . $file->getFilename(), $replace);
+  $file->destination = \Drupal::service('file_system')->getDestinationFilename($destination . $file->getFilename(), $replace);
   // If file_destination() returns FALSE then $replace == FILE_EXISTS_ERROR and
   // there's an existing file so we need to bail.
   if ($file->destination === FALSE) {
-    drupal_set_message(t('The file %source could not be uploaded because a file by that name already exists in the destination %directory.', ['%source' => $file->getFilename(), '%directory' => $destination]), 'error');
+    \Drupal::messenger()->addError(t('The file %source could not be uploaded because a file by that name already exists in the destination %directory.', ['%source' => $file->getFilename(), '%directory' => $destination]), 'error');
     return FALSE;
   }
 
@@ -555,7 +543,7 @@ function filefield_sources_save_file($filepath, $validators = [], $destination =
     else {
       $message .= ' ' . array_pop($errors);
     }
-    drupal_set_message($message, 'error');
+    \Drupal::messenger()->addError($message, 'error');
     return FALSE;
   }
 
@@ -563,18 +551,18 @@ function filefield_sources_save_file($filepath, $validators = [], $destination =
   // directory. This overcomes open_basedir restrictions for future file
   // operations.
   $file->setFileUri($file->destination);
-  if (!$reuse_file && !file_unmanaged_copy($filepath, $file->getFileUri(), $replace)) {
-    drupal_set_message(t('File upload error. Could not move uploaded file.'), 'error');
+  if (!$reuse_file && !\Drupal::service('file_system')->copy($filepath, $file->getFileUri(), $replace)) {
+    \Drupal::messenger()->addError(t('File upload error. Could not move uploaded file.'), 'error');
     \Drupal::logger('filefield_sources')->log(E_NOTICE, 'Upload error. Could not move uploaded file %file to destination %destination.', ['%file' => $file->getFilename(), '%destination' => $file->getFileUri()]);
     return FALSE;
   }
 
   // Set the permissions on the new file.
-  drupal_chmod($file->getFileUri());
+  \Drupal::service('file_system')->chmod($file->getFileUri());
 
   // If we are replacing an existing file re-use its database record.
-  if ($replace == FILE_EXISTS_REPLACE) {
-    $existing_files = file_load_multiple([], ['uri' => $file->getFileUri()]);
+  if ($replace == FileSystemInterface::EXISTS_REPLACE) {
+    $existing_files = File::loadMultiple([], ['uri' => $file->getFileUri()]);
     if (count($existing_files)) {
       $existing = reset($existing_files);
       $file->setOriginalId($existing->id());
@@ -608,7 +596,7 @@ function filefield_sources_clean_filename($filepath, $extensions) {
     $extensions = 'jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp';
   }
   $filename = file_munge_filename($filename, $extensions);
-  $directory = drupal_dirname($filepath);
+  $directory = \Drupal::service('file_system')->dirname($filepath);
   return ($directory != '.' ? $directory . '/' : '') . $filename;
 }
 
@@ -751,7 +739,7 @@ if (!function_exists('module_get_weight')) {
     if ($weight !== NULL) {
       return (int) $weight;
     }
-    throw new InvalidArgumentException(format_string('The module %module is not installed.', ['%module' => $module]));
+    throw new InvalidArgumentException(new FormattableMarkup('The module %module is not installed.', ['%module' => $module]));
   }
 
 }

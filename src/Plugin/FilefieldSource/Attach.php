@@ -6,6 +6,8 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\filefield_sources\FilefieldSourceInterface;
 use Drupal\Core\Field\WidgetInterface;
 use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\File\FileSystem;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Template\Attribute;
 
@@ -27,21 +29,21 @@ class Attach implements FilefieldSourceInterface {
    */
   public static function value(array &$element, &$input, FormStateInterface $form_state) {
     if (!empty($input['filefield_attach']['filename'])) {
-      $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
+      $instance = \Drupal::entityTypeManager()->getStorage('field_config')->load($element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
       $filepath = $input['filefield_attach']['filename'];
 
       // Check that the destination is writable.
       $directory = $element['#upload_location'];
-      $mode = Settings::get('file_chmod_directory', FILE_CHMOD_DIRECTORY);
+      $mode = Settings::get('file_chmod_directory', FileSystem::CHMOD_DIRECTORY);
 
       // This first chmod check is for other systems such as S3, which don't
       // work with file_prepare_directory().
-      if (!drupal_chmod($directory, $mode) && !file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
+      if (!\Drupal::service('file_system')->chmod($directory, $mode) && !\Drupal::service('file_system')->prepareDirectory($directory, FileSystemInterface::CREATE_DIRECTORY)) {
         \Drupal::logger('filefield_sources')->log(E_NOTICE, 'File %file could not be copied, because the destination directory %destination is not configured correctly.', [
           '%file' => $filepath,
-          '%destination' => drupal_realpath($directory),
+          '%destination' => \Drupal::service('file_system')->realpath($directory),
         ]);
-        drupal_set_message(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', ['%file' => $filepath]), 'error');
+        \Drupal::messenger()->addError(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', ['%file' => $filepath]), 'error');
         return;
       }
 
@@ -84,7 +86,7 @@ class Attach implements FilefieldSourceInterface {
   public static function process(array &$element, FormStateInterface $form_state, array &$complete_form) {
     $settings = $element['#filefield_sources_settings']['source_attach'];
     $field_name = $element['#field_name'];
-    $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $field_name);
+    $instance = \Drupal::entityTypeManager()->getStorage('field_config')->load($element['#entity_type'] . '.' . $element['#bundle'] . '.' . $field_name);
 
     $element['filefield_attach'] = [
       '#weight' => 100.5,
@@ -192,10 +194,10 @@ class Attach implements FilefieldSourceInterface {
       $output = '<select name="' . $element['filename']['#name'] . '' . ($multiple ? '[]' : '') . '"' . ($multiple ? ' multiple="multiple" ' : '') . new Attribute($element['filename']['#attributes']) . ' id="' . $element['filename']['#id'] . '" ' . $size . '>' . $option_output . '</select>';
     }
 
-    $output .= drupal_render($element['attach']);
+    $output .= \Drupal::service('renderer')->render($element['attach']);
     $element['#children'] = $output;
     $element['#theme_wrappers'] = ['form_element'];
-    return '<div class="filefield-source filefield-source-attach clear-block">' . drupal_render($element) . '</div>';
+    return '<div class="filefield-source filefield-source-attach clear-block">' . \Drupal::service('renderer')->render($element) . '</div>';
   }
 
   /**
@@ -222,7 +224,7 @@ class Attach implements FilefieldSourceInterface {
       $path = $token->replace($path, ['user' => $account]);
     }
 
-    return $absolute ? $path : file_default_scheme() . '://' . $path;
+    return $absolute ? $path : \Drupal::config('system.file')->get('default_scheme') . '://' . $path;
   }
 
   /**
@@ -237,14 +239,14 @@ class Attach implements FilefieldSourceInterface {
    *   List of options.
    */
   protected static function getAttachOptions($path, $extensions = FALSE) {
-    if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
-      drupal_set_message(t('Specified file attach path %path must exist or be writable.', ['%path' => $path]), 'error');
+    if (!\Drupal::service('file_system')->prepareDirectory($path, FileSystemInterface::CREATE_DIRECTORY)) {
+      \Drupal::messenger()->addError(t('Specified file attach path %path must exist or be writable.', ['%path' => $path]), 'error');
       return FALSE;
     }
 
     $options = [];
     $pattern = !empty($extensions) ? '/\.(' . strtr($extensions, ' ', '|') . ')$/' : '/.*/';
-    $files = file_scan_directory($path, $pattern);
+    $files = \Drupal::service('file_system')->scanDirectory($path, $pattern);
 
     if (count($files)) {
       $options = ['' => t('-- Select file --')];
@@ -298,7 +300,7 @@ class Attach implements FilefieldSourceInterface {
         FILEFIELD_SOURCE_ATTACH_ABSOLUTE => t('Absolute server path'),
       ],
       '#default_value' => $settings['source_attach']['absolute'],
-      '#description' => t('The <em>File attach path</em> may be with the files directory (%file_directory) or from the root of your server. If an absolute path is used and it does not start with a "/" your path will be relative to your site directory: %realpath.', ['%file_directory' => drupal_realpath(file_default_scheme() . '://'), '%realpath' => realpath('./')]),
+      '#description' => t('The <em>File attach path</em> may be with the files directory (%file_directory) or from the root of your server. If an absolute path is used and it does not start with a "/" your path will be relative to your site directory: %realpath.', ['%file_directory' => \Drupal::service('file_system')->realpath(\Drupal::config('system.file')->get('default_scheme') . '://'), '%realpath' => realpath('./')]),
     ];
     $return['source_attach']['attach_mode'] = [
       '#type' => 'radios',
@@ -342,7 +344,7 @@ class Attach implements FilefieldSourceInterface {
       $filepath = static::getDirectory($input['source_attach']);
 
       // Check that the directory exists and is writable.
-      if (!file_prepare_directory($filepath, FILE_CREATE_DIRECTORY)) {
+      if (!\Drupal::service('file_system')->prepareDirectory($filepath, FileSystemInterface::CREATE_DIRECTORY)) {
         $form_state->setError($element['path'], t('Specified file attach path %path must exist or be writable.', ['%path' => $filepath]));
       }
     }

@@ -28,10 +28,11 @@ class ImceScanner {
    */
   public function customScanFull($dirname, $options) {
     // Get a list of files in the database for this directory.
+    $connection = \Drupal::service('database');
     $scheme = $this->context['scheme'];
     $sql_uri_name = $dirname == '.' ? $scheme . '://' : $dirname . '/';
 
-    $result = db_select('file_managed', 'f')
+    $result = $connection->select('file_managed', 'f')
       ->fields('f', ['uri'])
       ->condition('f.uri', $sql_uri_name . '%', 'LIKE')
       ->condition('f.uri', $sql_uri_name . '_%/%', 'NOT LIKE')
@@ -69,8 +70,9 @@ class ImceScanner {
 
     $entity_type = $this->context['entity_type'];
     $field_name = $this->context['field_name'];
-    $field_storage = entity_load('field_storage_config', $entity_type . '.' . $field_name);
-    $entity_manager = \Drupal::entityManager();
+    $field_storage = \Drupal::entityTypeManager()->getStorage('field_storage_config')->load($entity_type . '.' . $field_name);
+
+    $entity_manager = \Drupal::entityTypeManager();
     if ($entity_manager->hasDefinition($entity_type)) {
       $storage = $entity_manager->getStorage($entity_type);
       $table_mapping = $storage->getTableMapping();
@@ -78,7 +80,8 @@ class ImceScanner {
       $field_column_name = $table_mapping->getFieldColumnName($field_storage, 'target_id');
 
       $sql_uri = $field_uri . ($is_root ? '' : '/');
-      $query = db_select($field_table, 'cf');
+      $connection = \Drupal::service('database');
+      $query = $connection->select($field_table, 'cf');
       $query->innerJoin('file_managed', 'f', 'f.fid = cf.' . $field_column_name);
       $result = $query->fields('f')
         ->condition('f.status', 1)

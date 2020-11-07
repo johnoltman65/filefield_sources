@@ -10,6 +10,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Site\Settings;
 use Drupal\Component\Utility\Unicode;
+use Drupal\Core\File\FileSystem;
+use Drupal\Core\File\FileSystemInterface;
 
 /**
  * A FileField source plugin to allow downloading a file from a remote server.
@@ -28,26 +30,26 @@ class Remote implements FilefieldSourceInterface {
    */
   public static function value(array &$element, &$input, FormStateInterface $form_state) {
     if (isset($input['filefield_remote']['url']) && strlen($input['filefield_remote']['url']) > 0 && UrlHelper::isValid($input['filefield_remote']['url']) && $input['filefield_remote']['url'] != FILEFIELD_SOURCE_REMOTE_HINT_TEXT) {
-      $field = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
+      $field = \Drupal::entityTypeManager()->getStorage('field_config')->load($element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
       $url = $input['filefield_remote']['url'];
 
       // Check that the destination is writable.
       $temporary_directory = 'temporary://';
-      if (!file_prepare_directory($temporary_directory, FILE_MODIFY_PERMISSIONS)) {
-        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'The directory %directory is not writable, because it does not have the correct permissions set.', ['%directory' => drupal_realpath($temporary_directory)]);
-        drupal_set_message(t('The file could not be transferred because the temporary directory is not writable.'), 'error');
+      if (!\Drupal::service('file_system')->prepareDirectory($temporary_directory, FileSystemInterface::MODIFY_PERMISSIONS)) {
+        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'The directory %directory is not writable, because it does not have the correct permissions set.', ['%directory' => \Drupal::service('file_system')->realpath($temporary_directory)]);
+        \Drupal::messenger()->addError(t('The file could not be transferred because the temporary directory is not writable.'), 'error');
         return;
       }
 
       // Check that the destination is writable.
       $directory = $element['#upload_location'];
-      $mode = Settings::get('file_chmod_directory', FILE_CHMOD_DIRECTORY);
+      $mode = Settings::get('file_chmod_directory', FileSystem::CHMOD_DIRECTORY);
 
       // This first chmod check is for other systems such as S3, which don't
       // work with file_prepare_directory().
-      if (!drupal_chmod($directory, $mode) && !file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
-        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'File %file could not be copied, because the destination directory %destination is not configured correctly.', ['%file' => $url, '%destination' => drupal_realpath($directory)]);
-        drupal_set_message(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', ['%file' => $url]), 'error');
+      if (!\Drupal::service('file_system')->chmod($directory, $mode) && !\Drupal::service('file_system')->prepareDirectory($directory, FileSystemInterface::CREATE_DIRECTORY)) {
+        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'File %file could not be copied, because the destination directory %destination is not configured correctly.', ['%file' => $url, '%destination' => \Drupal::service('file_system')->realpath($directory)]);
+        \Drupal::messenger()->addError(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', ['%file' => $url]), 'error');
         return;
       }
 
@@ -114,7 +116,7 @@ class Remote implements FilefieldSourceInterface {
       }
 
       $filename = filefield_sources_clean_filename($filename, $field->getSetting('file_extensions'));
-      $filepath = file_create_filename($filename, $temporary_directory);
+      $filepath = \Drupal::service('file_system')->createFilename($filename, $temporary_directory);
 
       if (empty($pathinfo['extension'])) {
         $form_state->setError($element, t('The remote URL must be a file and have an extension.'));
@@ -259,7 +261,7 @@ class Remote implements FilefieldSourceInterface {
    */
   protected static function mimeExtension($curl_mime_type = NULL) {
     static $extension = NULL;
-    $mimetype = Unicode::strtolower($curl_mime_type);
+    $mimetype = mb_strtolower($curl_mime_type);
     $result = \Drupal::service('file.mime_type.guesser.extension')->convertMimeTypeToMostCommonExtension($mimetype);
     if ($result) {
       $extension = $result;
@@ -334,8 +336,8 @@ class Remote implements FilefieldSourceInterface {
   public static function element($variables) {
     $element = $variables['element'];
 
-    $element['url']['#field_suffix'] = drupal_render($element['transfer']);
-    return '<div class="filefield-source filefield-source-remote clear-block">' . drupal_render($element['url']) . '</div>';
+    $element['url']['#field_suffix'] = \Drupal::service('renderer')->render($element['transfer']);
+    return '<div class="filefield-source filefield-source-remote clear-block">' . \Drupal::service('renderer')->render($element['url']) . '</div>';
   }
 
   /**
@@ -388,7 +390,7 @@ class Remote implements FilefieldSourceInterface {
 
     // Add settings to the FileField widget form.
     if (!filefield_sources_curl_enabled()) {
-      drupal_set_message(t('<strong>Filefield sources:</strong> remote plugin will be disabled without php-curl extension.'), 'warning');
+      \Drupal::messenger()->addError(t('<strong>Filefield sources:</strong> remote plugin will be disabled without php-curl extension.'), 'warning');
     }
 
     return $return;

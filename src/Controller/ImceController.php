@@ -7,18 +7,30 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\imce\Imce;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Drupal\Core\Render\BubbleableMetadata;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Controller routines for imce routes.
  */
 class ImceController extends ControllerBase {
+  /**
+   * @var Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  public static function create(ContainerInterface $container) {
+    $instance = parent::create($container);
+    $instance->entityTypeManager = $container->get('entity_type.manager');
+    // $instance->connection = $container->get('');
+    return $instance;
+  }
 
   /**
    * Outputs the IMCE browser for FileField.
    */
   public function page($entity_type, $bundle_name, $field_name, Request $request) {
     // Check access.
-    if (!\Drupal::moduleHandler()->moduleExists('imce') || !Imce::access() || !$instance = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name)) {
+    if (!\Drupal::moduleHandler()->moduleExists('imce') || !Imce::access() || !$instance = $this->entityTypeManager->getStorage('field_config')->load($entity_type . '.' . $bundle_name . '.' . $field_name)) {
       throw new AccessDeniedHttpException();
     }
 
@@ -28,7 +40,7 @@ class ImceController extends ControllerBase {
     // Override scanner.
     if (!empty($imceFM)) {
       $scanner = \Drupal::service('filefield_sources.imce_scanner');
-      $widget = entity_get_form_display($entity_type, $bundle_name, 'default')->getComponent($field_name);
+      $widget = $this->entityTypeManager->getStorage('entity_form_display')->load($entity_type . '.' . $bundle_name . '.' . 'default');
       // Full mode.
       if (!empty($widget['third_party_settings']['filefield_sources']['filefield_sources']['source_imce']['imce_mode'])) {
         $imceFM->setConf('scanner', [$scanner, 'customScanFull']);

@@ -3,14 +3,21 @@
 namespace Drupal\Tests\filefield_sources\Functional;
 
 use Drupal\Core\File\FileSystem;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Tests\file\Functional\FileFieldTestBase;
 use Drupal\field\Entity\FieldConfig;
+use Drupal\file\Entity\File;
 use Drupal\user\Entity\Role;
 
 /**
  * Base class for File Field Sources test cases.
  */
 abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
 
   /**
    * Modules to enable.
@@ -156,8 +163,8 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
 
     // Add a filesize property to files as would be read by file_load().
     $file->filesize = filesize($file->uri);
-
-    return entity_create('file', (array) $file);
+    // Begin building file object.
+    return File::create((array) $file);
   }
 
   /**
@@ -171,13 +178,13 @@ abstract class FileFieldSourcesTestBase extends FileFieldTestBase {
       $filename = $this->randomMachineName() . '.txt';
     }
     if (empty($path)) {
-      $path = file_default_scheme() . '://';
+      $path = \Drupal::config('system.file')->get('default_scheme') . '://';
     }
     $uri = $path . $filename;
     $contents = $this->randomString();
 
     // Change mode so that we can create files.
-    file_prepare_directory($path, FILE_CREATE_DIRECTORY);
+    \Drupal::service('file_system')->prepareDirectory($path, FileSystemInterface::CREATE_DIRECTORY);
     \Drupal::getContainer()->get('file_system')->chmod($path, FileSystem::CHMOD_DIRECTORY);
 
     file_put_contents($uri, $contents);

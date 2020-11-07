@@ -4,6 +4,7 @@ namespace Drupal\Tests\filefield_sources\Functional;
 
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Tests\BrowserTestBase;
 
 /**
  * Tests empty values.

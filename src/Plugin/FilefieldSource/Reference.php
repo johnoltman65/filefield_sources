@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Component\Utility\Html;
+use Drupal\file\Entity\File;
 
 /**
  * A FileField source plugin to allow referencing of existing files.
@@ -32,7 +33,7 @@ class Reference implements FilefieldSourceInterface {
       $matches = [];
       if (preg_match('/\[fid:(\d+)\]/', $input['filefield_reference']['autocomplete'], $matches)) {
         $fid = $matches[1];
-        if ($file = file_load($fid)) {
+        if ($file = File::load($fid)) {
 
           // Remove file size restrictions, since the file already exists on
           // disk.
@@ -118,8 +119,8 @@ class Reference implements FilefieldSourceInterface {
   public static function element($variables) {
     $element = $variables['element'];
 
-    $element['autocomplete']['#field_suffix'] = drupal_render($element['select']);
-    return '<div class="filefield-source filefield-source-reference clear-block">' . drupal_render($element['autocomplete']) . '</div>';
+    $element['autocomplete']['#field_suffix'] = \Drupal::service('renderer')->render($element['select']);
+    return '<div class="filefield-source filefield-source-reference clear-block">' . \Drupal::service('renderer')->render($element['autocomplete']) . '</div>';
   }
 
   /**
@@ -127,19 +128,19 @@ class Reference implements FilefieldSourceInterface {
    */
   public static function autocomplete(Request $request, $entity_type, $bundle_name, $field_name) {
     $matches = [];
-    $string = Unicode::strtolower($request->query->get('q'));
+    $string = mb_strtolower($request->query->get('q'));
 
     if (isset($string)) {
-      $widget = entity_get_form_display($entity_type, $bundle_name, 'default')->getComponent($field_name);
+      $widget = \Drupal::service('entity_display.repository')->getFormDisplay($entity_type, $bundle_name, 'default')->getComponent($field_name);
       if ($widget) {
         // // If we are looking at a single field, cache its settings, in case we want to search all fields.
         $setting_autocomplete = $widget['third_party_settings']['filefield_sources']['filefield_sources']['source_reference']['autocomplete'];
         $setting_search_all_fields = $widget['third_party_settings']['filefield_sources']['filefield_sources']['source_reference']['search_all_fields'];
       }
 
-      $field_definition = entity_load('field_config', $entity_type . '.' . $bundle_name . '.' . $field_name);
+      $field_definition = \Drupal::entityTypeManager()->getStorage('field_config')->load($entity_type . '.' . $bundle_name . '.' . $field_name);
       if (!isset($field_definition) || $setting_search_all_fields) {
-        $field_definitions = \Drupal::entityManager()->getStorage('field_config')->loadByProperties(['type' => ['file', 'image']]);
+        $field_definitions = \Drupal::entityTypeManager()->getStorage('field_config')->loadByProperties(['type' => ['file', 'image']]);
       }
       else {
         $field_definitions = [$field_definition];

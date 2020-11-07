@@ -179,7 +179,7 @@ class AttachSourceTest extends FileFieldSourcesTestBase {
    * Calculate custom absolute path.
    */
   public function getCustomAttachPath() {
-    $path = drupal_realpath($this->getFieldSetting('uri_scheme') . '://');
+    $path = \Drupal::service('file_system')->realpath($this->getFieldSetting('uri_scheme') . '://');
     $path = str_replace(realpath('./'), '', $path);
     $path = ltrim($path, '/');
     $path = $path . '/custom_file_attach/';

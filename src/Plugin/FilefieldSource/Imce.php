@@ -3,9 +3,13 @@
 namespace Drupal\filefield_sources\Plugin\FilefieldSource;
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Security\TrustedCallbackInterface;
 use Drupal\filefield_sources\FilefieldSourceInterface;
 use Symfony\Component\Routing\Route;
 use Drupal\Core\Field\WidgetInterface;
+use Drupal\Core\Render\Element;
+use Drupal\Core\Url;
+use Drupal\file\Entity\File;
 
 /**
  * A FileField source plugin to allow referencing of files from IMCE.
@@ -18,14 +22,14 @@ use Drupal\Core\Field\WidgetInterface;
  *   weight = -1
  * )
  */
-class Imce implements FilefieldSourceInterface {
+class Imce implements FilefieldSourceInterface, TrustedCallbackInterface {
 
   /**
    * {@inheritdoc}
    */
   public static function value(array &$element, &$input, FormStateInterface $form_state) {
     if (isset($input['filefield_imce']['imce_paths']) && $input['filefield_imce']['imce_paths'] != '') {
-      $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
+      $instance = \Drupal::entityTypeManager()->getStorage('field_config')->load($element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
       $field_settings = $instance->getSettings();
       $scheme = $field_settings['uri_scheme'];
       $imce_paths = explode(':', $input['filefield_imce']['imce_paths']);
@@ -40,13 +44,14 @@ class Imce implements FilefieldSourceInterface {
       }
 
       // Resolve the file path to an FID.
-      $fids = db_select('file_managed', 'f')
+      $connection = \Drupal::service('database');
+      $fids = $connection->select('file_managed', 'f')
         ->condition('uri', $uris, 'IN')
         ->fields('f', ['fid'])
         ->execute()
         ->fetchCol();
       if ($fids) {
-        $files = file_load_multiple($fids);
+        $files = File::loadMultiple($fids);
         foreach ($files as $file) {
           if (filefield_sources_element_validate($element, $file, $form_state)) {
             if (!in_array($file->id(), $input['fids'])) {
@@ -67,7 +72,7 @@ class Imce implements FilefieldSourceInterface {
    * {@inheritdoc}
    */
   public static function process(array &$element, FormStateInterface $form_state, array &$complete_form) {
-    $instance = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
+    $instance = \Drupal::entityTypeManager()->getStorage('field_config')->load($element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
 
     $element['filefield_imce'] = [
       '#weight' => 100.5,
@@ -78,7 +83,7 @@ class Imce implements FilefieldSourceInterface {
       '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
     ];
 
-    $imce_url = \Drupal::url('filefield_sources.imce', [
+    $imce_url = Url::fromRoute('filefield_sources.imce', [
       'entity_type' => $element['#entity_type'],
       'bundle_name' => $element['#bundle'],
       'field_name' => $element['#field_name'],
@@ -88,7 +93,7 @@ class Imce implements FilefieldSourceInterface {
         'sendto' => 'imceFileField.sendto',
         'fieldId' => $element['#attributes']['data-drupal-selector'] . '-filefield-imce',
       ],
-    ]);
+    ])->toString();
     $element['filefield_imce']['browse'] = [
       '#type' => 'markup',
       '#markup' => '<span>' . t('No file selected') . '</span> (<a class="filefield-sources-imce-browse" href="' . $imce_url . '">' . t('browse') . '</a>)',
@@ -136,8 +141,12 @@ class Imce implements FilefieldSourceInterface {
    */
   public static function element($variables) {
     $element = $variables['element'];
-
-    $output = drupal_render_children($element);
+    $output = '';
+    foreach (Element::children($element) as $key) {
+      if (!empty($element[$key])) {
+        $output .= \Drupal::service('renderer')->render($element[$key]);
+      }
+    }
     return '<div class="filefield-source filefield-source-imce clear-block">' . $output . '</div>';
   }
 
@@ -206,6 +215,13 @@ class Imce implements FilefieldSourceInterface {
       $element['filefield_imce']['imce_button']['#access'] = FALSE;
     }
     return $element;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function trustedCallbacks() {
+    return ['preRenderWidget'];
   }
 
 }
