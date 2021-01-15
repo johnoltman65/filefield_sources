@@ -3,6 +3,7 @@
 namespace Drupal\filefield_sources\Access;
 
 use Drupal\Core\Routing\Access\AccessInterface as RoutingAccessInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -15,11 +16,14 @@ class FieldAccessCheck implements RoutingAccessInterface {
    */
   protected $entityTypeManager;
 
-  public static function create(ContainerInterface $container) {
-    $instance = parent::create($container);
-    $instance->entityTypeManager = $container->get('entity_type.manager');
-    // $instance->connection = $container->get('');
-    return $instance;
+  /**
+   * Constructs a FieldAccessCheck object.
+   *
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
+   */
+  public function __construct(EntityTypeManagerInterface $entity_type_manager) {
+    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
@@ -38,7 +42,7 @@ class FieldAccessCheck implements RoutingAccessInterface {
    *   A \Drupal\Core\Access\AccessInterface constant value.
    */
   public function access($entity_type, $bundle_name, $field_name, AccountInterface $account) {
-    $field = \Drupal::entityTypeManager()->getStorage('field_config')->load($entity_type . '.' . $bundle_name . '.' . $field_name);
+    $field = $this->entityTypeManager->getStorage('field_config')->load($entity_type . '.' . $bundle_name . '.' . $field_name);
     return $field->access('edit', $account, TRUE);
   }
 

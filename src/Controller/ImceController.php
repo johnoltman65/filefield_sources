@@ -19,7 +19,7 @@ class ImceController extends ControllerBase {
   protected $entityTypeManager;
 
   public static function create(ContainerInterface $container) {
-    $instance = parent::create($container);
+    $instance = new static();
     $instance->entityTypeManager = $container->get('entity_type.manager');
     // $instance->connection = $container->get('');
     return $instance;
