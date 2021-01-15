@@ -31,6 +31,6 @@
         "drupal/core": "^8 || ^9"
     },
     "require-dev": {
-        "drupal/imce": "^1.7"
+        "drupal/imce": "^2.3"
     }
 }
