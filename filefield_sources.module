@@ -50,12 +50,10 @@ function filefield_sources_theme() {
 
   $theme['filefield_sources_element'] = [
     'render element' => 'element',
-    'function' => 'theme_filefield_sources_element',
   ];
 
   $theme['filefield_sources_list'] = [
-    'variables' => ['element' => NULL, 'sources' => NULL],
-    'function' => 'theme_filefield_sources_list',
+    'variables' => ['id' => NULL, 'sources' => NULL],
   ];
 
   return $theme;
@@ -257,7 +255,7 @@ function filefield_sources_field_process(&$element, FormStateInterface $form_sta
     if (count($enabled_sources) > 1) {
       $element['filefield_sources_list'] = [
         '#theme' => 'filefield_sources_list',
-        '#element' => $element,
+        '#id' => $element['#id'],
         '#sources' => $sources,
         '#weight' => -20,
       ];
@@ -603,7 +601,7 @@ function filefield_sources_clean_filename($filepath, $extensions) {
 /**
  * Theme the display of the source element.
  */
-function theme_filefield_sources_element($variables) {
+function template_preprocess_filefield_sources_element(&$variables) {
   $element = $variables['element'];
   $source_id = $element['#source_id'];
   $method = isset($element['#method']) ? $element['#method'] : 'element';
@@ -614,26 +612,11 @@ function theme_filefield_sources_element($variables) {
     $callback = [$sources[$source_id]['class'], $method];
     if (is_callable($callback)) {
       $variables = array_merge($variables, $extra_variables);
-      return call_user_func_array($callback, [$variables]);
+      $variables['rendered_element'] = call_user_func_array($callback, [$variables]);
     }
   }
 
   return '';
-}
-
-/**
- * Theme the display of the sources list.
- */
-function theme_filefield_sources_list($variables) {
-  $element = $variables['element'];
-  $sources = $variables['sources'];
-
-  $links = [];
-
-  foreach ($sources as $name => $source) {
-    $links[] = '<a href="#" onclick="return false;" title="' . $source['description'] . '" id="' . $element['#id'] . '-' . $name . '-source" class="filefield-source filefield-source-' . $name . '">' . $source['label'] . '</a>';
-  }
-  return '<div class="filefield-sources-list">' . implode(' | ', $links) . '</div>';
 }
 
 /**
