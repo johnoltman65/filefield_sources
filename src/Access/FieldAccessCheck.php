@@ -2,25 +2,30 @@
 
 namespace Drupal\filefield_sources\Access;
 
-use Drupal\Core\Routing\Access\AccessInterface as RoutingAccessInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Routing\Access\AccessInterface;
 use Drupal\Core\Session\AccountInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Access check for file field source routes.
+ *
+ * NOTE: AccessInterface has no methods declared, so it might be removed in the
+ * future.
  */
-class FieldAccessCheck implements RoutingAccessInterface {
+class FieldAccessCheck implements AccessInterface {
+
   /**
-   * @var Drupal\Core\Entity\EntityTypeManagerInterface
+   * The entity type manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
 
   /**
-   * Constructs a FieldAccessCheck object.
+   * Constructs an EntityCreateAccessCheck object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
+   *   The entity type manager service.
    */
   public function __construct(EntityTypeManagerInterface $entity_type_manager) {
     $this->entityTypeManager = $entity_type_manager;
@@ -38,12 +43,12 @@ class FieldAccessCheck implements RoutingAccessInterface {
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The currently logged in account.
    *
-   * @return string
-   *   A \Drupal\Core\Access\AccessInterface constant value.
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   AccessResult object
    */
-  public function access($entity_type, $bundle_name, $field_name, AccountInterface $account) {
+  public function access(string $entity_type, string $bundle_name, string $field_name, AccountInterface $account) {
     $field = $this->entityTypeManager->getStorage('field_config')->load($entity_type . '.' . $bundle_name . '.' . $field_name);
-    return $field->access('edit', $account, TRUE);
+    return $this->entityTypeManager->getAccessControlHandler($entity_type)->fieldAccess('edit', $field, $account, NULL, TRUE);
   }
 
 }
