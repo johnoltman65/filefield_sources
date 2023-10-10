@@ -1,5 +1,5 @@
 <?php
-// @codingStandardsIgnoreFile
+// phpcs:ignoreFile
 
 /**
  * This file was generated via php core/scripts/generate-proxy-class.php 'Drupal\filefield_sources\File\MimeType\ExtensionMimeTypeGuesser' "modules/contrib/filefield_sources/src".
@@ -12,7 +12,7 @@ namespace Drupal\filefield_sources\ProxyClass\File\MimeType {
      *
      * @see \Drupal\Component\ProxyBuilder
      */
-    class ExtensionMimeTypeGuesser implements \Symfony\Component\HttpFoundation\File\MimeType\MimeTypeGuesserInterface
+    class ExtensionMimeTypeGuesser implements \Symfony\Component\Mime\MimeTypeGuesserInterface
     {
 
         use \Drupal\Core\DependencyInjection\DependencySerializationTrait;
@@ -86,17 +86,25 @@ namespace Drupal\filefield_sources\ProxyClass\File\MimeType {
         /**
          * {@inheritdoc}
          */
-        public function guess($path)
+        public function guessMimeType($path): ?string
         {
-            return $this->lazyLoadItself()->guess($path);
+            return $this->lazyLoadItself()->guessMimeType($path);
         }
 
         /**
          * {@inheritdoc}
          */
-        public function setMapping(array $mapping = NULL)
+        public function setMapping(?array $mapping = NULL)
         {
             return $this->lazyLoadItself()->setMapping($mapping);
+        }
+
+        /**
+         * {@inheritdoc}
+         */
+        public function isGuesserSupported(): bool
+        {
+            return $this->lazyLoadItself()->isGuesserSupported();
         }
 
     }

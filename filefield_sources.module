@@ -10,6 +10,7 @@ use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Field\WidgetInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\File\Event\FileUploadSanitizeNameEvent;
 use Drupal\Core\Render\Element;
 use Drupal\imce\Imce;
 use Drupal\file\Entity\File;
@@ -91,11 +92,11 @@ function filefield_sources_field_widget_settings_summary_alter(&$summary, $conte
 }
 
 /**
- * Implements hook_field_widget_form_alter().
+ * Implements hook_field_widget_single_element_form_alter().
  *
  * Add file field sources widget's settings to element.
  */
-function filefield_sources_field_widget_form_alter(&$element, FormStateInterface $form_state, $context) {
+function filefield_sources_field_widget_single_element_form_alter(array &$element, \Drupal\Core\Form\FormStateInterface $form_state, array $context) {
   $plugin = $context['widget'];
   if (in_array($plugin->getPluginId(), \Drupal::moduleHandler()->invokeAll('filefield_sources_widgets'))) {
     $element['#filefield_sources_settings'] = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources');
@@ -472,7 +473,9 @@ function filefield_sources_save_file($filepath, $validators = [], $destination =
   if (!empty($extensions)) {
     // Munge the filename to protect against possible malicious extension hiding
     // within an unknown file type (ie: filename.html.foo).
-    $file->setFilename(file_munge_filename($file->getFilename(), $extensions));
+    $event = new FileUploadSanitizeNameEvent($file->getFilename(), $extensions);
+    \Drupal::service('event_dispatcher')->dispatch($event);
+    $file->setFilename($event->getFilename());
   }
 
   // Rename potentially executable files, to help prevent exploits (i.e. will
@@ -593,7 +596,9 @@ function filefield_sources_clean_filename($filepath, $extensions) {
   if (empty($extensions)) {
     $extensions = 'jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp';
   }
-  $filename = file_munge_filename($filename, $extensions);
+  $event = new FileUploadSanitizeNameEvent($filename, $extensions);
+  \Drupal::service('event_dispatcher')->dispatch($event);
+  $filename = $event->getFilename();
   $directory = \Drupal::service('file_system')->dirname($filepath);
   return ($directory != '.' ? $directory . '/' : '') . $filename;
 }
